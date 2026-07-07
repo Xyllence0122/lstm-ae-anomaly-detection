@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+outputs/synthetic_data.npz
+outputs/lstm_ae_scores.npz

@@ -1,0 +1,67 @@
+{
+  "n_normal_wafers": 107,
+  "n_faulty_wafers": 20,
+  "process_len_mean": 100.62616822429906,
+  "sensors": {
+    "Cl2 Flow": {
+      "index": 3,
+      "physical_meaning": "製程氣體流量 (sccm)，MFC 流量控制迴路",
+      "mean": 753.2278257639082,
+      "std": 0.7482460467509433,
+      "range": [
+        749.0,
+        757.0
+      ],
+      "between_wafer_std": 0.07573227620992208,
+      "within_wafer_std": 0.74238884818054,
+      "final_value_mean": 752.8224299065421,
+      "final_value_std": 0.6530028997967635,
+      "lag1_autocorr": 0.002302122891917621
+    },
+    "He Press": {
+      "index": 7,
+      "physical_meaning": "晶圓背面 He 冷卻壓力，散熱系統壓力控制",
+      "mean": 100.63666759543048,
+      "std": 0.737399563226711,
+      "range": [
+        99.0,
+        102.0
+      ],
+      "between_wafer_std": 0.10190384687539575,
+      "within_wafer_std": 0.7249283060886489,
+      "final_value_mean": 100.22429906542057,
+      "final_value_std": 0.7771071591023329,
+      "lag1_autocorr": 0.023266357242791393
+    },
+    "Pressure": {
+      "index": 8,
+      "physical_meaning": "反應腔壓力 (mTorr)，壓力控制迴路的被控變數",
+      "mean": 1203.2438005015324,
+      "std": 26.172508247250565,
+      "range": [
+        1138.0,
+        1316.0
+      ],
+      "between_wafer_std": 20.752342223230155,
+      "within_wafer_std": 15.740614449261408,
+      "final_value_mean": 1265.271028037383,
+      "final_value_std": 31.143793757301705,
+      "lag1_autocorr": 0.5260677904599911
+    },
+    "Vat Valve": {
+      "index": 20,
+      "physical_meaning": "節流閥開度，調節腔體壓力的執行器",
+      "mean": 49.808210272127795,
+      "std": 0.8042883467827278,
+      "range": [
+        48.0,
+        51.0
+      ],
+      "between_wafer_std": 0.3018282100308223,
+      "within_wafer_std": 0.7294957231042936,
+      "final_value_mean": 49.018691588785046,
+      "final_value_std": 0.1924416848782617,
+      "lag1_autocorr": 0.8467848394130879
+    }
+  }
+}

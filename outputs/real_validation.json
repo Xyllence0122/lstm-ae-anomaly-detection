@@ -1,0 +1,38 @@
+{
+  "direct_transfer": {
+    "threshold": 1.8487380425391866,
+    "fpr": 1.0,
+    "recall": 1.0
+  },
+  "recalibrated": {
+    "threshold": 1.7768789543937769,
+    "fpr": 0.05555555555555555,
+    "recall": 0.25,
+    "auc": 0.6305555555555555,
+    "per_fault": {
+      "TCP +50": false,
+      "RF -12": false,
+      "RF +10": false,
+      "Pr +3": true,
+      "TCP +10": false,
+      "BCl3 +5": false,
+      "Pr -2": true,
+      "Cl2 -5": false,
+      "He Chuck": false,
+      "TCP +30": false,
+      "Cl2 +5": true,
+      "BCl3 -5": false,
+      "Pr +2": true,
+      "TCP -20": false,
+      "TCP -15": false,
+      "Cl2 -10": false,
+      "BCl3 +10": true,
+      "Pr +1": false,
+      "TCP +20": false
+    }
+  },
+  "spc": {
+    "fpr": 0.018518518518518517,
+    "recall": 0.25
+  }
+}
