@@ -1,38 +1,47 @@
 {
   "direct_transfer": {
-    "threshold": 1.8487380425391866,
-    "fpr": 1.0,
-    "recall": 1.0
+    "threshold": 1.8016973544337604,
+    "fpr": 0.11627906976744186,
+    "recall": 0.75
   },
   "recalibrated": {
-    "threshold": 1.7768789543937769,
-    "fpr": 0.05555555555555555,
-    "recall": 0.25,
-    "auc": 0.6305555555555555,
+    "threshold": 1.9450274218277017,
+    "fpr": 0.046511627906976744,
+    "recall": 0.75,
+    "auc": 0.8802325581395348,
+    "recall_monitored": 1.0,
+    "recall_unmonitored": 0.5833333333333334,
     "per_fault": {
-      "TCP +50": false,
-      "RF -12": false,
-      "RF +10": false,
-      "Pr +3": true,
-      "TCP +10": false,
-      "BCl3 +5": false,
-      "Pr -2": true,
-      "Cl2 -5": false,
-      "He Chuck": false,
-      "TCP +30": false,
-      "Cl2 +5": true,
-      "BCl3 -5": false,
-      "Pr +2": true,
-      "TCP -20": false,
-      "TCP -15": false,
-      "Cl2 -10": false,
-      "BCl3 +10": true,
-      "Pr +1": false,
-      "TCP +20": false
+      "TCP +50#0": false,
+      "RF -12#1": false,
+      "RF +10#2": true,
+      "Pr +3#3": true,
+      "TCP +10#4": false,
+      "BCl3 +5#5": true,
+      "Pr -2#6": true,
+      "Cl2 -5#7": true,
+      "He Chuck#8": true,
+      "TCP +30#9": true,
+      "Cl2 +5#10": true,
+      "BCl3 -5#11": true,
+      "Pr +2#12": true,
+      "TCP -20#13": true,
+      "TCP -15#14": false,
+      "Cl2 -10#15": true,
+      "RF -12#16": true,
+      "BCl3 +10#17": true,
+      "Pr +1#18": true,
+      "TCP +20#19": false
     }
   },
   "spc": {
-    "fpr": 0.018518518518518517,
+    "fpr": 0.0,
     "recall": 0.25
+  },
+  "dense_ae": {
+    "threshold": 3.0363233966304,
+    "fpr": 0.023255813953488372,
+    "recall": 0.75,
+    "auc": 0.9232558139534883
   }
 }

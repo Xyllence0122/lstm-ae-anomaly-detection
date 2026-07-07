@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Step 5：真實資料驗證（最重要的 sanity check）。
+Step 5：真實資料最終驗證（最重要的 sanity check）。
 
-合成資料是自己設計的——如果設計本身有錯，模型在合成測試集上表現再好
-也不會暴露問題。因此把訓練好的 LSTM-AE 直接套用到 LAM 9600 的
-真實 wafer 上驗證：
-- 107 片真實正常 wafer（其中一半用來重新校準閾值，另一半當測試負樣本）
-- 20 片真實 faulty wafer（設定點偏移型異常：TCP +50、Pr +3、Cl2 -10 …）
+方法論：模型只用合成資料訓練；真實資料分兩組——
+- 統計組（60%，Step 1 提取統計特性用；此處兼作閾值校準）
+- 保留組（40%，從未參與統計提取；當最終驗證的負樣本）
+- 20 片真實 faulty wafer（設定點偏移型異常）當正樣本
 
 評估兩種情境：
-1. 直接遷移：閾值沿用合成驗證集的設定（考驗合成→真實的 gap）
-2. 重新校準：用一半真實正常 wafer 重算 calib 與閾值（實務部署做法）
-
-同時跑 SPC X-bar 對照。注意：真實 faults 是設定點偏移型（會持續到製程結束），
-本來就是 SPC 擅長的型態，可觀察兩方法互補性。
+1. 直接遷移：閾值沿用合成驗證集的設定（考驗 synthetic→real gap）
+2. 重新校準：用統計組真實 wafer 重算 calib 與閾值（實務部署做法）
 
 輸出：
 - outputs/real_validation.json
@@ -27,19 +23,20 @@ import torch
 import matplotlib.pyplot as plt
 
 from config import (DATA_MAT, OUTPUT_DIR, FIGURE_DIR, SENSOR_IDX, STEP_COL,
-                    PROCESS_STEPS, MIN_WAFER_LEN, COLORS, set_plot_style)
-from models import LSTMAutoEncoder, sensor_peak_scores, combine_peaks
+                    PROCESS_STEPS, MIN_WAFER_LEN, RESAMPLE_LEN, COLORS,
+                    set_plot_style)
+from models import (LSTMAutoEncoder, DenseAutoEncoder, pointwise_errors,
+                    sensor_peak_scores, combine_peaks, make_threshold)
 
 
 def load_real_wafers():
-    """回傳 (正常 wafer list, 異常 wafer list, 異常名稱 list)，只留所選 sensors"""
     mat = scipy.io.loadmat(DATA_MAT)
     lam = mat["LAMDATA"][0, 0]
     fault_names = [str(n).strip() for n in lam["fault_names"]]
 
     def prep(w):
         w = w[np.isin(w[:, STEP_COL], PROCESS_STEPS)]
-        return w[:, SENSOR_IDX]
+        return w[:, SENSOR_IDX].astype(float)
 
     normal = [prep(lam["calibration"][i, 0])
               for i in range(lam["calibration"].shape[0])
@@ -53,51 +50,28 @@ def load_real_wafers():
     return normal, faulty, fnames
 
 
-@torch.no_grad()
-def wafer_peaks(model, wafers, mu, sd, window):
-    """逐片計算 per-sensor 平滑誤差峰值（真實 wafer 長度不一，逐片 forward）"""
-    model.eval()
-    peaks = []
-    for w in wafers:
-        x = (w - mu) / sd
-        xt = torch.as_tensor(x[None], dtype=torch.float32)
-        err = ((model(xt) - xt) ** 2)[0].numpy()          # (T, F)
-        peaks.append(sensor_peak_scores(err[None], window)[0])
-    return np.stack(peaks)                                 # (N, F)
-
-
-def spc_on_real(normal_calib, normal_eval, faulty):
-    """SPC X-bar：用校準組正常 wafer 的最終值建管制界限"""
-    finals_c = np.stack([w[-1] for w in normal_calib])
-    mu, sd = finals_c.mean(axis=0), finals_c.std(axis=0)
-    ucl, lcl = mu + 3 * sd, mu - 3 * sd
-
-    def flag(wafers):
-        finals = np.stack([w[-1] for w in wafers])
-        return ((finals > ucl) | (finals < lcl)).any(axis=1).astype(int)
-
-    return flag(normal_eval), flag(faulty)
-
-
 def main():
     set_plot_style()
     ckpt = torch.load(OUTPUT_DIR / "lstm_ae.pt", weights_only=False)
+    stats = json.loads((OUTPUT_DIR / "sensor_stats.json").read_text(encoding="utf-8"))
     model = LSTMAutoEncoder(len(SENSOR_IDX), ckpt["hidden_size"], ckpt["latent_size"])
     model.load_state_dict(ckpt["state_dict"])
     mu, sd, window = ckpt["mu"], ckpt["sd"], int(ckpt["window"])
 
     normal, faulty, fnames = load_real_wafers()
-    rng = np.random.default_rng(0)
-    order = rng.permutation(len(normal))
-    calib_idx, eval_idx = order[:len(order) // 2], order[len(order) // 2:]
-    normal_calib = [normal[i] for i in calib_idx]
-    normal_eval = [normal[i] for i in eval_idx]
-    print(f"真實正常 wafer：{len(normal_calib)} 片校準 + {len(normal_eval)} 片評估；"
-          f"真實 faulty：{len(faulty)} 片")
+    # 沿用 Step 1 的切分：統計組 = 校準；保留組 = 最終驗證負樣本
+    normal_calib = [normal[i] for i in stats["stats_idx"]]
+    normal_eval = [normal[i] for i in stats["holdout_idx"]]
+    print(f"真實正常 wafer：統計組 {len(normal_calib)} 片（校準）+ "
+          f"保留組 {len(normal_eval)} 片（驗證）；真實 faulty：{len(faulty)} 片")
 
-    pk_calib = wafer_peaks(model, normal_calib, mu, sd, window)
-    pk_eval = wafer_peaks(model, normal_eval, mu, sd, window)
-    pk_fault = wafer_peaks(model, faulty, mu, sd, window)
+    def peaks_of(wafers):
+        z = [(w - mu) / sd for w in wafers]
+        return sensor_peak_scores(pointwise_errors(model, z), window)
+
+    pk_calib = peaks_of(normal_calib)
+    pk_eval = peaks_of(normal_eval)
+    pk_fault = peaks_of(faulty)
 
     results = {}
 
@@ -115,51 +89,102 @@ def main():
           f"真實正常誤報率={results['direct_transfer']['fpr']:.3f}  "
           f"真實異常偵測率={results['direct_transfer']['recall']:.3f}")
 
-    # ---------- 情境 2：重新校準（一半真實正常 wafer） ----------
-    calib_real = pk_calib.mean(axis=0)
+    # ---------- 情境 2：重新校準（統計組真實 wafer） ----------
+    calib_real = pk_calib.mean(axis=0) if ckpt["use_calib"] else None
     sc_calib = combine_peaks(pk_calib, calib_real)
     sc_eval = combine_peaks(pk_eval, calib_real)
     sc_fault = combine_peaks(pk_fault, calib_real)
-    thr_real = float(sc_calib.mean() + 3 * sc_calib.std())
+    thr_real = make_threshold(sc_calib, ckpt["thr_rule"])
 
     detected = sc_fault > thr_real
-    # AUC（閾值無關的分離度指標）
     from sklearn.metrics import roc_auc_score
     y = np.concatenate([np.zeros(len(sc_eval)), np.ones(len(sc_fault))])
     auc = float(roc_auc_score(y, np.concatenate([sc_eval, sc_fault])))
 
+    # 有監測 / 未監測 sensor 上的故障分組（sensor 覆蓋取捨的量化）
+    monitored_kw = ("Pr ", "Cl2", "He")
+    mon = np.array([any(k in n for k in monitored_kw) for n in fnames])
     results["recalibrated"] = {
-        "threshold": thr_real,
+        "threshold": float(thr_real),
         "fpr": float((sc_eval > thr_real).mean()),
         "recall": float(detected.mean()),
         "auc": auc,
-        "per_fault": {n: bool(d) for n, d in zip(fnames, detected)},
+        "recall_monitored": float(detected[mon].mean()),
+        "recall_unmonitored": float(detected[~mon].mean()),
+        "per_fault": {f"{n}#{i}": bool(dd)
+                      for i, (n, dd) in enumerate(zip(fnames, detected))},
     }
     print(f"\n[重新校準] 閾值={thr_real:.3f}  "
           f"誤報率={results['recalibrated']['fpr']:.3f}  "
           f"偵測率={detected.mean():.3f}  AUC={auc:.3f}")
+    print(f"  有監測 sensor 的故障（{mon.sum()} 片）偵測率 = "
+          f"{results['recalibrated']['recall_monitored']:.2f}")
+    print(f"  未監測 sensor 的故障（{(~mon).sum()} 片）偵測率 = "
+          f"{results['recalibrated']['recall_unmonitored']:.2f}")
     for n, s, dflag in sorted(zip(fnames, sc_fault, detected), key=lambda z: -z[1]):
         print(f"  {'[O]' if dflag else '[X]'} {n:10s} score={s:.2f}")
 
-    # ---------- SPC 對照 ----------
-    spc_eval, spc_fault = spc_on_real(normal_calib, normal_eval, faulty)
-    results["spc"] = {"fpr": float(spc_eval.mean()), "recall": float(spc_fault.mean())}
-    print(f"\n[SPC X-bar] 誤報率={spc_eval.mean():.3f}  偵測率={spc_fault.mean():.3f}")
+    # ---------- SPC 對照（真實 faults 是設定點偏移型，SPC 的主場） ----------
+    finals_c = np.stack([w[-1] for w in normal_calib])
+    m_, s_ = finals_c.mean(axis=0), finals_c.std(axis=0)
+    ucl, lcl = m_ + 3 * s_, m_ - 3 * s_
+
+    def spc_flag(wafers):
+        f = np.stack([w[-1] for w in wafers])
+        return ((f > ucl) | (f < lcl)).any(axis=1).astype(int)
+
+    results["spc"] = {"fpr": float(spc_flag(normal_eval).mean()),
+                      "recall": float(spc_flag(faulty).mean())}
+    print(f"\n[SPC X-bar] 誤報率={results['spc']['fpr']:.3f}  "
+          f"偵測率={results['spc']['recall']:.3f}")
+
+    # ---------- Dense AE 對照（重採樣固定長度 + 重新校準，與 LSTM 同待遇） ----------
+    dense_pt = OUTPUT_DIR / "dense_ae.pt"
+    if dense_pt.exists():
+        dck = torch.load(dense_pt, weights_only=False)
+        dense = DenseAutoEncoder(dck["seq_len"], len(SENSOR_IDX))
+        dense.load_state_dict(dck["state_dict"])
+
+        def resample(w, n=RESAMPLE_LEN):
+            t_src = np.linspace(0, 1, len(w))
+            t_dst = np.linspace(0, 1, n)
+            return np.stack([np.interp(t_dst, t_src, w[:, f])
+                             for f in range(w.shape[1])], axis=1)
+
+        def d_peaks(wafers):
+            z = [(resample(w) - mu) / sd for w in wafers]
+            return sensor_peak_scores(pointwise_errors(dense, z), dck["window"])
+
+        dpk_calib, dpk_eval, dpk_fault = (d_peaks(normal_calib),
+                                          d_peaks(normal_eval), d_peaks(faulty))
+        d_calib = dpk_calib.mean(axis=0) if dck["use_calib"] else None
+        ds_calib = combine_peaks(dpk_calib, d_calib)
+        ds_eval = combine_peaks(dpk_eval, d_calib)
+        ds_fault = combine_peaks(dpk_fault, d_calib)
+        d_thr = make_threshold(ds_calib, dck["thr_rule"])
+        d_auc = float(roc_auc_score(
+            np.concatenate([np.zeros(len(ds_eval)), np.ones(len(ds_fault))]),
+            np.concatenate([ds_eval, ds_fault])))
+        results["dense_ae"] = {"threshold": float(d_thr),
+                               "fpr": float((ds_eval > d_thr).mean()),
+                               "recall": float((ds_fault > d_thr).mean()),
+                               "auc": d_auc}
+        print(f"\n[Dense AE]  誤報率={results['dense_ae']['fpr']:.3f}  "
+              f"偵測率={results['dense_ae']['recall']:.3f}  AUC={d_auc:.3f}")
 
     (OUTPUT_DIR / "real_validation.json").write_text(
         json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n結果已存檔：{OUTPUT_DIR / 'real_validation.json'}")
 
-    # ---------- 圖：真實資料驗證 ----------
+    # ---------- 圖 ----------
     fig, axes = plt.subplots(2, 1, figsize=(9.5, 8.5),
                              gridspec_kw={"height_ratios": [1, 1.4]})
 
-    # (a) 分數分布：正常（評估組）vs faulty
     ax = axes[0]
     rj = np.random.default_rng(1)
     ax.scatter(rj.uniform(-0.15, 0.15, len(sc_eval)), sc_eval, s=16,
                color=COLORS["normal"], alpha=0.6, edgecolors="none",
-               label=f"真實正常（n={len(sc_eval)}）")
+               label=f"真實正常・保留組（n={len(sc_eval)}）")
     ax.scatter(1 + rj.uniform(-0.15, 0.15, len(sc_fault)), sc_fault, s=20,
                color=COLORS["faulty"], alpha=0.75, edgecolors="none",
                label=f"真實 faulty（n={len(sc_fault)}）")
@@ -169,16 +194,15 @@ def main():
     ax.set_xticks([0, 1], ["Normal", "Faulty"])
     ax.set_yscale("log")
     ax.set_ylabel("Anomaly score")
-    ax.set_title(f"(a) 真實 wafer 異常分數（AUC = {auc:.3f}）")
+    ax.set_title(f"(a) 真實 wafer 最終驗證（AUC = {auc:.3f}）")
     ax.legend(frameon=False, fontsize=9)
 
-    # (b) 每個 fault 的分數（依大小排序）
     ax = axes[1]
     idx_sorted = np.argsort(sc_fault)[::-1]
     labels = [fnames[i] for i in idx_sorted]
     vals = sc_fault[idx_sorted]
     colors = [COLORS["faulty"] if v > thr_real else COLORS["muted"] for v in vals]
-    bars = ax.bar(range(len(vals)), vals, color=colors, width=0.7)
+    ax.bar(range(len(vals)), vals, color=colors, width=0.7)
     ax.axhline(thr_real, color=COLORS["ink"], linestyle="--", linewidth=1.4)
     ax.set_xticks(range(len(vals)), labels, rotation=45, ha="right", fontsize=8)
     ax.set_yscale("log")

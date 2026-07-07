@@ -54,7 +54,7 @@ STEP_COL = 1          # Step Number 欄位
 PROCESS_STEPS = (4, 5)  # 主蝕刻製程步驟（慣例：只分析 step 4、5）
 MIN_WAFER_LEN = 60    # 過短的 wafer 視為紀錄不完整，剔除
 
-SEQ_LEN = 90          # 合成資料的時間序列長度
+RESAMPLE_LEN = 100    # Dense AE / Isolation Forest 用的固定重採樣長度
 RANDOM_SEED = 42
 
 # ---------- 繪圖樣式（validated palette，light mode） ----------

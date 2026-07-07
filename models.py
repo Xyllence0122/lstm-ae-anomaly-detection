@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-模型定義：
-- LSTMAutoEncoder：時序重建模型（本專案主角）
-- DenseAutoEncoder：無時序結構的全連接 AE（baseline，用於對照）
+模型定義與訓練/評分工具：
+- LSTMAutoEncoder：時序重建模型（支援變長序列）
+- DenseAutoEncoder：無時序結構的全連接 AE（baseline，固定長度輸入）
+- 變長資料以「長度分桶」方式訓練與推論
 """
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -11,7 +13,7 @@ import torch.nn as nn
 class LSTMAutoEncoder(nn.Module):
     """
     Encoder LSTM 將整段序列壓縮成 latent 向量，
-    Decoder LSTM 從 latent 重建整段序列。
+    Decoder LSTM 從 latent 重建整段序列（長度跟隨輸入，天然支援變長）。
     只用正常資料訓練 → 異常波形的重建誤差會明顯偏高。
     """
 
@@ -25,12 +27,11 @@ class LSTMAutoEncoder(nn.Module):
 
     def forward(self, x):                       # x: (B, T, F)
         T = x.shape[1]
-        _, (h, _) = self.encoder(x)             # h: (1, B, hidden)
-        z = self.to_latent(h[-1])               # (B, latent)
-        dec_in = self.from_latent(z)            # (B, hidden)
-        dec_in = dec_in.unsqueeze(1).repeat(1, T, 1)  # 沿時間軸展開
+        _, (h, _) = self.encoder(x)
+        z = self.to_latent(h[-1])
+        dec_in = self.from_latent(z).unsqueeze(1).repeat(1, T, 1)
         dec_out, _ = self.decoder(dec_in)
-        return self.output(dec_out)             # (B, T, F)
+        return self.output(dec_out)
 
 
 class DenseAutoEncoder(nn.Module):
@@ -49,26 +50,24 @@ class DenseAutoEncoder(nn.Module):
 
     def forward(self, x):                       # x: (B, T, F)
         B = x.shape[0]
-        out = self.net(x.reshape(B, -1))
-        return out.reshape(B, self.seq_len, self.n_features)
+        return self.net(x.reshape(B, -1)).reshape(B, self.seq_len, self.n_features)
 
 
-@torch.no_grad()
-def reconstruction_errors(model, X, batch_size=64, device="cpu"):
-    """每片 wafer 的重建 MSE（時間 × sensor 平均），回傳 shape (N,)"""
-    model.eval()
-    errs = []
-    for i in range(0, len(X), batch_size):
-        xb = torch.as_tensor(X[i:i + batch_size], dtype=torch.float32, device=device)
-        recon = model(xb)
-        errs.append(((recon - xb) ** 2).mean(dim=(1, 2)).cpu())
-    return torch.cat(errs).numpy()
+# ---------- 變長資料工具 ----------
+
+def _buckets_by_length(X_list):
+    """依序列長度分桶：{T: [indices]}（LSTM 一個 batch 內長度需一致）"""
+    buckets = {}
+    for i, x in enumerate(X_list):
+        buckets.setdefault(len(x), []).append(i)
+    return buckets
 
 
 def train_collect_checkpoints(model, Xtr, Xva, epochs=400, batch_size=32,
-                              lr=1e-3, ckpt_every=10, seed=42, verbose=True):
+                              lr=1e-3, ckpt_every=20, seed=42, verbose=True):
     """
     只用正常資料訓練 AE，每 ckpt_every 個 epoch 保存一份權重。
+    X 可為變長 list（長度分桶）或固定長度 list/array。
 
     動機：AE 訓練越久重建能力越強，連異常波形都能重建，偵測力反而下降；
     且不同異常型態偏好不同收斂程度。因此保留整條訓練軌跡的 checkpoints，
@@ -76,23 +75,33 @@ def train_collect_checkpoints(model, Xtr, Xva, epochs=400, batch_size=32,
 
     回傳 (hist, checkpoints)；checkpoints = [(epoch, state_dict), ...]
     """
-    import numpy as np
-
     torch.manual_seed(seed)
+    rng = np.random.default_rng(seed)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     loss_fn = nn.MSELoss()
-    Xtr_t = torch.as_tensor(Xtr, dtype=torch.float32)
-    Xva_t = torch.as_tensor(Xva, dtype=torch.float32)
+
+    tr_buckets = {T: torch.as_tensor(np.stack([Xtr[i] for i in idx]),
+                                     dtype=torch.float32)
+                  for T, idx in _buckets_by_length(Xtr).items()}
+    va_buckets = {T: torch.as_tensor(np.stack([Xva[i] for i in idx]),
+                                     dtype=torch.float32)
+                  for T, idx in _buckets_by_length(Xva).items()}
+    n_val = sum(len(v) for v in va_buckets.values())
 
     hist = {"train": [], "val": []}
     checkpoints = []
 
     for epoch in range(1, epochs + 1):
         model.train()
-        perm = torch.randperm(len(Xtr_t))
+        batches = []
+        for T, tens in tr_buckets.items():
+            perm = rng.permutation(len(tens))
+            for i in range(0, len(perm), batch_size):
+                batches.append(tens[perm[i:i + batch_size]])
+        rng.shuffle(batches)
+
         tr = []
-        for i in range(0, len(perm), batch_size):
-            xb = Xtr_t[perm[i:i + batch_size]]
+        for xb in batches:
             opt.zero_grad()
             loss = loss_fn(model(xb), xb)
             loss.backward()
@@ -101,7 +110,8 @@ def train_collect_checkpoints(model, Xtr, Xva, epochs=400, batch_size=32,
 
         model.eval()
         with torch.no_grad():
-            val_loss = loss_fn(model(Xva_t), Xva_t).item()
+            val_loss = sum(loss_fn(model(t), t).item() * len(t)
+                           for t in va_buckets.values()) / n_val
         hist["train"].append(float(np.mean(tr)))
         hist["val"].append(val_loss)
 
@@ -115,53 +125,59 @@ def train_collect_checkpoints(model, Xtr, Xva, epochs=400, batch_size=32,
     return hist, checkpoints
 
 
-def sensor_peak_scores(pw_err, window=5):
+@torch.no_grad()
+def pointwise_errors(model, X_list, batch_size=64):
+    """逐時間步、逐 sensor 的平方誤差；支援變長，回傳與輸入同序的 list[(T,F)]"""
+    model.eval()
+    out = [None] * len(X_list)
+    for T, idx in _buckets_by_length(X_list).items():
+        tens = torch.as_tensor(np.stack([X_list[i] for i in idx]),
+                               dtype=torch.float32)
+        for i in range(0, len(idx), batch_size):
+            xb = tens[i:i + batch_size]
+            err = ((model(xb) - xb) ** 2).numpy()
+            for k, j in enumerate(idx[i:i + batch_size]):
+                out[j] = err[k]
+    return out
+
+
+def sensor_peak_scores(err_list, window=5):
     """
     每片 wafer、每個 sensor 的「平滑誤差峰值」，shape (N, F)。
     沿時間軸做移動平均平滑後取最大值——局部異常不被整片平均稀釋。
     """
-    import numpy as np
     kernel = np.ones(window) / window
-    N, T, F = pw_err.shape
+    N = len(err_list)
+    F = err_list[0].shape[1]
     peaks = np.empty((N, F))
     for n in range(N):
         for f in range(F):
-            peaks[n, f] = np.convolve(pw_err[n, :, f], kernel, mode="valid").max()
+            peaks[n, f] = np.convolve(err_list[n][:, f], kernel, mode="valid").max()
     return peaks
 
 
 def combine_peaks(peaks, calib=None):
-    """
-    合併 per-sensor 峰值成單一異常分數：max over sensors。
-    calib（shape (F,)）：以驗證集正常峰值的平均做校正，
-    讓「正常峰值水準」不同的 sensors 可比較後再取 max。
-    """
+    """合併 per-sensor 峰值成單一異常分數：max over sensors（可選校正）"""
     if calib is not None:
         peaks = peaks / calib
     return peaks.max(axis=1)
 
 
-@torch.no_grad()
-def pointwise_errors(model, X, batch_size=64, device="cpu"):
-    """逐時間步、逐 sensor 的平方誤差，回傳 shape (N, T, F)"""
-    model.eval()
-    errs = []
-    for i in range(0, len(X), batch_size):
-        xb = torch.as_tensor(X[i:i + batch_size], dtype=torch.float32, device=device)
-        recon = model(xb)
-        errs.append(((recon - xb) ** 2).cpu())
-    return torch.cat(errs).numpy()
+def make_threshold(val_scores, rule):
+    """閾值規則：max 型分數右偏，p99 比 mean+3σ 更穩健，兩者都納入網格"""
+    if rule == "p99":
+        return float(np.percentile(val_scores, 99))
+    return float(val_scores.mean() + 3 * val_scores.std())
 
 
-def grid_select(model, checkpoints, Xva, Xva_anom, y_va_anom, windows=(5, 9),
-                verbose=True):
+def grid_select(model, checkpoints, Xva, Xva_anom, y_va_anom,
+                windows=(5, 9), thr_rules=("mean3sigma", "p99"), verbose=True):
     """
-    在驗證集上掃「checkpoint × 平滑窗口 × 是否峰值校正」網格，
+    在驗證集上掃「checkpoint × 平滑窗口 × 峰值校正 × 閾值規則」網格，
     以 F1 選出最佳組合（不同異常型態偏好不同收斂程度，單一早停點兩頭不討好）。
 
-    回傳 dict(epoch, window, use_calib, f1, state)
+    回傳 dict(epoch, window, use_calib, thr_rule, f1, state)
     """
-    import numpy as np
     from sklearn.metrics import f1_score
 
     y_true = np.concatenate([np.zeros(len(Xva), dtype=int),
@@ -178,14 +194,16 @@ def grid_select(model, checkpoints, Xva, Xva_anom, y_va_anom, windows=(5, 9),
                 calib = va_peaks.mean(axis=0) if use_calib else None
                 va_s = combine_peaks(va_peaks, calib)
                 an_s = combine_peaks(an_peaks, calib)
-                thr = va_s.mean() + 3 * va_s.std()
-                y_pred = (np.concatenate([va_s, an_s]) > thr).astype(int)
-                f1 = f1_score(y_true, y_pred, zero_division=0)
-                if best is None or f1 > best["f1"] + 1e-9:
-                    best = {"epoch": epoch, "window": w, "use_calib": use_calib,
-                            "f1": float(f1),
-                            "state": {k: v.clone() for k, v in state.items()}}
+                for rule in thr_rules:
+                    thr = make_threshold(va_s, rule)
+                    y_pred = (np.concatenate([va_s, an_s]) > thr).astype(int)
+                    f1 = f1_score(y_true, y_pred, zero_division=0)
+                    if best is None or f1 > best["f1"] + 1e-9:
+                        best = {"epoch": epoch, "window": w, "use_calib": use_calib,
+                                "thr_rule": rule, "f1": float(f1),
+                                "state": {k: v.clone() for k, v in state.items()}}
     if verbose:
-        print(f"網格選擇結果：epoch={best['epoch']}, window={best['window']}, "
-              f"峰值校正={best['use_calib']}, 驗證 F1={best['f1']:.3f}")
+        print(f"網格選擇：epoch={best['epoch']}, window={best['window']}, "
+              f"校正={best['use_calib']}, 閾值={best['thr_rule']}, "
+              f"驗證 F1={best['f1']:.3f}")
     return best
