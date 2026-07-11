@@ -1,117 +1,104 @@
-# LSTM AutoEncoder for Semiconductor Anomaly Detection
+# LSTM-AE Anomaly Detection for Semiconductor Etch
 
-Detecting **process anomalies that traditional SPC cannot see**, with a strict
-methodology: real LAM 9600 Metal Etcher data is used **only** to (1) extract
-normal-process statistics and (2) final validation — models are trained purely
-on synthetic data generated from those statistics.
+PyTorch implementation of an LSTM autoencoder that catches etch process faults
+which final-value SPC misses. The models never see real data during training:
+real wafers from a LAM 9600 metal etcher are used only to extract statistics
+for a synthetic data generator, and again at the very end for validation.
 
-## Key results
+## Results
 
-**Real-data final validation** (20 induced faults, 43 held-out normal wafers
-never used for statistics):
+Final validation on real data (20 induced faults, 43 held-out normal wafers
+that were never used for statistics):
 
-| Method | Fault recall | False-alarm rate | AUC |
+| Method | Fault recall | False alarms | AUC |
 |---|---|---|---|
-| SPC X-bar (final value) | 25% | 0.0% | – |
+| SPC X-bar (final value) | 25% | 0.0% | - |
 | Dense AE | 75% | 2.3% | 0.923 |
-| **LSTM-AE** | **75%** | 4.7% | 0.880 |
+| LSTM-AE | 75% | 4.7% | 0.880 |
 
-- Faults on **monitored** quantities (Pr, Cl2, He): **8/8 detected (100%)** —
-  including the smallest one (Pr +1)
-- Faults on unmonitored sensors (TCP/RF): 58% still caught indirectly through
-  **closed-loop coupling** (e.g. an RF fault perturbs the pressure loop)
-- Direct threshold transfer from synthetic to real: false alarms dropped from
-  **100% (v1) to 11.6% (v2)** after the generator was rebuilt from richer
-  real statistics
+All 8 faults on monitored sensors (Pr, Cl2, He) were detected, including the
+smallest one (Pr +1). Faults on unmonitored sensors (TCP/RF) were still caught
+58% of the time, because they perturb the pressure control loop and show up
+indirectly.
 
-**Synthetic benchmark** (5 random seeds, mean ± std): LSTM-AE F1 = 0.725 ± 0.013
-vs SPC X-bar 0.137 and Isolation Forest 0.057.
+On the synthetic benchmark (5 seeds): LSTM-AE F1 = 0.725 ± 0.013, vs 0.137 for
+SPC X-bar and 0.057 for Isolation Forest.
 
 ![SPC blind spot](figures/04_spc_blind_spot.png)
 
-## Methodology
+A few things I learned along the way:
 
-### Real data is the source of statistics — and the final judge
+1. The win comes from looking at the whole trajectory instead of the final
+   value. Both autoencoders get 75% recall vs SPC's 25%; the model family
+   matters less than the approach.
+2. A plain Dense AE matches the LSTM-AE here (and slightly beats it on AUC).
+   Since the wafers are resampled to fixed length with locked profiles,
+   position-specific weights are enough. What the LSTM buys you is operational:
+   variable-length input and a path to streaming detection.
+3. Synthetic benchmarks lie until you check them against real data. The v1
+   generator (hand-designed ramps, no quantization, fixed length) scored
+   F1 0.86 on its own test set but produced 100% false alarms on real wafers.
+   Rebuilding it from richer real statistics dropped that to 11.6% with the
+   same direct threshold transfer, still without training on real data.
 
-`01_sensor_stats.py` splits the 107 real normal wafers 60/40. The 60% statistics
-set yields, per sensor: **mean waveform profile** (captures ramp direction and the
-step-transition transient), residual within-wafer std and lag-1 autocorrelation,
-between-wafer offset std, **quantization step**, transient amplitude, and the
-process-length distribution. The 40% holdout is reserved as final-validation
-negatives and never touches training, model selection, or statistics.
+## How it works
 
-### Synthetic benchmark (v2)
+**Statistics extraction** (`01_sensor_stats.py`): the 107 real normal wafers
+are split 60/40. From the 60% set, each sensor gets a mean waveform profile
+(ramp direction, step-transition transient), within-wafer residual std and
+lag-1 autocorrelation, between-wafer offset std, quantization step, transient
+amplitude, and the process-length distribution. The 40% holdout is only used
+as final-validation negatives.
 
-`02_generate_synthetic.py` builds each wafer as: time-rescaled mean profile
-(random length 95–112) + between-wafer offset + AR(1) residual noise + integer
-quantization. Three anomaly types, all **ending on target** (invisible to
-final-value SPC), each hitting 1–2 random sensors:
+**Synthetic generator** (`02_generate_synthetic.py`): each wafer is a
+time-rescaled mean profile (random length 95-112) plus between-wafer offset,
+AR(1) residual noise, and integer quantization. Three anomaly types, all
+designed to end on target so final-value SPC can't see them, each hitting 1-2
+random sensors:
 
-- **A — ramp too fast**: transient time-axis compressed 2.5–4× + overshoot
-  ringing (only on sensors with a real transient)
-- **B — mid-process oscillation**: 2.5–4σ damped burst, recovers before the end
-- **C — slow drift**: linear drift ending within the ±3σ control limits
+- A: ramp too fast — transient compressed 2.5-4x in time, with overshoot
+  ringing (only on sensors that have a real transient)
+- B: mid-process oscillation — a 2.5-4 sigma damped burst that recovers before
+  the end
+- C: slow drift — linear drift that stays inside the ±3 sigma control limits
 
-### Honest model selection
+**Model selection**: AE detection quality is not monotonic in training epochs,
+because a fully converged AE reconstructs anomalies too. So checkpoints (every
+20 epochs), smoothing window, peak calibration, and threshold rule
+(mean+3 sigma vs p99) are grid-selected by F1 on a held-out synthetic anomaly
+validation set. The test set is touched once per seed, and results are
+reported over 5 seeds. The anomaly score is the max of the smoothed
+per-timestep reconstruction error, so a localized anomaly doesn't get diluted
+by averaging over the whole wafer.
 
-AE detection quality is **not monotonic in training epochs** — a converged AE
-reconstructs anomalies too. Checkpoints (every 20 epochs) × smoothing window ×
-peak calibration × threshold rule (mean+3σ vs p99) are grid-selected by F1 on a
-**held-out synthetic anomaly validation set**; the test set is touched once per
-seed. Results are reported over 5 seeds.
-
-Anomaly score = max of smoothed per-timestep reconstruction error, so localized
-anomalies are not diluted by whole-wafer averaging.
-
-## Findings worth stating plainly
-
-1. **Trajectory-based detection is the real win** — both AEs detect 75% of real
-   faults vs SPC's 25%. Watching the whole trajectory beats checking the final
-   value, regardless of the model family.
-2. **A Dense AE matches the LSTM-AE on this benchmark** (and edges it on AUC).
-   With profile-locked waveforms resampled to fixed length, position-specific
-   weights suffice; the LSTM's advantages here are operational (native
-   variable-length input, streaming potential) rather than accuracy.
-3. **Synthetic benchmarks must be validated on real data.** v1 of the generator
-   (hand-designed ramps, no quantization, fixed length) scored F1 0.86 on its own
-   synthetic test set but transferred to real data with 100% false alarms.
-   Rebuilding it from richer statistics fixed transfer without ever training on
-   real data.
-
-## Pipeline
-
-| Script | What it does |
-|---|---|
-| `01_sensor_stats.py` | 60/40 split of real normals; extract profile/noise/quantization/length statistics |
-| `02_generate_synthetic.py` | Variable-length, quantized synthetic benchmark + separate validation-anomaly set |
-| `03_train_lstm_ae.py` | 5-seed training with checkpoint grid selection (resumable) |
-| `04_compare_methods.py` | SPC X-bar / Dense AE / Isolation Forest / LSTM-AE under identical protocols |
-| `05_validate_real_data.py` | Final validation on held-out real normals + 20 real faults |
-
-## Run
+## Usage
 
 ```bash
 pip install torch scipy scikit-learn pandas matplotlib
-python 01_sensor_stats.py
-python 02_generate_synthetic.py
-python 03_train_lstm_ae.py      # ~15-25 min on CPU (5 seeds, resumable)
-python 04_compare_methods.py
-python 05_validate_real_data.py
+
+python 01_sensor_stats.py       # extract statistics from real normals
+python 02_generate_synthetic.py # build the synthetic benchmark
+python 03_train_lstm_ae.py      # 5-seed training, ~15-25 min on CPU, resumable
+python 04_compare_methods.py    # SPC / Dense AE / Isolation Forest / LSTM-AE
+python 05_validate_real_data.py # final validation on held-out real wafers
 ```
 
-## Dataset
+## Data
 
-LAM 9600 Metal Etcher data (Eigenvector Research): 108 normal + 21 faulty wafers,
-21 engineering variables. Place `MACHINE_Data.mat` at the path configured in
-`config.py`. The dataset itself is not redistributed here.
+LAM 9600 Metal Etcher dataset (Eigenvector Research): 108 normal + 21 faulty
+wafers, 21 engineering variables. Put `MACHINE_Data.mat` at the path set in
+`config.py`; the dataset itself is not included in this repo.
 
-Monitored sensors are chosen from an **equipment-control** viewpoint — controlled
-variable (Pressure), actuator (Vat Valve), cooling loop (He Press), flow loop
-(Cl2 Flow) — a closed-loop story that needs no plasma chemistry to explain.
+The monitored sensors were picked from an equipment-control point of view:
+controlled variable (Pressure), actuator (Vat Valve), cooling loop (He Press),
+flow loop (Cl2 Flow). The idea is that a closed-loop story explains the
+detections without needing any plasma chemistry.
 
-## Future Work
+## TODO
 
-- Streaming detection (LSTM forecaster) — alarm mid-process instead of per-wafer
-- Extend sensor coverage (TCP/RF power) and quantify the coverage/recall trade-off
-- Transformer AutoEncoder comparison
-- Edge deployment on Raspberry Pi (ONNX / quantization)
+- Streaming detection with an LSTM forecaster, so alarms fire mid-process
+  instead of per-wafer
+- Add TCP/RF power to the monitored set and measure the coverage/recall
+  trade-off
+- Try a Transformer autoencoder
+- Edge deployment on a Raspberry Pi (ONNX, quantization)
