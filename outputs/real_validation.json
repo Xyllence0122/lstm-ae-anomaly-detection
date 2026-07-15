@@ -1,0 +1,47 @@
+{
+  "direct_transfer": {
+    "threshold": 1.7130634551759925,
+    "fpr": 0.16279069767441862,
+    "recall": 0.85
+  },
+  "recalibrated": {
+    "threshold": 2.102779789737935,
+    "fpr": 0.046511627906976744,
+    "recall": 0.7,
+    "auc": 0.8872093023255815,
+    "recall_monitored": 1.0,
+    "recall_unmonitored": 0.5,
+    "per_fault": {
+      "TCP +50#0": false,
+      "RF -12#1": false,
+      "RF +10#2": true,
+      "Pr +3#3": true,
+      "TCP +10#4": false,
+      "BCl3 +5#5": true,
+      "Pr -2#6": true,
+      "Cl2 -5#7": true,
+      "He Chuck#8": true,
+      "TCP +30#9": false,
+      "Cl2 +5#10": true,
+      "BCl3 -5#11": true,
+      "Pr +2#12": true,
+      "TCP -20#13": true,
+      "TCP -15#14": false,
+      "Cl2 -10#15": true,
+      "RF -12#16": true,
+      "BCl3 +10#17": true,
+      "Pr +1#18": true,
+      "TCP +20#19": false
+    }
+  },
+  "spc": {
+    "fpr": 0.0,
+    "recall": 0.25
+  },
+  "dense_ae": {
+    "threshold": 3.304157203056036,
+    "fpr": 0.0,
+    "recall": 0.6,
+    "auc": 0.9127906976744187
+  }
+}

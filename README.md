@@ -5,6 +5,14 @@ which final-value SPC misses. The models never see real data during training:
 real wafers from a LAM 9600 metal etcher are used only to extract statistics
 for a synthetic data generator, and again at the very end for validation.
 
+> **v2.1 (2026-07-13).** Synthetic generator now uses stationary AR(1) noise
+> initialization (v2 started every wafer at exactly zero noise, which the AE
+> could exploit); Isolation Forest now gets the same threshold-selection
+> protocol as the autoencoders (validation-anomaly F1), so the comparison is
+> no longer tilted; GPU is used automatically when available; and a new
+> sampling-rate sweep experiment (`06`) was added. The result tables below
+> are from v2 — re-run `02 → 05` to refresh them.
+
 ## Results
 
 Final validation on real data (20 induced faults, 43 held-out normal wafers
@@ -52,9 +60,9 @@ as final-validation negatives.
 
 **Synthetic generator** (`02_generate_synthetic.py`): each wafer is a
 time-rescaled mean profile (random length 95-112) plus between-wafer offset,
-AR(1) residual noise, and integer quantization. Three anomaly types, all
-designed to end on target so final-value SPC can't see them, each hitting 1-2
-random sensors:
+stationary AR(1) residual noise, and integer quantization. Three anomaly
+types, all designed to end on target so final-value SPC can't see them, each
+hitting 1-2 random sensors:
 
 - A: ramp too fast — transient compressed 2.5-4x in time, with overshoot
   ringing (only on sensors that have a real transient)
@@ -69,19 +77,41 @@ because a fully converged AE reconstructs anomalies too. So checkpoints (every
 validation set. The test set is touched once per seed, and results are
 reported over 5 seeds. The anomaly score is the max of the smoothed
 per-timestep reconstruction error, so a localized anomaly doesn't get diluted
-by averaging over the whole wafer.
+by averaging over the whole wafer. Isolation Forest gets the same
+threshold-selection protocol, so no method is judged under looser rules than
+another.
+
+**Sampling-rate sweep** (`06_sampling_rate_sweep.py`): answers "how fast do
+you have to sample to see how fast an anomaly?" — the honest version of the
+millisecond-detection question. The real dataset is sampled at ~1 Hz, so
+sub-second physics simply isn't in the data, and no synthetic benchmark at
+millisecond resolution could ever be validated against it. Instead, a
+continuous-time model (first-order setpoint response + Ornstein-Uhlenbeck
+noise; steady levels, noise strength, correlation time, and quantization all
+anchored to the real statistics, the event duration stated as an explicit
+scenario assumption) is sampled at 0.5-20 Hz. One detector is trained per
+rate, and each is evaluated against the same set of too-fast-arrival anomalies
+(1 s down to 0.05 s). The output is a detection-rate-vs-sampling-rate curve:
+slow sampling misses fast anomalies not because the model is weak but because
+the evidence was never recorded — which is precisely the argument for
+high-frequency sampling plus on-device inference at the edge (kHz streams
+can't be shipped to the cloud).
 
 ## Usage
 
 ```bash
 pip install torch scipy scikit-learn pandas matplotlib
 
-python 01_sensor_stats.py       # extract statistics from real normals
-python 02_generate_synthetic.py # build the synthetic benchmark
-python 03_train_lstm_ae.py      # 5-seed training, ~15-25 min on CPU, resumable
-python 04_compare_methods.py    # SPC / Dense AE / Isolation Forest / LSTM-AE
-python 05_validate_real_data.py # final validation on held-out real wafers
+python 01_sensor_stats.py        # extract statistics from real normals
+python 02_generate_synthetic.py  # build the synthetic benchmark
+python 03_train_lstm_ae.py       # 5-seed training, ~15-25 min on CPU, resumable
+python 04_compare_methods.py     # SPC / Dense AE / Isolation Forest / LSTM-AE
+python 05_validate_real_data.py  # final validation on held-out real wafers
+python 06_sampling_rate_sweep.py # detection rate vs sampling rate, ~30-60 min CPU, resumable
 ```
+
+After changing the generator (`02`), move `outputs/seeds/` away before
+re-running `03`, otherwise its resume logic will silently reuse stale seeds.
 
 ## Data
 
@@ -101,4 +131,5 @@ detections without needing any plasma chemistry.
 - Add TCP/RF power to the monitored set and measure the coverage/recall
   trade-off
 - Try a Transformer autoencoder
-- Edge deployment on a Raspberry Pi (ONNX, quantization)
+- Edge deployment on a Raspberry Pi (ONNX, quantization), including
+  throughput at the sampling rates the `06` sweep shows are necessary
