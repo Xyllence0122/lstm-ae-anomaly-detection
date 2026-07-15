@@ -4,7 +4,8 @@ Step 4：四種方法同場比較。
 
 1. SPC X-bar 管制圖：只看每片 wafer 的最終值（傳統做法），±3σ 管制界限
 2. Dense AE（無 LSTM）：與 LSTM-AE 相同的選擇協議；輸入為重採樣固定長度版
-3. Isolation Forest：攤平固定長度向量 + 樹模型
+3. Isolation Forest：攤平固定長度向量 + 樹模型；閾值規則同樣以
+   「驗證異常 F1」挑選（與 AE 方法一致的協議，避免對比不公平）
 4. LSTM-AE：讀取 Step 3 發佈的模型與分數設定（變長輸入）
 
 輸出：
@@ -19,11 +20,11 @@ import pandas as pd
 import torch
 import matplotlib.pyplot as plt
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_recall_fscore_support, f1_score
 
 from config import (OUTPUT_DIR, FIGURE_DIR, RANDOM_SEED, SENSOR_NAMES,
                     COLORS, set_plot_style)
-from models import (LSTMAutoEncoder, DenseAutoEncoder,
+from models import (DEVICE, LSTMAutoEncoder, DenseAutoEncoder,
                     train_collect_checkpoints, grid_select,
                     pointwise_errors, sensor_peak_scores, combine_peaks,
                     make_threshold)
@@ -54,6 +55,24 @@ def spc_xbar(X_train_list, X_test_list):
     finals_test = np.stack([w[-1] for w in X_test_list])
     out = (finals_test > ucl) | (finals_test < lcl)
     return out.any(axis=1).astype(int), (mu, sd, ucl, lcl), finals_test
+
+
+def select_threshold_by_val_f1(val_normal_scores, val_anom_scores,
+                               rules=("mean3sigma", "p99")):
+    """
+    與 AE 方法一致的閾值選擇協議：在驗證集（正常 + 異常）上以 F1 挑閾值規則。
+    回傳 (threshold, rule, val_f1)。
+    """
+    y_val = np.concatenate([np.zeros(len(val_normal_scores), dtype=int),
+                            np.ones(len(val_anom_scores), dtype=int)])
+    s_val = np.concatenate([val_normal_scores, val_anom_scores])
+    best = None
+    for rule in rules:
+        thr = make_threshold(val_normal_scores, rule)
+        f1 = f1_score(y_val, (s_val > thr).astype(int), zero_division=0)
+        if best is None or f1 > best[2]:
+            best = (thr, rule, f1)
+    return best
 
 
 def main():
@@ -104,22 +123,27 @@ def main():
                            d_best["window"]), d_calib)
     rows.append(evaluate("Dense AE", y_test, (dense_scores > thr_dense).astype(int)))
     # 存檔供 Step 5 真實資料驗證（與 LSTM-AE 相同待遇）
-    torch.save({"state_dict": dense.state_dict(), "window": d_best["window"],
+    torch.save({"state_dict": {k: v.detach().cpu().clone()
+                               for k, v in dense.state_dict().items()},
+                "window": d_best["window"],
                 "use_calib": d_best["use_calib"], "thr_rule": d_best["thr_rule"],
                 "threshold": thr_dense, "calib": d_calib,
                 "seq_len": Xtr_f.shape[1]}, OUTPUT_DIR / "dense_ae.pt")
 
-    # 3. Isolation Forest（固定長度攤平）
+    # 3. Isolation Forest（固定長度攤平；閾值規則同樣由驗證異常 F1 挑選）
     iso = IsolationForest(n_estimators=300, random_state=RANDOM_SEED)
     iso.fit(Xtr_f.reshape(len(Xtr_f), -1))
-    val_if = -iso.decision_function(Xva_f.reshape(len(Xva_f), -1))
-    thr_if = val_if.mean() + 3 * val_if.std()
+    val_if_n = -iso.decision_function(Xva_f.reshape(len(Xva_f), -1))
+    val_if_a = -iso.decision_function(Xan_f.reshape(len(Xan_f), -1))
+    thr_if, if_rule, if_val_f1 = select_threshold_by_val_f1(val_if_n, val_if_a)
+    print(f"Isolation Forest 閾值規則={if_rule}（驗證 F1={if_val_f1:.3f}）")
     if_scores = -iso.decision_function(Xte_f.reshape(len(Xte_f), -1))
     rows.append(evaluate("Isolation Forest", y_test, (if_scores > thr_if).astype(int)))
 
     # 4. LSTM-AE（發佈模型，變長輸入）
     lstm = LSTMAutoEncoder(n_feat, ckpt["hidden_size"], ckpt["latent_size"])
     lstm.load_state_dict(ckpt["state_dict"])
+    lstm.to(DEVICE)
     window = int(ckpt["window"])
     calib = ckpt["calib"]
     pw_err = pointwise_errors(lstm, Xte)
@@ -150,7 +174,7 @@ def main():
                     ha="center", fontsize=8, color=COLORS["ink2"])
     ax.set_xticks(x, df["method"])
     ax.set_ylim(0, 1.12)
-    ax.set_title("異常偵測方法比較（合成測試集 v2：變長 + 量化）")
+    ax.set_title("異常偵測方法比較（合成測試集 v2.1：變長 + 量化）")
     ax.legend(frameon=False, loc="upper left", ncols=3)
     fig.tight_layout()
     fig.savefig(FIGURE_DIR / "04_method_comparison.png", bbox_inches="tight")
@@ -158,7 +182,14 @@ def main():
     # ---------- 圖 2：SPC 盲點示範（緩慢漂移 wafer） ----------
     kernel = np.ones(window) / window
     calib_vec = calib if calib is not None else np.ones(n_feat)
+    # 首選：LSTM-AE 抓到而 SPC 沒抓到的漂移 wafer；若無則逐步放寬（防呆）
     cand = np.where((y_test == 3) & (lstm_pred == 1) & (spc_pred == 0))[0]
+    if len(cand) == 0:
+        cand = np.where((y_test == 3) & (lstm_pred == 1))[0]
+        print("警告：沒有「LSTM-AE 抓到且 SPC 漏掉」的漂移 wafer，改用 LSTM-AE 抓到的")
+    if len(cand) == 0:
+        cand = np.where(y_test == 3)[0]
+        print("警告：LSTM-AE 沒抓到任何漂移 wafer，示範圖僅供參考")
     demo = cand[np.argmax(lstm_scores[cand])]
     p_idx = int(np.argmax(te_peaks[demo] / calib_vec))
     p_name = SENSOR_NAMES[p_idx]

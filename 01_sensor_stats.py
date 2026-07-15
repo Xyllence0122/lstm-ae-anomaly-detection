@@ -70,6 +70,7 @@ def main():
     normal, faulty, fault_names, file_vars = load_lam_data()
     print(f".mat 內變數名稱：{file_vars}")
 
+    # 注意：長度過濾用「原始長度」（trim 前），Step 5 用同一規則，索引才對得上
     normal_ok = [keep_process_steps(w) for w in normal if w.shape[0] >= MIN_WAFER_LEN]
     n_dropped = len(normal) - len(normal_ok)
     print(f"真實正常 wafer：{len(normal_ok)}（剔除 {n_dropped} 片過短紀錄）")
@@ -117,7 +118,8 @@ def main():
                 lag1s.append(float(np.corrcoef(r[:-1], r[1:])[0, 1]))
 
         all_vals = np.concatenate(traces)
-        # 暫態幅度：profile 前 20% 的變化量（判斷 ramp 型異常適用性）
+        # 暫態幅度：profile 穩態段（前 20% 之後）的平均值 − 起始值，
+        # 表示製程開頭有多大的 ramp/暫態（判斷 A 型異常適用性）
         n20 = PROFILE_GRID // 5
         transient_amp = float(profile[n20:].mean() - profile[0])
 
@@ -130,7 +132,8 @@ def main():
             "profile": profile.tolist(),
             "within_wafer_std": float(np.mean(resid_stds)),
             "between_wafer_std": float(np.std(offsets)),
-            "lag1_autocorr": float(np.mean(lag1s)),
+            # 殘差幾乎為常數時 lag1 無法定義，記 0.0（等同白噪聲假設）
+            "lag1_autocorr": float(np.mean(lag1s)) if lag1s else 0.0,
             "quant_step": quant_step(all_vals),
             "transient_amp": transient_amp,
         }

@@ -4,10 +4,14 @@
 - LSTMAutoEncoder：時序重建模型（支援變長序列）
 - DenseAutoEncoder：無時序結構的全連接 AE（baseline，固定長度輸入）
 - 變長資料以「長度分桶」方式訓練與推論
+- 有 CUDA 時自動使用 GPU（checkpoint 一律存成 CPU tensor，存檔可攜）
 """
 import numpy as np
 import torch
 import torch.nn as nn
+
+# 訓練/推論裝置：有 GPU 用 GPU，沒有就 CPU（所有存檔皆為 CPU tensor）
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class LSTMAutoEncoder(nn.Module):
@@ -63,6 +67,11 @@ def _buckets_by_length(X_list):
     return buckets
 
 
+def _cpu_state(model):
+    """取 model.state_dict() 的 CPU 深拷貝（GPU 訓練時存檔仍可在任何機器載入）"""
+    return {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+
+
 def train_collect_checkpoints(model, Xtr, Xva, epochs=400, batch_size=32,
                               lr=1e-3, ckpt_every=20, seed=42, verbose=True):
     """
@@ -73,18 +82,19 @@ def train_collect_checkpoints(model, Xtr, Xva, epochs=400, batch_size=32,
     且不同異常型態偏好不同收斂程度。因此保留整條訓練軌跡的 checkpoints，
     再由呼叫端以「驗證異常集 F1」挑選（測試集只在最終評估使用一次）。
 
-    回傳 (hist, checkpoints)；checkpoints = [(epoch, state_dict), ...]
+    回傳 (hist, checkpoints)；checkpoints = [(epoch, cpu_state_dict), ...]
     """
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
+    model.to(DEVICE)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     loss_fn = nn.MSELoss()
 
     tr_buckets = {T: torch.as_tensor(np.stack([Xtr[i] for i in idx]),
-                                     dtype=torch.float32)
+                                     dtype=torch.float32).to(DEVICE)
                   for T, idx in _buckets_by_length(Xtr).items()}
     va_buckets = {T: torch.as_tensor(np.stack([Xva[i] for i in idx]),
-                                     dtype=torch.float32)
+                                     dtype=torch.float32).to(DEVICE)
                   for T, idx in _buckets_by_length(Xva).items()}
     n_val = sum(len(v) for v in va_buckets.values())
 
@@ -116,8 +126,7 @@ def train_collect_checkpoints(model, Xtr, Xva, epochs=400, batch_size=32,
         hist["val"].append(val_loss)
 
         if epoch % ckpt_every == 0:
-            checkpoints.append(
-                (epoch, {k: v.clone() for k, v in model.state_dict().items()}))
+            checkpoints.append((epoch, _cpu_state(model)))
             if verbose and epoch % (ckpt_every * 5) == 0:
                 print(f"epoch {epoch:3d}  train={hist['train'][-1]:.4f}  "
                       f"val={val_loss:.4f}")
@@ -129,13 +138,14 @@ def train_collect_checkpoints(model, Xtr, Xva, epochs=400, batch_size=32,
 def pointwise_errors(model, X_list, batch_size=64):
     """逐時間步、逐 sensor 的平方誤差；支援變長，回傳與輸入同序的 list[(T,F)]"""
     model.eval()
+    dev = next(model.parameters()).device
     out = [None] * len(X_list)
     for T, idx in _buckets_by_length(X_list).items():
         tens = torch.as_tensor(np.stack([X_list[i] for i in idx]),
-                               dtype=torch.float32)
+                               dtype=torch.float32).to(dev)
         for i in range(0, len(idx), batch_size):
             xb = tens[i:i + batch_size]
-            err = ((model(xb) - xb) ** 2).numpy()
+            err = ((model(xb) - xb) ** 2).cpu().numpy()
             for k, j in enumerate(idx[i:i + batch_size]):
                 out[j] = err[k]
     return out
@@ -145,14 +155,17 @@ def sensor_peak_scores(err_list, window=5):
     """
     每片 wafer、每個 sensor 的「平滑誤差峰值」，shape (N, F)。
     沿時間軸做移動平均平滑後取最大值——局部異常不被整片平均稀釋。
+    實作以 cumsum 一次算完該片所有 sensors（與 np.convolve mode="valid" 等價）。
     """
-    kernel = np.ones(window) / window
     N = len(err_list)
     F = err_list[0].shape[1]
     peaks = np.empty((N, F))
     for n in range(N):
-        for f in range(F):
-            peaks[n, f] = np.convolve(err_list[n][:, f], kernel, mode="valid").max()
+        e = err_list[n]                      # (T, F)
+        cs = np.cumsum(e, axis=0, dtype=np.float64)
+        cs = np.vstack([np.zeros((1, F)), cs])
+        ma = (cs[window:] - cs[:-window]) / window   # (T-window+1, F) 移動平均
+        peaks[n] = ma.max(axis=0)
     return peaks
 
 
@@ -167,7 +180,9 @@ def make_threshold(val_scores, rule):
     """閾值規則：max 型分數右偏，p99 比 mean+3σ 更穩健，兩者都納入網格"""
     if rule == "p99":
         return float(np.percentile(val_scores, 99))
-    return float(val_scores.mean() + 3 * val_scores.std())
+    if rule == "mean3sigma":
+        return float(val_scores.mean() + 3 * val_scores.std())
+    raise ValueError(f"未知的閾值規則：{rule!r}（可用：'mean3sigma'、'p99'）")
 
 
 def grid_select(model, checkpoints, Xva, Xva_anom, y_va_anom,
@@ -176,7 +191,7 @@ def grid_select(model, checkpoints, Xva, Xva_anom, y_va_anom,
     在驗證集上掃「checkpoint × 平滑窗口 × 峰值校正 × 閾值規則」網格，
     以 F1 選出最佳組合（不同異常型態偏好不同收斂程度，單一早停點兩頭不討好）。
 
-    回傳 dict(epoch, window, use_calib, thr_rule, f1, state)
+    回傳 dict(epoch, window, use_calib, thr_rule, f1, state)；state 為 CPU tensor。
     """
     from sklearn.metrics import f1_score
 

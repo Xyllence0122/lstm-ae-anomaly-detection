@@ -21,12 +21,14 @@ import numpy as np
 import scipy.io
 import torch
 import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score
 
 from config import (DATA_MAT, OUTPUT_DIR, FIGURE_DIR, SENSOR_IDX, STEP_COL,
                     PROCESS_STEPS, MIN_WAFER_LEN, RESAMPLE_LEN, COLORS,
                     set_plot_style)
-from models import (LSTMAutoEncoder, DenseAutoEncoder, pointwise_errors,
-                    sensor_peak_scores, combine_peaks, make_threshold)
+from models import (DEVICE, LSTMAutoEncoder, DenseAutoEncoder,
+                    pointwise_errors, sensor_peak_scores, combine_peaks,
+                    make_threshold)
 
 
 def load_real_wafers():
@@ -38,6 +40,8 @@ def load_real_wafers():
         w = w[np.isin(w[:, STEP_COL], PROCESS_STEPS)]
         return w[:, SENSOR_IDX].astype(float)
 
+    # 注意：長度過濾用「原始長度」（trim 前），與 Step 1 同一規則，
+    # stats_idx / holdout_idx 才會對到同一批 wafer
     normal = [prep(lam["calibration"][i, 0])
               for i in range(lam["calibration"].shape[0])
               if lam["calibration"][i, 0].shape[0] >= MIN_WAFER_LEN]
@@ -56,9 +60,15 @@ def main():
     stats = json.loads((OUTPUT_DIR / "sensor_stats.json").read_text(encoding="utf-8"))
     model = LSTMAutoEncoder(len(SENSOR_IDX), ckpt["hidden_size"], ckpt["latent_size"])
     model.load_state_dict(ckpt["state_dict"])
+    model.to(DEVICE)
     mu, sd, window = ckpt["mu"], ckpt["sd"], int(ckpt["window"])
 
     normal, faulty, fnames = load_real_wafers()
+    if len(normal) != stats["n_normal_total"]:
+        raise RuntimeError(
+            f"真實正常 wafer 數（{len(normal)}）與 Step 1 記錄"
+            f"（{stats['n_normal_total']}）不一致，切分索引會錯位——"
+            "請先重跑 01_sensor_stats.py")
     # 沿用 Step 1 的切分：統計組 = 校準；保留組 = 最終驗證負樣本
     normal_calib = [normal[i] for i in stats["stats_idx"]]
     normal_eval = [normal[i] for i in stats["holdout_idx"]]
@@ -97,7 +107,6 @@ def main():
     thr_real = make_threshold(sc_calib, ckpt["thr_rule"])
 
     detected = sc_fault > thr_real
-    from sklearn.metrics import roc_auc_score
     y = np.concatenate([np.zeros(len(sc_eval)), np.ones(len(sc_fault))])
     auc = float(roc_auc_score(y, np.concatenate([sc_eval, sc_fault])))
 
@@ -144,6 +153,7 @@ def main():
         dck = torch.load(dense_pt, weights_only=False)
         dense = DenseAutoEncoder(dck["seq_len"], len(SENSOR_IDX))
         dense.load_state_dict(dck["state_dict"])
+        dense.to(DEVICE)
 
         def resample(w, n=RESAMPLE_LEN):
             t_src = np.linspace(0, 1, len(w))

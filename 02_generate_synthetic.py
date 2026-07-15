@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Step 2：依 LAM 9600 真實統計特性生成合成時間序列（v2）。
+Step 2：依 LAM 9600 真實統計特性生成合成時間序列（v2.1）。
 
 v2 相對 v1 的修正（縮小 synthetic→real domain gap）：
 - 波形骨架改用真實 mean profile（自然涵蓋 ramp 方向與 step 4→5 暫態），
@@ -9,6 +9,13 @@ v2 相對 v1 的修正（縮小 synthetic→real domain gap）：
 - 序列長度改為變長（取樣自真實長度範圍 95~112）
 - 「升溫過快」只發生在真實有暫態的 sensors（Pressure、Vat Valve）
 - 驗證異常集（模型選擇用）與測試集完全分開
+
+v2.1 修正：
+- AR(1) 噪聲改為「平穩初始化」：x[0] ~ N(0, σ)。v2 版 x[0]=0，
+  序列開頭的噪聲變異數偏小（非平穩），會讓模型把「開頭很安靜」學成正常特徵
+- AR(1) 遞迴改用 scipy.signal.lfilter 向量化（等價、較快）
+- Type A 若無任何 sensor 具備足夠暫態，直接報錯而不是靜默生成
+  「標了異常標籤但實際正常」的錯誤樣本
 
 異常設計（每片隨機影響 1~2 個 sensors，最終值都在正常範圍）：
 - Type A 升溫過快：暫態段時間軸壓縮 2.5~4 倍 + 過衝 ringing，最終達標
@@ -24,6 +31,7 @@ import json
 
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.signal import lfilter
 
 from config import (OUTPUT_DIR, FIGURE_DIR, SENSOR_IDX, SELECTED_SENSORS,
                     RESAMPLE_LEN, RANDOM_SEED, COLORS, set_plot_style)
@@ -47,12 +55,15 @@ def load_stats():
 
 
 def ar1_noise(rng, n, sigma, phi):
+    """
+    平穩 AR(1) 噪聲：x[t] = φ·x[t-1] + ε[t]，ε ~ N(0, σ√(1-φ²))。
+    x[0] 直接取自平穩分布 N(0, σ)，整段序列每一點的邊際變異數都是 σ²。
+    以 lfilter 實作遞迴（與逐步迴圈等價，向量化較快）。
+    """
     phi = float(np.clip(phi, 0.0, 0.95))
     eps = rng.normal(0, sigma * np.sqrt(1 - phi**2), n)
-    x = np.zeros(n)
-    for t in range(1, n):
-        x[t] = phi * x[t - 1] + eps[t]
-    return x
+    eps[0] = rng.normal(0, sigma)               # 平穩初始化
+    return lfilter([1.0], [1.0, -phi], eps)
 
 
 def make_wafer(rng, sensors, len_range, anomaly=0, n_affected=None,
@@ -72,6 +83,11 @@ def make_wafer(rng, sensors, len_range, anomaly=0, n_affected=None,
             pool = [j for j in pool
                     if abs(sensors[j]["transient_amp"])
                     >= A_ELIGIBLE_SIGMA * sensors[j]["within_wafer_std"]]
+            if not pool:
+                raise ValueError(
+                    "沒有任何 sensor 的暫態幅度達到 A_ELIGIBLE_SIGMA，"
+                    "無法生成 Type A 異常（檢查 sensor_stats.json 的 transient_amp，"
+                    "或調低 A_ELIGIBLE_SIGMA）")
         k = min(n_affected or int(rng.integers(1, 3)), len(pool))
         affected = set(rng.choice(pool, size=k, replace=False))
 
@@ -208,7 +224,7 @@ def main():
         ax.legend(loc="lower right", fontsize=9, frameon=False)
         ax.set_ylabel("Pressure (mTorr)", fontsize=9)
     axes[-1].set_xlabel("Time step")
-    fig.suptitle("合成資料 v2 範例（Pressure）：mean profile 骨架 + 量化", fontsize=13)
+    fig.suptitle("合成資料 v2.1 範例（Pressure）：mean profile 骨架 + 量化", fontsize=13)
     fig.tight_layout()
     fig.savefig(FIGURE_DIR / "02_synthetic_examples.png", bbox_inches="tight")
     print(f"範例圖已存檔：{FIGURE_DIR / '02_synthetic_examples.png'}")

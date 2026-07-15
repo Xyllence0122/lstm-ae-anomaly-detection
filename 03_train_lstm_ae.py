@@ -22,9 +22,9 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_fscore_support
 
 from config import OUTPUT_DIR, FIGURE_DIR, COLORS, set_plot_style
-from models import (LSTMAutoEncoder, train_collect_checkpoints, grid_select,
-                    pointwise_errors, sensor_peak_scores, combine_peaks,
-                    make_threshold)
+from models import (DEVICE, LSTMAutoEncoder, train_collect_checkpoints,
+                    grid_select, pointwise_errors, sensor_peak_scores,
+                    combine_peaks, make_threshold)
 
 EPOCHS = 400
 CKPT_EVERY = 20
@@ -44,6 +44,10 @@ def load_data():
 
 def zscore_list(X_list, mu, sd):
     return [(x - mu) / sd for x in X_list]
+
+
+def cpu_state(model):
+    return {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
 
 
 def evaluate_test(model, Xte, y_test, window, use_calib, thr_rule, Xva):
@@ -69,11 +73,13 @@ def evaluate_test(model, Xte, y_test, window, use_calib, thr_rule, Xva):
 
 def main():
     set_plot_style()
+    print(f"訓練裝置：{DEVICE}")
     X_train, X_val, X_val_anom, y_val_anom, X_test, y_test = load_data()
 
-    # z-score 標準化（只用訓練集統計）
+    # z-score 標準化（只用訓練集統計；防止零變異 sensor 造成除以零）
     all_train = np.concatenate(X_train)
     mu, sd = all_train.mean(axis=0), all_train.std(axis=0)
+    sd = np.where(sd < 1e-9, 1.0, sd)
     Xtr = zscore_list(X_train, mu, sd)
     Xva = zscore_list(X_val, mu, sd)
     Xva_an = zscore_list(X_val_anom, mu, sd)
@@ -112,7 +118,7 @@ def main():
               f"per-type={ {k: round(v, 2) for k, v in m['per_type_recall'].items()} }")
 
         jf.write_text(json.dumps(m, ensure_ascii=False, indent=2), encoding="utf-8")
-        torch.save({"state_dict": model.state_dict(), "hist": hist,
+        torch.save({"state_dict": cpu_state(model), "hist": hist,
                     "test_scores": test_scores, "calib": calib,
                     "threshold": m["threshold"]}, pf)
 

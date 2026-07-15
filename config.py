@@ -52,7 +52,8 @@ SENSOR_NAMES = [SELECTED_SENSORS[i][0] for i in SENSOR_IDX]
 
 STEP_COL = 1          # Step Number 欄位
 PROCESS_STEPS = (4, 5)  # 主蝕刻製程步驟（慣例：只分析 step 4、5）
-MIN_WAFER_LEN = 60    # 過短的 wafer 視為紀錄不完整，剔除
+MIN_WAFER_LEN = 60    # 過短的 wafer 視為紀錄不完整，剔除（以「原始長度」判斷，
+                      # Step 1 與 Step 5 必須使用同一規則，否則切分索引會對不上）
 
 RESAMPLE_LEN = 100    # Dense AE / Isolation Forest 用的固定重採樣長度
 RANDOM_SEED = 42
