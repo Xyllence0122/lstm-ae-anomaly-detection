@@ -1,5 +1,9 @@
 __pycache__/
 *.pyc
+.venv/
+.matplotlib/
 outputs/synthetic_data.npz
 outputs/lstm_ae_scores.npz
 outputs/seeds/
+outputs/streaming_seeds/
+tmp/

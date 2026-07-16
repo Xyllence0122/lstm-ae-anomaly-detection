@@ -20,12 +20,12 @@ import json
 import numpy as np
 import scipy.io
 import torch
-import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score
 
 from config import (DATA_MAT, OUTPUT_DIR, FIGURE_DIR, SENSOR_IDX, STEP_COL,
                     PROCESS_STEPS, MIN_WAFER_LEN, RESAMPLE_LEN, COLORS,
                     set_plot_style)
+import matplotlib.pyplot as plt
 from models import (DEVICE, LSTMAutoEncoder, DenseAutoEncoder,
                     pointwise_errors, sensor_peak_scores, combine_peaks,
                     make_threshold)

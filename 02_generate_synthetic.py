@@ -18,7 +18,7 @@ v2.1 修正：
   「標了異常標籤但實際正常」的錯誤樣本
 
 異常設計（每片隨機影響 1~2 個 sensors，最終值都在正常範圍）：
-- Type A 升溫過快：暫態段時間軸壓縮 2.5~4 倍 + 過衝 ringing，最終達標
+- Type A 暫態到位過快：暫態段時間軸壓縮 2.5~4 倍 + 過衝 ringing，最終達標
 - Type B 過程震盪：中段 2.5~4σ 阻尼震盪，結束前恢復
 - Type C 緩慢漂移：線性漂移，最終偏移 2.0~2.8σ（在 SPC 管制界限內）
 
@@ -30,11 +30,11 @@ v2.1 修正：
 import json
 
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.signal import lfilter
 
 from config import (OUTPUT_DIR, FIGURE_DIR, SENSOR_IDX, SELECTED_SENSORS,
                     RESAMPLE_LEN, RANDOM_SEED, COLORS, set_plot_style)
+import matplotlib.pyplot as plt
 
 N_TRAIN_NORMAL = 500
 N_VAL_NORMAL = 200
@@ -45,7 +45,12 @@ N_TEST_PER_ANOMALY = 100
 TRANSIENT_FRAC = 0.2        # profile 前 20% 視為暫態段
 A_ELIGIBLE_SIGMA = 2.0      # 暫態幅度 ≥ 2σ 的 sensor 才可能發生「升溫過快」
 
-ANOMALY_TYPES = {0: "Normal", 1: "A: 升溫過快", 2: "B: 過程震盪", 3: "C: 緩慢漂移"}
+ANOMALY_TYPES = {
+    0: "Normal",
+    1: "A: 暫態到位過快",
+    2: "B: 過程震盪",
+    3: "C: 緩慢漂移",
+}
 
 
 def load_stats():
@@ -67,8 +72,13 @@ def ar1_noise(rng, n, sigma, phi):
 
 
 def make_wafer(rng, sensors, len_range, anomaly=0, n_affected=None,
-               fixed_len=None, no_offset=False):
-    """生成一片變長多變量時間序列，回傳 shape (T, F)"""
+               fixed_len=None, no_offset=False, return_metadata=False):
+    """生成一片變長多變量時間序列。
+
+    ``return_metadata=True`` 時一併回傳異常注入起點與受影響 sensor 位置，
+    供串流模型計算首次告警延遲。這些欄位描述合成注入規則，不是假裝已知的
+    真實設備故障起點。
+    """
     n_sensors = len(sensors)
     T = fixed_len or int(rng.integers(len_range[0], len_range[1] + 1))
     u = np.linspace(0, 1, T)                       # 正規化時間軸
@@ -91,6 +101,8 @@ def make_wafer(rng, sensors, len_range, anomaly=0, n_affected=None,
         k = min(n_affected or int(rng.integers(1, 3)), len(pool))
         affected = set(rng.choice(pool, size=k, replace=False))
 
+    onset_indices = []
+    end_indices = []
     for j, s in enumerate(sensors):
         profile = np.asarray(s["profile"])
         grid = np.linspace(0, 1, len(profile))
@@ -111,6 +123,8 @@ def make_wafer(rng, sensors, len_range, anomaly=0, n_affected=None,
             t_steps = np.arange(T, dtype=float)
             base = base + amp * np.exp(-t_steps / tau) * np.sin(
                 2 * np.pi * t_steps / period)
+            onset_indices.append(0)
+            end_indices.append(min(int(np.ceil(TRANSIENT_FRAC * T)), T - 1))
         else:
             base = np.interp(u, grid, profile)
 
@@ -132,6 +146,8 @@ def make_wafer(rng, sensors, len_range, anomaly=0, n_affected=None,
             t_steps = np.arange(T, dtype=float)
             base = base + amp * env * np.sin(
                 2 * np.pi * t_steps / period + rng.uniform(0, 2 * np.pi))
+            onset_indices.append(lo)
+            end_indices.append(max(hi - 1, lo))
 
         # ---------- Type C：緩慢線性漂移（最終偏移 < SPC 管制界限） ----------
         if anomaly == 3 and is_bad:
@@ -140,6 +156,8 @@ def make_wafer(rng, sensors, len_range, anomaly=0, n_affected=None,
             drift = np.zeros(T)
             drift[t0:] = np.linspace(0, drift_end, T - t0)
             base = base + drift
+            onset_indices.append(t0)
+            end_indices.append(T - 1)
 
         # ---------- 整數量化（真實訊號的量化階距） ----------
         q = s["quant_step"]
@@ -147,7 +165,20 @@ def make_wafer(rng, sensors, len_range, anomaly=0, n_affected=None,
             base = np.round(base / q) * q
 
         X[:, j] = base
-    return X
+    metadata = {
+        "anomaly_type": int(anomaly),
+        "anomaly_name": ANOMALY_TYPES[int(anomaly)],
+        "affected_sensor_positions": sorted(int(j) for j in affected),
+        "onset_index": min(onset_indices) if onset_indices else None,
+        "end_index": max(end_indices) if end_indices else None,
+        "sequence_length": int(T),
+    }
+    if metadata["onset_index"] is not None:
+        metadata["onset_fraction"] = (
+            metadata["onset_index"] / max(metadata["sequence_length"] - 1, 1))
+    else:
+        metadata["onset_fraction"] = None
+    return (X, metadata) if return_metadata else X
 
 
 def resample_fixed(X, n=RESAMPLE_LEN):
@@ -158,8 +189,18 @@ def resample_fixed(X, n=RESAMPLE_LEN):
     return np.stack([np.interp(t_dst, t_src, X[:, f]) for f in range(F)], axis=1)
 
 
-def gen_set(rng, sensors, len_range, n, anomaly=0):
-    return [make_wafer(rng, sensors, len_range, anomaly) for _ in range(n)]
+def gen_set(rng, sensors, len_range, n, anomaly=0, with_metadata=False):
+    generated = [make_wafer(rng, sensors, len_range, anomaly,
+                            return_metadata=with_metadata) for _ in range(n)]
+    if not with_metadata:
+        return generated
+    wafers, metadata = zip(*generated)
+    return list(wafers), list(metadata)
+
+
+def metadata_array(items):
+    """Store metadata as portable JSON strings instead of a pickle object array."""
+    return np.asarray([json.dumps(item, ensure_ascii=False) for item in items])
 
 
 def to_obj(lst):
@@ -179,14 +220,21 @@ def main():
     print(f"生成合成資料（變長 {len_range[0]}~{len_range[1]} 步、含量化）…")
     X_train = gen_set(rng, sensors, len_range, N_TRAIN_NORMAL, 0)
     X_val = gen_set(rng, sensors, len_range, N_VAL_NORMAL, 0)
-    X_val_anom, y_val_anom = [], []
+    X_val_anom, y_val_anom, val_metadata = [], [], []
     for k in (1, 2, 3):
-        X_val_anom += gen_set(rng, sensors, len_range, N_VAL_PER_ANOMALY, k)
+        wafers, metadata = gen_set(
+            rng, sensors, len_range, N_VAL_PER_ANOMALY, k, with_metadata=True)
+        X_val_anom += wafers
+        val_metadata += metadata
         y_val_anom += [k] * N_VAL_PER_ANOMALY
-    X_test, y_test = gen_set(rng, sensors, len_range, N_TEST_NORMAL, 0), \
-        [0] * N_TEST_NORMAL
+    X_test, test_metadata = gen_set(
+        rng, sensors, len_range, N_TEST_NORMAL, 0, with_metadata=True)
+    y_test = [0] * N_TEST_NORMAL
     for k in (1, 2, 3):
-        X_test += gen_set(rng, sensors, len_range, N_TEST_PER_ANOMALY, k)
+        wafers, metadata = gen_set(
+            rng, sensors, len_range, N_TEST_PER_ANOMALY, k, with_metadata=True)
+        X_test += wafers
+        test_metadata += metadata
         y_test += [k] * N_TEST_PER_ANOMALY
 
     np.savez_compressed(
@@ -198,6 +246,8 @@ def main():
         X_val_fixed=np.stack([resample_fixed(x) for x in X_val]),
         X_val_anom_fixed=np.stack([resample_fixed(x) for x in X_val_anom]),
         X_test_fixed=np.stack([resample_fixed(x) for x in X_test]),
+        val_metadata=metadata_array(val_metadata),
+        test_metadata=metadata_array(test_metadata),
         sensor_names=np.array(names),
     )
     print(f"train={len(X_train)}  val={len(X_val)}  val_anom={len(X_val_anom)}  "
@@ -207,7 +257,7 @@ def main():
     # ---------- 範例圖：Pressure，正常 vs 三種異常（共用設定點與種子） ----------
     j = names.index("Pressure")
     demo = {}
-    for key, anom in [("Normal", 0), ("A: 升溫過快（最終達標）", 1),
+    for key, anom in [("Normal", 0), ("A: 暫態到位過快（最終達標）", 1),
                       ("B: 過程震盪（最終達標）", 2), ("C: 緩慢漂移", 3)]:
         demo[key] = make_wafer(np.random.default_rng(11), sensors, len_range,
                                anomaly=anom, n_affected=len(sensors),

@@ -57,6 +57,42 @@ class DenseAutoEncoder(nn.Module):
         return self.net(x.reshape(B, -1)).reshape(B, self.seq_len, self.n_features)
 
 
+class LSTMForecaster(nn.Module):
+    """Causal one-step forecaster for online anomaly detection.
+
+    The output at index ``t`` predicts input index ``t + 1`` and therefore only
+    depends on samples ``0..t``. Unlike the autoencoder, this model can retain
+    its recurrent state and emit a new prediction as each sensor sample arrives.
+    """
+
+    def __init__(self, n_features: int, hidden_size: int = 64,
+                 num_layers: int = 1):
+        super().__init__()
+        self.n_features = n_features
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(n_features, hidden_size, num_layers=num_layers,
+                            batch_first=True)
+        self.output = nn.Linear(hidden_size, n_features)
+
+    def forward(self, x):
+        encoded, _ = self.lstm(x)
+        return self.output(encoded)
+
+
+class LSTMForecasterStep(nn.Module):
+    """State-explicit wrapper used for TorchScript edge inference."""
+
+    def __init__(self, forecaster: LSTMForecaster):
+        super().__init__()
+        self.lstm = forecaster.lstm
+        self.output = forecaster.output
+
+    def forward(self, x_t, hidden, cell):
+        encoded, (next_hidden, next_cell) = self.lstm(x_t, (hidden, cell))
+        return self.output(encoded), next_hidden, next_cell
+
+
 # ---------- 變長資料工具 ----------
 
 def _buckets_by_length(X_list):
@@ -134,6 +170,64 @@ def train_collect_checkpoints(model, Xtr, Xva, epochs=400, batch_size=32,
     return hist, checkpoints
 
 
+def train_forecaster_collect_checkpoints(model, Xtr, Xva, epochs=200,
+                                         batch_size=32, lr=1e-3,
+                                         ckpt_every=20, seed=42,
+                                         verbose=True):
+    """Train a one-step forecaster on normal sequences and retain checkpoints."""
+    if min(map(len, Xtr)) < 2 or min(map(len, Xva)) < 2:
+        raise ValueError("Forecaster sequences must contain at least two samples")
+
+    torch.manual_seed(seed)
+    rng = np.random.default_rng(seed)
+    model.to(DEVICE)
+    opt = torch.optim.Adam(model.parameters(), lr=lr)
+    loss_fn = nn.MSELoss()
+
+    tr_buckets = {T: torch.as_tensor(np.stack([Xtr[i] for i in idx]),
+                                     dtype=torch.float32).to(DEVICE)
+                  for T, idx in _buckets_by_length(Xtr).items()}
+    va_buckets = {T: torch.as_tensor(np.stack([Xva[i] for i in idx]),
+                                     dtype=torch.float32).to(DEVICE)
+                  for T, idx in _buckets_by_length(Xva).items()}
+    n_val = sum(len(v) for v in va_buckets.values())
+
+    hist = {"train": [], "val": []}
+    checkpoints = []
+    for epoch in range(1, epochs + 1):
+        model.train()
+        batches = []
+        for tens in tr_buckets.values():
+            perm = rng.permutation(len(tens))
+            for i in range(0, len(perm), batch_size):
+                batches.append(tens[perm[i:i + batch_size]])
+        rng.shuffle(batches)
+
+        train_losses = []
+        for xb in batches:
+            opt.zero_grad()
+            loss = loss_fn(model(xb[:, :-1]), xb[:, 1:])
+            loss.backward()
+            opt.step()
+            train_losses.append(loss.item())
+
+        model.eval()
+        with torch.no_grad():
+            val_loss = sum(
+                loss_fn(model(t[:, :-1]), t[:, 1:]).item() * len(t)
+                for t in va_buckets.values()) / n_val
+        hist["train"].append(float(np.mean(train_losses)))
+        hist["val"].append(float(val_loss))
+
+        if epoch % ckpt_every == 0:
+            checkpoints.append((epoch, _cpu_state(model)))
+            if verbose and epoch % (ckpt_every * 5) == 0:
+                print(f"epoch {epoch:3d}  train={hist['train'][-1]:.4f}  "
+                      f"val={val_loss:.4f}")
+
+    return hist, checkpoints
+
+
 @torch.no_grad()
 def pointwise_errors(model, X_list, batch_size=64):
     """逐時間步、逐 sensor 的平方誤差；支援變長，回傳與輸入同序的 list[(T,F)]"""
@@ -146,6 +240,25 @@ def pointwise_errors(model, X_list, batch_size=64):
         for i in range(0, len(idx), batch_size):
             xb = tens[i:i + batch_size]
             err = ((model(xb) - xb) ** 2).cpu().numpy()
+            for k, j in enumerate(idx[i:i + batch_size]):
+                out[j] = err[k]
+    return out
+
+
+@torch.no_grad()
+def forecaster_pointwise_errors(model, X_list, batch_size=64):
+    """Causal one-step squared errors; output item shape is ``(T - 1, F)``."""
+    model.eval()
+    dev = next(model.parameters()).device
+    out = [None] * len(X_list)
+    for T, idx in _buckets_by_length(X_list).items():
+        if T < 2:
+            raise ValueError("Forecaster sequences must contain at least two samples")
+        tens = torch.as_tensor(np.stack([X_list[i] for i in idx]),
+                               dtype=torch.float32).to(dev)
+        for i in range(0, len(idx), batch_size):
+            xb = tens[i:i + batch_size]
+            err = ((model(xb[:, :-1]) - xb[:, 1:]) ** 2).cpu().numpy()
             for k, j in enumerate(idx[i:i + batch_size]):
                 out[j] = err[k]
     return out
@@ -167,6 +280,33 @@ def sensor_peak_scores(err_list, window=5):
         ma = (cs[window:] - cs[:-window]) / window   # (T-window+1, F) 移動平均
         peaks[n] = ma.max(axis=0)
     return peaks
+
+
+def streaming_score_curves(err_list, window=5, calib=None):
+    """Convert causal point errors to trailing-window online score curves.
+
+    Each returned score can be emitted immediately when its trailing window is
+    complete. No centered smoothing or future observation is used.
+    """
+    if window < 1:
+        raise ValueError("window must be at least 1")
+    denom = None
+    if calib is not None:
+        denom = np.asarray(calib, dtype=float)
+        denom = np.where(np.abs(denom) < 1e-12, 1.0, denom)
+
+    curves = []
+    for err in err_list:
+        if len(err) < window:
+            raise ValueError(
+                f"window={window} exceeds an error sequence of length {len(err)}")
+        cs = np.cumsum(err, axis=0, dtype=np.float64)
+        cs = np.vstack([np.zeros((1, err.shape[1])), cs])
+        moving = (cs[window:] - cs[:-window]) / window
+        if denom is not None:
+            moving = moving / denom
+        curves.append(moving.max(axis=1))
+    return curves
 
 
 def combine_peaks(peaks, calib=None):
@@ -221,4 +361,60 @@ def grid_select(model, checkpoints, Xva, Xva_anom, y_va_anom,
         print(f"網格選擇：epoch={best['epoch']}, window={best['window']}, "
               f"校正={best['use_calib']}, 閾值={best['thr_rule']}, "
               f"驗證 F1={best['f1']:.3f}")
+    return best
+
+
+def forecaster_grid_select(model, checkpoints, Xva, Xva_anom, y_va_anom,
+                           windows=(3, 5, 9),
+                           thr_rules=("mean3sigma", "p99"),
+                           anom_onset_indices=None, verbose=True):
+    """Select a causal forecaster checkpoint and event-level score settings."""
+    from sklearn.metrics import f1_score
+
+    if (anom_onset_indices is not None and
+            len(anom_onset_indices) != len(Xva_anom)):
+        raise ValueError("anom_onset_indices must align with Xva_anom")
+    y_true = np.concatenate([np.zeros(len(Xva), dtype=int),
+                             (np.asarray(y_va_anom) > 0).astype(int)])
+    best = None
+    for epoch, state in checkpoints:
+        model.load_state_dict(state)
+        va_pw = forecaster_pointwise_errors(model, Xva)
+        an_pw = forecaster_pointwise_errors(model, Xva_anom)
+        for window in windows:
+            if any(len(e) < window for e in va_pw + an_pw):
+                continue
+            va_peaks = sensor_peak_scores(va_pw, window)
+            for use_calib in (False, True):
+                calib = va_peaks.mean(axis=0) if use_calib else None
+                va_curves = streaming_score_curves(va_pw, window, calib)
+                an_curves = streaming_score_curves(an_pw, window, calib)
+                va_scores = np.asarray([curve.max() for curve in va_curves])
+                if anom_onset_indices is None:
+                    an_scores = np.asarray([curve.max() for curve in an_curves])
+                else:
+                    an_scores = np.asarray([
+                        curve[max(int(onset) - window, 0):].max()
+                        for curve, onset in zip(an_curves, anom_onset_indices)
+                    ])
+                for rule in thr_rules:
+                    threshold = make_threshold(va_scores, rule)
+                    pred = (np.concatenate([va_scores, an_scores]) >
+                            threshold).astype(int)
+                    f1 = f1_score(y_true, pred, zero_division=0)
+                    if best is None or f1 > best["f1"] + 1e-9:
+                        best = {
+                            "epoch": epoch,
+                            "window": window,
+                            "use_calib": use_calib,
+                            "thr_rule": rule,
+                            "f1": float(f1),
+                            "state": {k: v.clone() for k, v in state.items()},
+                        }
+    if best is None:
+        raise ValueError("No valid forecaster score window for these sequences")
+    if verbose:
+        print(f"Forecaster grid: epoch={best['epoch']}, "
+              f"window={best['window']}, calibrated={best['use_calib']}, "
+              f"threshold={best['thr_rule']}, validation F1={best['f1']:.3f}")
     return best

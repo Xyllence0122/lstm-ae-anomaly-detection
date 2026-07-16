@@ -25,11 +25,11 @@ import json
 
 import numpy as np
 import scipy.io
-import matplotlib.pyplot as plt
 
 from config import (DATA_MAT, OUTPUT_DIR, FIGURE_DIR, VAR_NAMES,
                     SELECTED_SENSORS, SENSOR_IDX, STEP_COL, PROCESS_STEPS,
                     MIN_WAFER_LEN, COLORS, set_plot_style)
+import matplotlib.pyplot as plt
 
 PROFILE_GRID = 101   # mean profile 的正規化時間軸點數
 SPLIT_SEED = 123     # 統計組/保留組切分（固定，確保 Step 5 用同一份切分）
@@ -86,6 +86,32 @@ def main():
     lens = [w.shape[0] for w in stats_wafers]
     print(f"製程段長度：min={min(lens)}, max={max(lens)}, mean={np.mean(lens):.1f}")
 
+    # Derive the sampling interval from the Time column instead of assuming
+    # exactly 1 Hz. The dataset variable name does not encode a unit; the Hz
+    # conversion below is conditional on the documented/assumed unit being s.
+    time_deltas = np.concatenate([
+        np.diff(w[:, 0].astype(float)) for w in stats_wafers
+    ])
+    time_deltas = time_deltas[np.isfinite(time_deltas) & (time_deltas > 0)]
+    if not len(time_deltas):
+        raise RuntimeError("No positive sampling intervals found in the Time column")
+    median_dt = float(np.median(time_deltas))
+    sampling = {
+        "time_column": VAR_NAMES[0],
+        "time_unit_assumption": "seconds",
+        "n_positive_intervals": int(len(time_deltas)),
+        "median_interval": median_dt,
+        "p05_interval": float(np.percentile(time_deltas, 5)),
+        "p95_interval": float(np.percentile(time_deltas, 95)),
+        "min_interval": float(time_deltas.min()),
+        "max_interval": float(time_deltas.max()),
+        "median_rate_hz_if_seconds": float(1.0 / median_dt),
+    }
+    print(f"取樣間隔中位數={median_dt:.4f}，P05~P95="
+          f"{sampling['p05_interval']:.4f}~{sampling['p95_interval']:.4f} "
+          f"（若 Time 單位為秒，中位取樣率約 "
+          f"{sampling['median_rate_hz_if_seconds']:.3f} Hz）")
+
     stats = {
         "n_normal_total": len(normal_ok),
         "split_seed": SPLIT_SEED,
@@ -94,6 +120,7 @@ def main():
         "len_min": int(min(lens)),
         "len_max": int(max(lens)),
         "profile_grid": PROFILE_GRID,
+        "sampling": sampling,
         "sensors": {},
     }
 
