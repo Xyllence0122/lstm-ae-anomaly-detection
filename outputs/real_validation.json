@@ -1,14 +1,14 @@
 {
   "direct_transfer": {
-    "threshold": 1.7130634551759925,
-    "fpr": 0.16279069767441862,
-    "recall": 0.85
+    "threshold": 1.772204338402371,
+    "fpr": 0.13953488372093023,
+    "recall": 0.8
   },
   "recalibrated": {
-    "threshold": 2.102779789737935,
+    "threshold": 2.1090203183564222,
     "fpr": 0.046511627906976744,
     "recall": 0.7,
-    "auc": 0.8872093023255815,
+    "auc": 0.9069767441860465,
     "recall_monitored": 1.0,
     "recall_unmonitored": 0.5,
     "per_fault": {
@@ -39,9 +39,17 @@
     "recall": 0.25
   },
   "dense_ae": {
-    "threshold": 3.304157203056036,
+    "threshold": 3.0913520944318815,
     "fpr": 0.0,
-    "recall": 0.6,
-    "auc": 0.9127906976744187
+    "recall": 0.65,
+    "auc": 0.9232558139534883
+  },
+  "streaming_forecaster": {
+    "threshold": 2.1490102555931667,
+    "fpr": 0.046511627906976744,
+    "recall": 0.65,
+    "auc": 0.9104651162790698,
+    "median_first_alarm_progress_detected": 0.0989010989010989,
+    "timing_note": "Process progress only; the real dataset has no verified fault-onset timestamp."
   }
 }

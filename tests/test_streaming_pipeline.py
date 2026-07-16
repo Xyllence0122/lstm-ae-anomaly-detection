@@ -10,6 +10,7 @@ from models import (
     forecaster_pointwise_errors,
     streaming_score_curves,
 )
+from edge_runtime import StreamingAnomalyDetector
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -32,6 +33,26 @@ def load_streaming_experiment_module():
 
 
 class StreamingModelTests(unittest.TestCase):
+    def test_edge_runtime_matches_online_error_order(self):
+        class EchoStep(torch.nn.Module):
+            def forward(self, sample, hidden, cell):
+                return sample, hidden, cell
+
+        detector = StreamingAnomalyDetector(
+            EchoStep(), mean=[0.0], std=[1.0], threshold=0.5, window=2,
+            calib=None, hidden_size=2, sensor_names=["Pressure"])
+
+        first = detector.update([0.0])
+        second = detector.update([1.0])
+        third = detector.update([2.0])
+
+        self.assertFalse(first["ready"])
+        self.assertFalse(second["ready"])
+        self.assertTrue(third["ready"])
+        self.assertAlmostEqual(third["score"], 1.0)
+        self.assertTrue(third["alarm"])
+        self.assertAlmostEqual(third["per_sensor_score"]["Pressure"], 1.0)
+
     def test_forecaster_does_not_use_future_samples(self):
         torch.manual_seed(7)
         model = LSTMForecaster(n_features=1, hidden_size=4)

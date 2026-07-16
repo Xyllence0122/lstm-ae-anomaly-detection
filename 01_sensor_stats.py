@@ -14,7 +14,7 @@ Step 1：從 LAM 9600 真實資料提取「正常製程的統計特性」。
 - 殘差統計：扣掉 profile 與片間 offset 後的 within-wafer std、lag-1 自相關
 - between_wafer_std：片間 offset 的變異
 - quant_step：量化階距（真實訊號是整數量化的）
-- transient_amp：製程前段暫態幅度（判斷「升溫過快」異常適用於哪些 sensors）
+- transient_amp：製程前段暫態幅度（判斷「暫態到位過快」異常適用於哪些 sensors）
 - 長度分布：step 4+5 製程段的長度範圍
 
 輸出：

@@ -1,135 +1,189 @@
-# LSTM-AE Anomaly Detection for Semiconductor Etch
+# Semiconductor Process Anomaly Detection with Edge AI
 
-PyTorch implementation of an LSTM autoencoder that catches etch process faults
-which final-value SPC misses. The models never see real data during training:
-real wafers from a LAM 9600 metal etcher are used only to extract statistics
-for a synthetic data generator, and again at the very end for validation.
+以 LAM 9600 蝕刻製程資料建立時間序列異常偵測實驗，研究「最終值相同，但暫態過程不同」的監控盲區。專案同時保留完整 wafer 的 LSTM Autoencoder，並加入可在製程途中告警的 causal LSTM forecaster 與 TorchScript 邊緣推論 artifact。
 
-> **v2.1 (2026-07-13).** Synthetic generator now uses stationary AR(1) noise
-> initialization (v2 started every wafer at exactly zero noise, which the AE
-> could exploit); Isolation Forest now gets the same threshold-selection
-> protocol as the autoencoders (validation-anomaly F1), so the comparison is
-> no longer tilted; GPU is used automatically when available; and a new
-> sampling-rate sweep experiment (`06`) was added. The result tables below
-> are from v2 — re-run `02 → 05` to refresh them.
+> 本專案是研究原型，不是經認證的設備安全聯鎖或良率保證系統。
 
-## Results
+## 研究問題
 
-Final validation on real data (20 induced faults, 43 held-out normal wafers
-that were never used for statistics):
+只檢查製程終值，無法區分下列兩條可能具有不同風險的軌跡：
 
-| Method | Fault recall | False alarms | AUC |
-|---|---|---|---|
-| SPC X-bar (final value) | 25% | 0.0% | - |
-| Dense AE | 75% | 2.3% | 0.923 |
-| LSTM-AE | 75% | 4.7% | 0.880 |
+- 正常時間內平穩到達設定點。
+- 過快到位、過程震盪或緩慢漂移，但結束時仍回到正常範圍。
 
-All 8 faults on monitored sensors (Pr, Cl2, He) were detected, including the
-smallest one (Pr +1). Faults on unmonitored sensors (TCP/RF) were still caught
-58% of the time, because they perturb the pressure control loop and show up
-indirectly.
+目前資料沒有溫度欄位，因此「0.001 秒升到 200°C」只能作為研究動機，不能宣稱已由 LAM 9600 驗證。程式中的 Type A 已改名為「暫態到位過快」，其實驗載體是 Pressure/Vat Valve 等製程暫態。
 
-On the synthetic benchmark (5 seeds): LSTM-AE F1 = 0.725 ± 0.013, vs 0.137 for
-SPC X-bar and 0.057 for Isolation Forest.
+## 模型配置
 
-![SPC blind spot](figures/04_spc_blind_spot.png)
+| 方法 | 用途 | 輸入 | 製程途中告警 |
+|---|---|---|---:|
+| Final-value SPC X-bar | 終值監控盲區示例 | 每片最終值 | 否 |
+| Isolation Forest | 非神經基準 | 固定長度攤平序列 | 否 |
+| Dense AE | 無 recurrent bias 的 AE 基準 | 固定長度完整序列 | 否 |
+| LSTM-AE | 完整 wafer 重建與離線確認 | 變長完整序列 | 否 |
+| Causal LSTM forecaster | 線上一步預測與早期告警 | 逐筆 sensor 樣本 | 是 |
 
-A few things I learned along the way:
+LSTM-AE 的分數是完整序列上的最大平滑重建誤差，必須等 wafer 序列完成。Causal forecaster 在時間 `t` 只使用 `0..t` 樣本預測 `t+1`，再以 trailing-window prediction error 觸發告警，不使用未來資料。
 
-1. The win comes from looking at the whole trajectory instead of the final
-   value. Both autoencoders get 75% recall vs SPC's 25%; the model family
-   matters less than the approach.
-2. A plain Dense AE matches the LSTM-AE here (and slightly beats it on AUC).
-   Since the wafers are resampled to fixed length with locked profiles,
-   position-specific weights are enough. What the LSTM buys you is operational:
-   variable-length input and a path to streaming detection.
-3. Synthetic benchmarks lie until you check them against real data. The v1
-   generator (hand-designed ramps, no quantization, fixed length) scored
-   F1 0.86 on its own test set but produced 100% false alarms on real wafers.
-   Rebuilding it from richer real statistics dropped that to 11.6% with the
-   same direct threshold transfer, still without training on real data.
+## 已核實的資料狀態
 
-## How it works
+- 原始 `.mat`：108 normal、21 faulty。
+- 套用 `MIN_WAFER_LEN=60`：107 normal、20 faulty。
+- Normal 固定切分：64 片統計/校準組、43 片最終保留組。
+- Step 4+5 長度：95 到 112 點，平均約 100.7 點。
+- `Time` 正間隔中位數：1.0200；P05 到 P95：0.9961 到 1.0488。
+- 若 `Time` 單位為秒，中位取樣率約 0.980 Hz，因此不能用這份資料驗證毫秒級熱行為。
+- 模型 sensors：Cl2 Flow、He Press、Pressure、Vat Valve；沒有 Temperature。
 
-**Statistics extraction** (`01_sensor_stats.py`): the 107 real normal wafers
-are split 60/40. From the 60% set, each sensor gets a mean waveform profile
-(ramp direction, step-transition transient), within-wafer residual std and
-lag-1 autocorrelation, between-wafer offset std, quantization step, transient
-amplitude, and the process-length distribution. The 40% holdout is only used
-as final-validation negatives.
+## 串流早期預警結果
 
-**Synthetic generator** (`02_generate_synthetic.py`): each wafer is a
-time-rescaled mean profile (random length 95-112) plus between-wafer offset,
-stationary AR(1) residual noise, and integer quantization. Three anomaly
-types, all designed to end on target so final-value SPC can't see them, each
-hitting 1-2 random sensors:
+合成測試集為 200 normal 加 Type A/B/C 各 100；5 seeds 結果如下：
 
-- A: ramp too fast — transient compressed 2.5-4x in time, with overshoot
-  ringing (only on sensors that have a real transient)
-- B: mid-process oscillation — a 2.5-4 sigma damped burst that recovers before
-  the end
-- C: slow drift — linear drift that stays inside the ±3 sigma control limits
+| 指標 | Mean | Std |
+|---|---:|---:|
+| Precision | 0.971 | 0.007 |
+| Recall | 0.663 | 0.033 |
+| F1 | 0.787 | 0.022 |
+| Normal wafer FPR | 0.030 | 0.008 |
+| Pre-onset alarm rate | 0.000 | 0.000 |
 
-**Model selection**: AE detection quality is not monotonic in training epochs,
-because a fully converged AE reconstructs anomalies too. So checkpoints (every
-20 epochs), smoothing window, peak calibration, and threshold rule
-(mean+3 sigma vs p99) are grid-selected by F1 on a held-out synthetic anomaly
-validation set. The test set is touched once per seed, and results are
-reported over 5 seeds. The anomaly score is the max of the smoothed
-per-timestep reconstruction error, so a localized anomaly doesn't get diluted
-by averaging over the whole wafer. Isolation Forest gets the same
-threshold-selection protocol, so no method is judged under looser rules than
-another.
+| 異常類型 | Recall mean | 首次告警進度 | 告警時剩餘序列比例 |
+|---|---:|---:|---:|
+| A：暫態到位過快 | 0.720 | 0.087 | 0.913 |
+| B：過程震盪 | 0.576 | 0.557 | 0.443 |
+| C：緩慢漂移 | 0.692 | 0.837 | 0.163 |
 
-**Sampling-rate sweep** (`06_sampling_rate_sweep.py`): answers "how fast do
-you have to sample to see how fast an anomaly?" — the honest version of the
-millisecond-detection question. The real dataset is sampled at ~1 Hz, so
-sub-second physics simply isn't in the data, and no synthetic benchmark at
-millisecond resolution could ever be validated against it. Instead, a
-continuous-time model (first-order setpoint response + Ornstein-Uhlenbeck
-noise; steady levels, noise strength, correlation time, and quantization all
-anchored to the real statistics, the event duration stated as an explicit
-scenario assumption) is sampled at 0.5-20 Hz. One detector is trained per
-rate, and each is evaluated against the same set of too-fast-arrival anomalies
-(1 s down to 0.05 s). The output is a detection-rate-vs-sampling-rate curve:
-slow sampling misses fast anomalies not because the model is weak but because
-the evidence was never recorded — which is precisely the argument for
-high-frequency sampling plus on-device inference at the edge (kHz streams
-can't be shipped to the cloud).
+只有合成異常 onset 之後的首次越界才算 true positive；注入前越界另計為 pre-onset alarm，避免把誤報包裝成提前命中。
 
-## Usage
+![Streaming early warning](figures/07_streaming_early_warning.png)
 
-```bash
-pip install torch scipy scikit-learn pandas matplotlib
+## 完整序列基準結果
 
-python 01_sensor_stats.py        # extract statistics from real normals
-python 02_generate_synthetic.py  # build the synthetic benchmark
-python 03_train_lstm_ae.py       # 5-seed training, ~15-25 min on CPU, resumable
-python 04_compare_methods.py     # SPC / Dense AE / Isolation Forest / LSTM-AE
-python 05_validate_real_data.py  # final validation on held-out real wafers
-python 06_sampling_rate_sweep.py # detection rate vs sampling rate, ~30-60 min CPU, resumable
+LSTM-AE 在 5 seeds 的合成測試集結果為 Precision `0.976 +/- 0.008`、Recall `0.649 +/- 0.025`、F1 `0.780 +/- 0.020`、FPR `0.024 +/- 0.007`。下表則使用發佈 seed 43，與其他完整序列方法在同一測試集比較：
+
+| 方法 | Precision | Recall | F1 | FPR |
+|---|---:|---:|---:|---:|
+| Final-value SPC X-bar | 0.882 | 0.050 | 0.095 | 0.010 |
+| Dense AE | 0.932 | 0.773 | 0.845 | 0.085 |
+| Isolation Forest | 0.667 | 0.040 | 0.075 | 0.030 |
+| LSTM-AE | 0.986 | 0.697 | 0.816 | 0.015 |
+
+Dense AE 的 F1 高於該 LSTM-AE release seed，但 FPR 也較高；本結果不支持「LSTM-AE 全面優於 Dense AE」。兩者都需完整 wafer，不能代替 causal forecaster 的途中告警角色。
+
+## 真實資料 sanity check
+
+真實保留組為 43 normal 加 20 faulty。這些 faulty 主要是設定點偏移，沒有經核實的 fault-onset timestamp，也不是合成 A/B/C 的真實複本：
+
+| 方法/設定 | Normal FPR | Fault recall | ROC-AUC |
+|---|---:|---:|---:|
+| LSTM-AE direct transfer | 0.140 | 0.800 | - |
+| LSTM-AE real-normal recalibration | 0.047 | 0.700 | 0.907 |
+| Final-value SPC X-bar | 0.000 | 0.250 | - |
+| Dense AE | 0.000 | 0.650 | 0.923 |
+| Causal LSTM forecaster | 0.047 | 0.650 | 0.910 |
+
+Causal forecaster 在成功偵測的 faulty wafer 中，首次告警製程進度中位數為 `0.099`。這只表示相對於該筆紀錄結束的位置，不能解讀為距離真實故障、損傷或事故的 lead time。
+
+## 邊緣 artifact
+
+Release forecaster：18,180 parameters；TorchScript step artifact 約 78.4 KiB。
+
+在本機 Windows CPU、單執行緒、2,000 次 recurrent step 的微基準：
+
+| Metric | Latency |
+|---|---:|
+| Mean | 158.1 microseconds |
+| p50 | 138.4 microseconds |
+| p95 | 237.4 microseconds |
+
+這不是 Raspberry Pi 結果，也不是完整端到端延遲。基準不含 sensor I/O、標準化、分數平滑、警報傳輸與系統排程。
+
+`edge_runtime.py` 提供 stateful detector：每次 `update()` 接受一筆依序為 Cl2 Flow、He Press、Pressure、Vat Valve 的樣本，維持 hidden/cell state，回傳 score、threshold、alarm 與 per-sensor score。每片 wafer 或新製程窗開始前必須呼叫 `reset()`。
+
+```python
+from edge_runtime import StreamingAnomalyDetector
+
+detector = StreamingAnomalyDetector.from_artifacts()
+result = detector.update([753.0, 101.0, 1204.0, 50.0])
+if result["alarm"]:
+    print(result)
 ```
 
-After changing the generator (`02`), move `outputs/seeds/` away before
-re-running `03`, otherwise its resume logic will silently reuse stale seeds.
+也可以重播無標題 CSV：
 
-## Data
+```powershell
+.\.venv\Scripts\python.exe edge_runtime.py sensor_rows.csv --show-all
+```
 
-LAM 9600 Metal Etcher dataset (Eigenvector Research): 108 normal + 21 faulty
-wafers, 21 engineering variables. Put `MACHINE_Data.mat` at the path set in
-`config.py`; the dataset itself is not included in this repo.
+## 實驗流程
 
-The monitored sensors were picked from an equipment-control point of view:
-controlled variable (Pressure), actuator (Vat Valve), cooling loop (He Press),
-flow loop (Cl2 Flow). The idea is that a closed-loop story explains the
-detections without needing any plasma chemistry.
+```text
+MACHINE_Data.mat
+  -> 01_sensor_stats.py
+     真實 normal 統計、固定資料切分、實測取樣間隔
+  -> 02_generate_synthetic.py
+     正常合成序列 + 三類異常 + 注入時間 metadata
+  -> 03_train_lstm_ae.py
+     5-seed 完整序列 LSTM-AE
+  -> 04_compare_methods.py
+     SPC / Dense AE / Isolation Forest / LSTM-AE
+  -> 05_validate_real_data.py
+     真實 holdout normal + faulty sanity check
+  -> 06_sampling_rate_sweep.py
+     連續時間情境下的取樣率敏感度
+  -> 07_streaming_early_warning.py
+     causal forecaster、post-onset 告警、TorchScript 與 CPU benchmark
+  -> edge_runtime.py
+     stateful 逐筆推論核心，可接到實際資料傳輸層
+```
 
-## TODO
+模型權重只使用 normal synthetic sequences 訓練；checkpoint、平滑窗口與閾值規則會使用獨立的 labeled synthetic anomaly validation set 選擇。因此「模型訓練」是 unsupervised，但完整模型選擇流程應描述為 semi-supervised。
 
-- Streaming detection with an LSTM forecaster, so alarms fire mid-process
-  instead of per-wafer
-- Add TCP/RF power to the monitored set and measure the coverage/recall
-  trade-off
-- Try a Transformer autoencoder
-- Edge deployment on a Raspberry Pi (ONNX, quantization), including
-  throughput at the sampling rates the `06` sweep shows are necessary
+## 安裝
+
+建議使用 Python 3.12 的獨立環境：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+資料路徑可用環境變數設定，避免修改原始碼：
+
+```powershell
+$env:LAM9600_DATA_MAT = 'D:\data\MACHINE_Data.mat'
+```
+
+未設定時會沿用 `config.py` 的本機相容預設值。
+
+## 執行
+
+```powershell
+.\.venv\Scripts\python.exe 01_sensor_stats.py
+.\.venv\Scripts\python.exe 02_generate_synthetic.py
+.\.venv\Scripts\python.exe 03_train_lstm_ae.py
+.\.venv\Scripts\python.exe 04_compare_methods.py
+.\.venv\Scripts\python.exe 05_validate_real_data.py
+.\.venv\Scripts\python.exe 06_sampling_rate_sweep.py
+.\.venv\Scripts\python.exe 07_streaming_early_warning.py
+```
+
+訓練快取會綁定資料 SHA-256、seed 與主要超參數；資料或設定改變時會自動重訓，不再靜默沿用過期模型。
+
+## 測試
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+測試涵蓋：因果模型不可讀取未來資料、trailing-window 分數、pre-onset 告警規則、Type A 終值一致性、B/C onset metadata，以及 edge runtime 的 sensor ordering。
+
+## 研究限制
+
+- 真實 faulty 主要是設定點偏移，不等同於合成的三類動態異常。
+- 合成 onset 是注入規則，不是真實晶圓損傷時間。
+- 目前沒有 yield、damage 或事故標籤，不能宣稱已證明避免損失或事故。
+- 真實驗證樣本小，應補 bootstrap confidence interval。
+- Raspberry Pi 的 p50/p95/p99、CPU、memory、功耗及掉樣率仍待實機量測。
+
+詳細主張邊界與模型檢核見 [研究模型檢核.md](研究模型檢核.md)。

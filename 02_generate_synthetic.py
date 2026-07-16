@@ -7,7 +7,7 @@ v2 相對 v1 的修正（縮小 synthetic→real domain gap）：
   不再用人工假設的「從下方 6σ ramp」
 - 加入整數量化（真實訊號量化階距 = 1）
 - 序列長度改為變長（取樣自真實長度範圍 95~112）
-- 「升溫過快」只發生在真實有暫態的 sensors（Pressure、Vat Valve）
+- 「暫態到位過快」只發生在真實有暫態的 sensors（Pressure、Vat Valve）
 - 驗證異常集（模型選擇用）與測試集完全分開
 
 v2.1 修正：
@@ -43,7 +43,7 @@ N_TEST_NORMAL = 200
 N_TEST_PER_ANOMALY = 100
 
 TRANSIENT_FRAC = 0.2        # profile 前 20% 視為暫態段
-A_ELIGIBLE_SIGMA = 2.0      # 暫態幅度 ≥ 2σ 的 sensor 才可能發生「升溫過快」
+A_ELIGIBLE_SIGMA = 2.0      # 暫態幅度 >= 2 sigma 的 sensor 才可能發生「暫態到位過快」
 
 ANOMALY_TYPES = {
     0: "Normal",

@@ -26,8 +26,9 @@ from config import (DATA_MAT, OUTPUT_DIR, FIGURE_DIR, SENSOR_IDX, STEP_COL,
                     PROCESS_STEPS, MIN_WAFER_LEN, RESAMPLE_LEN, COLORS,
                     set_plot_style)
 import matplotlib.pyplot as plt
-from models import (DEVICE, LSTMAutoEncoder, DenseAutoEncoder,
-                    pointwise_errors, sensor_peak_scores, combine_peaks,
+from models import (DEVICE, LSTMAutoEncoder, DenseAutoEncoder, LSTMForecaster,
+                    pointwise_errors, forecaster_pointwise_errors,
+                    sensor_peak_scores, streaming_score_curves, combine_peaks,
                     make_threshold)
 
 
@@ -181,6 +182,59 @@ def main():
                                "auc": d_auc}
         print(f"\n[Dense AE]  誤報率={results['dense_ae']['fpr']:.3f}  "
               f"偵測率={results['dense_ae']['recall']:.3f}  AUC={d_auc:.3f}")
+
+    # ---------- Causal forecaster（逐點預測 + 真實 normal 重新校準） ----------
+    forecaster_pt = OUTPUT_DIR / "streaming_lstm_forecaster.pt"
+    if forecaster_pt.exists():
+        fck = torch.load(forecaster_pt, weights_only=False)
+        forecaster = LSTMForecaster(
+            len(SENSOR_IDX), fck["hidden_size"], fck["num_layers"])
+        forecaster.load_state_dict(fck["state_dict"])
+        forecaster.to(DEVICE)
+        f_mean, f_std = fck["mean"], fck["std"]
+        f_window = int(fck["window"])
+
+        def f_errors(wafers):
+            z = [(w - f_mean) / f_std for w in wafers]
+            return forecaster_pointwise_errors(forecaster, z)
+
+        ferr_calib = f_errors(normal_calib)
+        ferr_eval = f_errors(normal_eval)
+        ferr_fault = f_errors(faulty)
+        fpk_calib = sensor_peak_scores(ferr_calib, f_window)
+        f_calib = fpk_calib.mean(axis=0) if fck["use_calib"] else None
+        fs_calib = combine_peaks(fpk_calib, f_calib)
+        f_thr = make_threshold(fs_calib, fck["thr_rule"])
+        fcurves_eval = streaming_score_curves(ferr_eval, f_window, f_calib)
+        fcurves_fault = streaming_score_curves(ferr_fault, f_window, f_calib)
+        fs_eval = np.asarray([curve.max() for curve in fcurves_eval])
+        fs_fault = np.asarray([curve.max() for curve in fcurves_fault])
+        f_detected = fs_fault > f_thr
+        f_auc = float(roc_auc_score(
+            np.concatenate([np.zeros(len(fs_eval)), np.ones(len(fs_fault))]),
+            np.concatenate([fs_eval, fs_fault])))
+        alert_progress = []
+        for wafer, curve, is_detected in zip(faulty, fcurves_fault, f_detected):
+            if is_detected:
+                first = int(np.flatnonzero(curve > f_thr)[0]) + f_window
+                alert_progress.append(first / max(len(wafer) - 1, 1))
+        results["streaming_forecaster"] = {
+            "threshold": float(f_thr),
+            "fpr": float((fs_eval > f_thr).mean()),
+            "recall": float(f_detected.mean()),
+            "auc": f_auc,
+            "median_first_alarm_progress_detected": (
+                float(np.median(alert_progress)) if alert_progress else None),
+            "timing_note": (
+                "Process progress only; the real dataset has no verified "
+                "fault-onset timestamp."
+            ),
+        }
+        print(f"\n[Causal forecaster] 誤報率="
+              f"{results['streaming_forecaster']['fpr']:.3f}  "
+              f"偵測率={results['streaming_forecaster']['recall']:.3f}  "
+              f"AUC={f_auc:.3f}  已偵測樣本首次告警進度中位數="
+              f"{results['streaming_forecaster']['median_first_alarm_progress_detected']:.3f}")
 
     (OUTPUT_DIR / "real_validation.json").write_text(
         json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
