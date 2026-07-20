@@ -51,5 +51,25 @@
     "auc": 0.9104651162790698,
     "median_first_alarm_progress_detected": 0.0989010989010989,
     "timing_note": "Process progress only; the real dataset has no verified fault-onset timestamp."
+  },
+  "sliding_window_lstm_ae": {
+    "threshold": 2.5091353484033694,
+    "calibration_target_fpr": 0.01,
+    "calibration_observed_fpr": 0.0,
+    "calibration_count": 64,
+    "calibration_fpr_resolution": 0.015625,
+    "fpr": 0.0,
+    "false_alarms": 0,
+    "normal_eval_count": 43,
+    "recall": 0.25,
+    "detected_faults": 5,
+    "fault_count": 20,
+    "auc": 0.658139534883721,
+    "window_size": 32,
+    "persistence_required": 3,
+    "persistence_span": 5,
+    "score_mode": "mean",
+    "median_first_alarm_progress_detected": 0.3804347826086957,
+    "timing_note": "Process progress only; the real dataset has no verified fault-onset timestamp."
   }
 }

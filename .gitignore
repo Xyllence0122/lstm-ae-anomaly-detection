@@ -6,4 +6,5 @@ outputs/synthetic_data.npz
 outputs/lstm_ae_scores.npz
 outputs/seeds/
 outputs/streaming_seeds/
+outputs/sliding_window_seeds/
 tmp/

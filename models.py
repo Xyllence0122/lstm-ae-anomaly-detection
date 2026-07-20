@@ -2,6 +2,7 @@
 """
 模型定義與訓練/評分工具：
 - LSTMAutoEncoder：時序重建模型（支援變長序列）
+- SlidingWindowLSTMAutoEncoder：以因果式 trailing window 做線上重建
 - DenseAutoEncoder：無時序結構的全連接 AE（baseline，固定長度輸入）
 - 變長資料以「長度分桶」方式訓練與推論
 - 有 CUDA 時自動使用 GPU（checkpoint 一律存成 CPU tensor，存檔可攜）
@@ -36,6 +37,18 @@ class LSTMAutoEncoder(nn.Module):
         dec_in = self.from_latent(z).unsqueeze(1).repeat(1, T, 1)
         dec_out, _ = self.decoder(dec_in)
         return self.output(dec_out)
+
+
+class SlidingWindowLSTMAutoEncoder(LSTMAutoEncoder):
+    """LSTM-AE trained and evaluated on causal trailing windows.
+
+    The network is intentionally identical to ``LSTMAutoEncoder``. Its online
+    behavior comes from the data contract: at sample ``t`` it receives only
+    ``x[t-window+1:t+1]``. A configured reduction converts that window's
+    reconstruction errors into a per-sensor score. This preserves the thesis'
+    LSTM-AE core without allowing future observations to influence an
+    already-emitted decision.
+    """
 
 
 class DenseAutoEncoder(nn.Module):
@@ -243,6 +256,104 @@ def pointwise_errors(model, X_list, batch_size=64):
             for k, j in enumerate(idx[i:i + batch_size]):
                 out[j] = err[k]
     return out
+
+
+def sample_sliding_windows(X_list, window_sizes=(8, 16, 32),
+                           samples_per_size=4, seed=42):
+    """Sample normal trailing windows for efficient mixed-length AE training."""
+    if samples_per_size < 1:
+        raise ValueError("samples_per_size must be at least 1")
+    sizes = tuple(sorted({int(value) for value in window_sizes}))
+    if not sizes or sizes[0] < 2:
+        raise ValueError("window sizes must contain integers of at least 2")
+
+    rng = np.random.default_rng(seed)
+    windows = []
+    for sequence in X_list:
+        for size in sizes:
+            if len(sequence) < size:
+                raise ValueError(
+                    f"window size {size} exceeds sequence length {len(sequence)}")
+            starts = np.arange(len(sequence) - size + 1)
+            replace = len(starts) < samples_per_size
+            selected = rng.choice(
+                starts, size=samples_per_size, replace=replace)
+            windows.extend(
+                np.asarray(sequence[start:start + size], dtype=np.float32)
+                for start in selected
+            )
+    return windows
+
+
+@torch.no_grad()
+def sliding_window_error_summaries(model, X_list, window_size,
+                                   batch_size=1024):
+    """Return causal reconstruction-error summaries for trailing windows.
+
+    The returned mapping contains value-error and first-difference-error
+    reductions. Each item has shape ``(T - window_size + 1, F)``. Output row
+    ``i`` maps to source sample ``i + window_size - 1`` and cannot depend on
+    later samples.
+    """
+    window_size = int(window_size)
+    if window_size < 2:
+        raise ValueError("window_size must be at least 2")
+    if batch_size < 1:
+        raise ValueError("batch_size must be at least 1")
+
+    model.eval()
+    dev = next(model.parameters()).device
+    modes = ("last", "mean", "max", "delta_mean", "delta_max")
+    out = {name: [None] * len(X_list) for name in modes}
+    for length, indices in _buckets_by_length(X_list).items():
+        if length < window_size:
+            raise ValueError(
+                f"window_size={window_size} exceeds sequence length {length}")
+        sequences = torch.as_tensor(
+            np.stack([X_list[index] for index in indices]),
+            dtype=torch.float32,
+            device=dev,
+        )
+        # unfold shape: (N, number_of_windows, F, W)
+        windows = sequences.unfold(1, window_size, 1).permute(0, 1, 3, 2)
+        n_sequences, n_windows, _, n_features = windows.shape
+        flat = windows.reshape(-1, window_size, n_features)
+        summaries = {name: [] for name in out}
+        for start in range(0, len(flat), batch_size):
+            batch = flat[start:start + batch_size]
+            reconstruction = model(batch)
+            squared = (reconstruction - batch) ** 2
+            delta_squared = (
+                (reconstruction[:, 1:] - reconstruction[:, :-1]) -
+                (batch[:, 1:] - batch[:, :-1])
+            ) ** 2
+            summaries["last"].append(squared[:, -1].cpu())
+            summaries["mean"].append(squared.mean(dim=1).cpu())
+            summaries["max"].append(squared.amax(dim=1).cpu())
+            summaries["delta_mean"].append(delta_squared.mean(dim=1).cpu())
+            summaries["delta_max"].append(delta_squared.amax(dim=1).cpu())
+        for name, chunks in summaries.items():
+            errors = torch.cat(chunks).numpy().reshape(
+                n_sequences, n_windows, n_features)
+            for local_index, source_index in enumerate(indices):
+                out[name][source_index] = errors[local_index]
+    return out
+
+
+def sliding_window_errors(model, X_list, window_size, reduction="last",
+                          batch_size=1024):
+    """Return one configured error reduction for every causal trailing window."""
+    if reduction not in ("last", "mean", "max", "delta_mean", "delta_max"):
+        raise ValueError(
+            "reduction must be one of: last, mean, max, delta_mean, delta_max")
+    return sliding_window_error_summaries(
+        model, X_list, window_size, batch_size)[reduction]
+
+
+def sliding_window_last_errors(model, X_list, window_size, batch_size=1024):
+    """Backward-compatible final-sample reduction helper."""
+    return sliding_window_errors(
+        model, X_list, window_size, "last", batch_size)
 
 
 @torch.no_grad()

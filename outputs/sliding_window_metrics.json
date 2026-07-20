@@ -1,0 +1,597 @@
+{
+  "protocol": {
+    "model_training": "Step 3 complete synthetic normal process trajectories only; online inference receives causal trailing windows",
+    "model_selection": "maximize overall anomaly recall after satisfying an empirical event-FPR constraint on separate validation data",
+    "validation_target_fpr": 0.01,
+    "test_access": "once per seed after model selection",
+    "score": "validation-selected trailing-window reconstruction-error or first-difference reconstruction-error reduction, calibrated per sensor, max across sensors, followed by k-of-n persistence",
+    "causality": "decision at t uses only samples at or before t",
+    "true_positive_rule": "complete persistence evidence span must be at or after synthetic anomaly onset"
+  },
+  "per_seed": [
+    {
+      "precision": 0.936,
+      "recall": 0.39,
+      "f1": 0.5505882352941176,
+      "fpr": 0.04,
+      "auc": 0.7014666666666667,
+      "threshold": 3.481740364113862,
+      "window_size": 8,
+      "persistence_required": 3,
+      "persistence_span": 5,
+      "score_mode": "mean",
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.02,
+        "B: 過程震盪": 0.52,
+        "C: 緩慢漂移": 0.63
+      },
+      "alert_timing": {
+        "A: 暫態響應速度異常": {
+          "detected": 2,
+          "total": 100,
+          "median_detection_delay_samples": 82.5,
+          "median_alert_progress": 0.774074074074074
+        },
+        "B: 過程震盪": {
+          "detected": 52,
+          "total": 100,
+          "median_detection_delay_samples": 20.0,
+          "median_alert_progress": 0.5628033980582524
+        },
+        "C: 緩慢漂移": {
+          "detected": 63,
+          "total": 100,
+          "median_detection_delay_samples": 60.0,
+          "median_alert_progress": 0.8404255319148937
+        }
+      },
+      "seed": 42,
+      "best_epoch": 140,
+      "validation_target_fpr": 0.01,
+      "val_precision": 0.9649122807017544,
+      "val_recall": 0.36666666666666664,
+      "val_f1": 0.5314009661835749,
+      "val_fpr": 0.01,
+      "val_pre_onset_alarm_rate": 0.0,
+      "val_per_type_recall": {
+        "A: 暫態響應速度異常": 0.06,
+        "B: 過程震盪": 0.44,
+        "C: 緩慢漂移": 0.6
+      },
+      "val_min_type_recall": 0.06,
+      "run_signature": "490772ddaf6f9043809b167319f5e384742433bf350b029dadda2132c32183fa",
+      "signature_payload": {
+        "pipeline_version": 7,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "hidden_size": 64,
+        "latent_size": 16,
+        "window_sizes": [
+          8,
+          16,
+          32,
+          64
+        ],
+        "score_modes": [
+          "last",
+          "mean",
+          "max",
+          "delta_mean",
+          "delta_max"
+        ],
+        "persistence_options": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            5
+          ]
+        ],
+        "validation_target_fpr": 0.01,
+        "seed": 42,
+        "source_step3_signature": "04ef2b177e50972cbfc875a071de28c4f3b4171dceb516906d3f82644827ca17"
+      },
+      "source_step3_val_f1": 0.743801652892562
+    },
+    {
+      "precision": 0.9565217391304348,
+      "recall": 0.44,
+      "f1": 0.6027397260273972,
+      "fpr": 0.03,
+      "auc": 0.7377833333333333,
+      "threshold": 2.1293889050838852,
+      "window_size": 32,
+      "persistence_required": 2,
+      "persistence_span": 3,
+      "score_mode": "mean",
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.02,
+        "B: 過程震盪": 0.55,
+        "C: 緩慢漂移": 0.75
+      },
+      "alert_timing": {
+        "A: 暫態響應速度異常": {
+          "detected": 2,
+          "total": 100,
+          "median_detection_delay_samples": 69.0,
+          "median_alert_progress": 0.6562142038946163
+        },
+        "B: 過程震盪": {
+          "detected": 55,
+          "total": 100,
+          "median_detection_delay_samples": 23.0,
+          "median_alert_progress": 0.61
+        },
+        "C: 緩慢漂移": {
+          "detected": 75,
+          "total": 100,
+          "median_detection_delay_samples": 55.0,
+          "median_alert_progress": 0.8191489361702128
+        }
+      },
+      "seed": 43,
+      "best_epoch": 60,
+      "validation_target_fpr": 0.01,
+      "val_precision": 0.9666666666666667,
+      "val_recall": 0.38666666666666666,
+      "val_f1": 0.5523809523809524,
+      "val_fpr": 0.01,
+      "val_pre_onset_alarm_rate": 0.0,
+      "val_per_type_recall": {
+        "A: 暫態響應速度異常": 0.04,
+        "B: 過程震盪": 0.4,
+        "C: 緩慢漂移": 0.72
+      },
+      "val_min_type_recall": 0.04,
+      "run_signature": "39247c0c3358f333f8a5866cd4a27d198e4eececa1b983c12b7ca74633a7b4af",
+      "signature_payload": {
+        "pipeline_version": 7,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "hidden_size": 64,
+        "latent_size": 16,
+        "window_sizes": [
+          8,
+          16,
+          32,
+          64
+        ],
+        "score_modes": [
+          "last",
+          "mean",
+          "max",
+          "delta_mean",
+          "delta_max"
+        ],
+        "persistence_options": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            5
+          ]
+        ],
+        "validation_target_fpr": 0.01,
+        "seed": 43,
+        "source_step3_signature": "f7edd6b3a01afdd4b657e550f07820ccc1160f7761b2266a276338ad3458d9ab"
+      },
+      "source_step3_val_f1": 0.7741935483870968
+    },
+    {
+      "precision": 0.9448275862068966,
+      "recall": 0.45666666666666667,
+      "f1": 0.6157303370786517,
+      "fpr": 0.04,
+      "auc": 0.7439666666666667,
+      "threshold": 2.079145039482915,
+      "window_size": 32,
+      "persistence_required": 3,
+      "persistence_span": 5,
+      "score_mode": "mean",
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.05,
+        "B: 過程震盪": 0.59,
+        "C: 緩慢漂移": 0.73
+      },
+      "alert_timing": {
+        "A: 暫態響應速度異常": {
+          "detected": 5,
+          "total": 100,
+          "median_detection_delay_samples": 96.0,
+          "median_alert_progress": 0.9622641509433962
+        },
+        "B: 過程震盪": {
+          "detected": 59,
+          "total": 100,
+          "median_detection_delay_samples": 23.0,
+          "median_alert_progress": 0.59
+        },
+        "C: 緩慢漂移": {
+          "detected": 73,
+          "total": 100,
+          "median_detection_delay_samples": 58.0,
+          "median_alert_progress": 0.8484848484848485
+        }
+      },
+      "seed": 44,
+      "best_epoch": 140,
+      "validation_target_fpr": 0.01,
+      "val_precision": 0.967741935483871,
+      "val_recall": 0.4,
+      "val_f1": 0.5660377358490566,
+      "val_fpr": 0.01,
+      "val_pre_onset_alarm_rate": 0.0,
+      "val_per_type_recall": {
+        "A: 暫態響應速度異常": 0.06,
+        "B: 過程震盪": 0.46,
+        "C: 緩慢漂移": 0.68
+      },
+      "val_min_type_recall": 0.06,
+      "run_signature": "940b32e2013c5313c6b9b2f8811a28b28ba1f289d4a1bd209e986394e11d717b",
+      "signature_payload": {
+        "pipeline_version": 7,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "hidden_size": 64,
+        "latent_size": 16,
+        "window_sizes": [
+          8,
+          16,
+          32,
+          64
+        ],
+        "score_modes": [
+          "last",
+          "mean",
+          "max",
+          "delta_mean",
+          "delta_max"
+        ],
+        "persistence_options": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            5
+          ]
+        ],
+        "validation_target_fpr": 0.01,
+        "seed": 44,
+        "source_step3_signature": "3d1e5e2974024c96c669e2f10f41747f83d481847fd599ea09bd877ac170f935"
+      },
+      "source_step3_val_f1": 0.7063829787234043
+    },
+    {
+      "precision": 0.9512195121951219,
+      "recall": 0.39,
+      "f1": 0.5531914893617021,
+      "fpr": 0.03,
+      "auc": 0.7091,
+      "threshold": 4.049508383450456,
+      "window_size": 8,
+      "persistence_required": 1,
+      "persistence_span": 1,
+      "score_mode": "mean",
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.03,
+        "B: 過程震盪": 0.53,
+        "C: 緩慢漂移": 0.61
+      },
+      "alert_timing": {
+        "A: 暫態響應速度異常": {
+          "detected": 3,
+          "total": 100,
+          "median_detection_delay_samples": 84.0,
+          "median_alert_progress": 0.8148148148148148
+        },
+        "B: 過程震盪": {
+          "detected": 53,
+          "total": 100,
+          "median_detection_delay_samples": 19.0,
+          "median_alert_progress": 0.5555555555555556
+        },
+        "C: 緩慢漂移": {
+          "detected": 61,
+          "total": 100,
+          "median_detection_delay_samples": 60.0,
+          "median_alert_progress": 0.85
+        }
+      },
+      "seed": 45,
+      "best_epoch": 220,
+      "validation_target_fpr": 0.01,
+      "val_precision": 0.9636363636363636,
+      "val_recall": 0.35333333333333333,
+      "val_f1": 0.5170731707317073,
+      "val_fpr": 0.01,
+      "val_pre_onset_alarm_rate": 0.0,
+      "val_per_type_recall": {
+        "A: 暫態響應速度異常": 0.06,
+        "B: 過程震盪": 0.44,
+        "C: 緩慢漂移": 0.56
+      },
+      "val_min_type_recall": 0.06,
+      "run_signature": "9ddc94c70f215fff1d7ac207ebd614bbfc2ee5b38f24c701b0372730faf4506f",
+      "signature_payload": {
+        "pipeline_version": 7,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "hidden_size": 64,
+        "latent_size": 16,
+        "window_sizes": [
+          8,
+          16,
+          32,
+          64
+        ],
+        "score_modes": [
+          "last",
+          "mean",
+          "max",
+          "delta_mean",
+          "delta_max"
+        ],
+        "persistence_options": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            5
+          ]
+        ],
+        "validation_target_fpr": 0.01,
+        "seed": 45,
+        "source_step3_signature": "5e8df8e3f6b082f9e53b6f99191a43ac9d9e9f58bcbae24f81f24442f65beb1d"
+      },
+      "source_step3_val_f1": 0.711864406779661
+    },
+    {
+      "precision": 0.9432624113475178,
+      "recall": 0.44333333333333336,
+      "f1": 0.6031746031746031,
+      "fpr": 0.04,
+      "auc": 0.7088333333333333,
+      "threshold": 2.6984280182720295,
+      "window_size": 16,
+      "persistence_required": 1,
+      "persistence_span": 1,
+      "score_mode": "mean",
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.03,
+        "B: 過程震盪": 0.59,
+        "C: 緩慢漂移": 0.71
+      },
+      "alert_timing": {
+        "A: 暫態響應速度異常": {
+          "detected": 3,
+          "total": 100,
+          "median_detection_delay_samples": 92.0,
+          "median_alert_progress": 0.8518518518518519
+        },
+        "B: 過程震盪": {
+          "detected": 59,
+          "total": 100,
+          "median_detection_delay_samples": 19.0,
+          "median_alert_progress": 0.5533980582524272
+        },
+        "C: 緩慢漂移": {
+          "detected": 71,
+          "total": 100,
+          "median_detection_delay_samples": 51.0,
+          "median_alert_progress": 0.7708333333333334
+        }
+      },
+      "seed": 46,
+      "best_epoch": 60,
+      "validation_target_fpr": 0.01,
+      "val_precision": 0.9672131147540983,
+      "val_recall": 0.3933333333333333,
+      "val_f1": 0.5592417061611374,
+      "val_fpr": 0.01,
+      "val_pre_onset_alarm_rate": 0.0,
+      "val_per_type_recall": {
+        "A: 暫態響應速度異常": 0.06,
+        "B: 過程震盪": 0.5,
+        "C: 緩慢漂移": 0.62
+      },
+      "val_min_type_recall": 0.06,
+      "run_signature": "641decd047b925532ba4012945251a3b8826921762118c1c5485c852ff786ddb",
+      "signature_payload": {
+        "pipeline_version": 7,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "hidden_size": 64,
+        "latent_size": 16,
+        "window_sizes": [
+          8,
+          16,
+          32,
+          64
+        ],
+        "score_modes": [
+          "last",
+          "mean",
+          "max",
+          "delta_mean",
+          "delta_max"
+        ],
+        "persistence_options": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            5
+          ]
+        ],
+        "validation_target_fpr": 0.01,
+        "seed": 46,
+        "source_step3_signature": "96e4fc583c223a371919f84154ed1a27148d89b6f6502a051d7d20f9fd9b77a4"
+      },
+      "source_step3_val_f1": 0.7385892116182573
+    }
+  ],
+  "aggregate": {
+    "precision": {
+      "mean": 0.9463662497759943,
+      "std": 0.007016388716773437
+    },
+    "recall": {
+      "mean": 0.42400000000000004,
+      "std": 0.0283156807754604
+    },
+    "f1": {
+      "mean": 0.5850848781872944,
+      "std": 0.027514660000498976
+    },
+    "fpr": {
+      "mean": 0.036000000000000004,
+      "std": 0.004898979485566357
+    },
+    "auc": {
+      "mean": 0.7202299999999999,
+      "std": 0.01718937139306988
+    },
+    "pre_onset_alarm_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "per_type": {
+      "A: 暫態響應速度異常": {
+        "recall_mean": 0.03,
+        "recall_std": 0.010954451150103323,
+        "median_detection_delay_samples_mean": 84.7,
+        "median_detection_delay_samples_std": 9.303762679690406,
+        "median_alert_progress_mean": 0.8118438191157507,
+        "median_alert_progress_std": 0.0998828078303643
+      },
+      "B: 過程震盪": {
+        "recall_mean": 0.556,
+        "recall_std": 0.02939387691339811,
+        "median_detection_delay_samples_mean": 20.8,
+        "median_detection_delay_samples_std": 1.8330302779823362,
+        "median_alert_progress_mean": 0.5743514023732471,
+        "median_alert_progress_std": 0.02209698627205487
+      },
+      "C: 緩慢漂移": {
+        "recall_mean": 0.6859999999999999,
+        "recall_std": 0.05571355310873648,
+        "median_detection_delay_samples_mean": 56.8,
+        "median_detection_delay_samples_std": 3.4292856398964493,
+        "median_alert_progress_mean": 0.8257785299806576,
+        "median_alert_progress_std": 0.02959634208573011
+      }
+    }
+  },
+  "release_seed": 44,
+  "release": {
+    "precision": 0.9448275862068966,
+    "recall": 0.45666666666666667,
+    "f1": 0.6157303370786517,
+    "fpr": 0.04,
+    "auc": 0.7439666666666667,
+    "threshold": 2.079145039482915,
+    "window_size": 32,
+    "persistence_required": 3,
+    "persistence_span": 5,
+    "score_mode": "mean",
+    "pre_onset_alarm_rate": 0.0,
+    "per_type_recall": {
+      "A: 暫態響應速度異常": 0.05,
+      "B: 過程震盪": 0.59,
+      "C: 緩慢漂移": 0.73
+    },
+    "alert_timing": {
+      "A: 暫態響應速度異常": {
+        "detected": 5,
+        "total": 100,
+        "median_detection_delay_samples": 96.0,
+        "median_alert_progress": 0.9622641509433962
+      },
+      "B: 過程震盪": {
+        "detected": 59,
+        "total": 100,
+        "median_detection_delay_samples": 23.0,
+        "median_alert_progress": 0.59
+      },
+      "C: 緩慢漂移": {
+        "detected": 73,
+        "total": 100,
+        "median_detection_delay_samples": 58.0,
+        "median_alert_progress": 0.8484848484848485
+      }
+    },
+    "seed": 44,
+    "best_epoch": 140,
+    "validation_target_fpr": 0.01,
+    "val_precision": 0.967741935483871,
+    "val_recall": 0.4,
+    "val_f1": 0.5660377358490566,
+    "val_fpr": 0.01,
+    "val_per_type_recall": {
+      "A: 暫態響應速度異常": 0.06,
+      "B: 過程震盪": 0.46,
+      "C: 緩慢漂移": 0.68
+    },
+    "val_min_type_recall": 0.06
+  },
+  "artifact_parity": {
+    "sequences_checked": 4,
+    "max_raw_score_abs_difference": 6.748565257730377e-07,
+    "max_persistent_score_abs_difference": 6.748565257730377e-07,
+    "alarm_decisions_match": true,
+    "absolute_tolerance": 1e-05,
+    "passed": true
+  },
+  "edge_benchmark": {
+    "device_scope": "host_cpu_not_raspberry_pi",
+    "includes": "normalization, trailing-window update, TorchScript inference, per-sensor scoring, persistence, and alarm decision",
+    "excludes": "sensor transport, persistence storage, and alert delivery",
+    "runs": 2000,
+    "mean_us": 688.08225,
+    "p50_us": 593.05,
+    "p95_us": 1089.2099999999998,
+    "p99_us": 1537.6929999999998,
+    "torchscript_size_kib": 223.7109375,
+    "parameter_count": 53588,
+    "torch_version": "2.13.0+cpu",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD",
+    "threads_during_benchmark": 1
+  },
+  "limitations": [
+    "Synthetic anomaly onset is not a measured physical failure onset.",
+    "The fixed benchmark oversamples anomalies and does not represent fab prevalence.",
+    "LAM 9600 sampling cannot validate sub-second process dynamics.",
+    "Host CPU latency is not Raspberry Pi or production IPC latency."
+  ]
+}

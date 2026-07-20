@@ -1,0 +1,248 @@
+{
+  "protocol": {
+    "status": "final holdout; not used for model selection",
+    "calibration_normal_count": 5000,
+    "holdout_normal_count": 10000,
+    "holdout_per_anomaly_type": 1000,
+    "random_seeds": {
+      "calibration": 193001,
+      "normal_holdout": 194001,
+      "anomaly_holdout": 195001
+    },
+    "artifact_sha256": {
+      "sliding_window_lstm_ae.pt": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
+      "streaming_lstm_forecaster.pt": "1e580fe05aa9a346bcec7ef034acb11fc0b89155b06caa76b64d5cc37762ef22"
+    },
+    "warning": "Changing model settings after reading this report invalidates its final-holdout status."
+  },
+  "results": [
+    {
+      "precision": 0.9218213058419243,
+      "recall": 0.3576666666666667,
+      "f1": 0.5153698366954851,
+      "fpr": 0.0091,
+      "auc": 0.7261139000000001,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.01,
+      "threshold": 2.2915715737547067,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 3000,
+      "false_alarms": 91,
+      "detected_anomalies": 1073,
+      "fpr_wilson_95": [
+        0.0074181785377802605,
+        0.01115883106255002
+      ],
+      "recall_wilson_95": [
+        0.3407070033935632,
+        0.3749903755435796
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.015,
+        "B: 過程震盪": 0.492,
+        "C: 緩慢漂移": 0.566
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.6741220079160646,
+        "prevalence_0.01": 0.2841857139073549,
+        "prevalence_0.001": 0.03785406604881869
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": 0.9207920792079208,
+        "B: 過程震盪": 0.5686274509803921,
+        "C: 緩慢漂移": 0.8611111111111112
+      }
+    },
+    {
+      "precision": 0.955955955955956,
+      "recall": 0.31833333333333336,
+      "f1": 0.4776194048512128,
+      "fpr": 0.0044,
+      "auc": 0.7261139000000001,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.005,
+      "threshold": 2.446301998730784,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 3000,
+      "false_alarms": 44,
+      "detected_anomalies": 955,
+      "fpr_wilson_95": [
+        0.0032794410394017762,
+        0.0059011781456128655
+      ],
+      "recall_wilson_95": [
+        0.3019055075921837,
+        0.3352258074446848
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.007,
+        "B: 過程震盪": 0.436,
+        "C: 緩慢漂移": 0.512
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.7920053076795489,
+        "prevalence_0.01": 0.42223008223538777,
+        "prevalence_0.001": 0.06753030024466475
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": 0.9724770642201835,
+        "B: 過程震盪": 0.5763403263403264,
+        "C: 緩慢漂移": 0.8767744833782569
+      }
+    },
+    {
+      "precision": 0.9855263157894737,
+      "recall": 0.24966666666666668,
+      "f1": 0.3984042553191489,
+      "fpr": 0.0011,
+      "auc": 0.7261139000000001,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.001,
+      "threshold": 2.7322752216943855,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 3000,
+      "false_alarms": 11,
+      "detected_anomalies": 749,
+      "fpr_wilson_95": [
+        0.0006143506542303221,
+        0.0019688029200307855
+      ],
+      "recall_wilson_95": [
+        0.23450541820704285,
+        0.2654681920547704
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.0,
+        "B: 過程震盪": 0.326,
+        "C: 緩慢漂移": 0.423
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.9227547123321425,
+        "prevalence_0.01": 0.6962907873942549,
+        "prevalence_0.001": 0.1851348345156586
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": null,
+        "B: 過程震盪": 0.5861985236985237,
+        "C: 緩慢漂移": 0.8969072164948454
+      }
+    },
+    {
+      "precision": 0.9485834207764953,
+      "recall": 0.6026666666666667,
+      "f1": 0.7370566653077864,
+      "fpr": 0.0098,
+      "auc": 0.8703041333333333,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.01,
+      "threshold": 1.9290071762398335,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 3000,
+      "false_alarms": 98,
+      "detected_anomalies": 1808,
+      "fpr_wilson_95": [
+        0.008048716055211168,
+        0.011927755947400165
+      ],
+      "recall_wilson_95": [
+        0.5850353776508097,
+        0.6200353654109234
+      ],
+      "pre_onset_alarm_rate": 0.0006666666666666666,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.635,
+        "B: 過程震盪": 0.579,
+        "C: 緩慢漂移": 0.594
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.7639651821178063,
+        "prevalence_0.01": 0.38316449794430557,
+        "prevalence_0.001": 0.05798849210676555
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": 0.08823529411764706,
+        "B: 過程震盪": 0.5157894736842106,
+        "C: 緩慢漂移": 0.8518518518518519
+      }
+    },
+    {
+      "precision": 0.9669467787114846,
+      "recall": 0.5753333333333334,
+      "f1": 0.7214211076280042,
+      "fpr": 0.0059,
+      "auc": 0.8703041333333333,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.005,
+      "threshold": 2.0021187603538886,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 3000,
+      "false_alarms": 59,
+      "detected_anomalies": 1726,
+      "fpr_wilson_95": [
+        0.004577046502138715,
+        0.007602420687763897
+      ],
+      "recall_wilson_95": [
+        0.5575603462562401,
+        0.592913640535811
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.604,
+        "B: 過程震盪": 0.546,
+        "C: 緩慢漂移": 0.576
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.8369296416622218,
+        "prevalence_0.01": 0.4962194175315528,
+        "prevalence_0.001": 0.08893102435555923
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": 0.08823529411764706,
+        "B: 過程震盪": 0.5196078431372549,
+        "C: 緩慢漂移": 0.8670068027210884
+      }
+    },
+    {
+      "precision": 0.982874617737003,
+      "recall": 0.5356666666666666,
+      "f1": 0.6934196332254585,
+      "fpr": 0.0028,
+      "auc": 0.8703041333333333,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.001,
+      "threshold": 2.103906614598055,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 3000,
+      "false_alarms": 28,
+      "detected_anomalies": 1607,
+      "fpr_wilson_95": [
+        0.001938005730685637,
+        0.004043842249115168
+      ],
+      "recall_wilson_95": [
+        0.5177860488126815,
+        0.5534560599782452
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.544,
+        "B: 過程震盪": 0.52,
+        "C: 緩慢漂移": 0.543
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.9096569681874788,
+        "prevalence_0.01": 0.6589846633314197,
+        "prevalence_0.001": 0.160722501150161
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": 0.08823529411764706,
+        "B: 過程震盪": 0.52,
+        "C: 緩慢漂移": 0.8787878787878788
+      }
+    }
+  ]
+}

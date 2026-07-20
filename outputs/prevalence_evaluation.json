@@ -1,0 +1,297 @@
+{
+  "protocol": {
+    "calibration_normal_count": 5000,
+    "independent_test_normal_count": 10000,
+    "fixed_anomaly_test_count": 300,
+    "target_fprs": [
+      0.01,
+      0.005,
+      0.001
+    ],
+    "prevalence_scenarios": [
+      0.05,
+      0.01,
+      0.001
+    ],
+    "threshold_data": "independent synthetic normal calibration cohort",
+    "test_data": "independent synthetic normals plus the fixed A/B/C test anomalies; anomalies are intentionally retained for stable recall"
+  },
+  "online_results": [
+    {
+      "precision": 0.5555555555555556,
+      "recall": 0.4,
+      "f1": 0.46511627906976744,
+      "fpr": 0.0096,
+      "auc": 0.7564653333333333,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.01,
+      "threshold": 2.2730147634453783,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 300,
+      "false_alarms": 96,
+      "detected_anomalies": 120,
+      "fpr_wilson_95": [
+        0.007868298014665221,
+        0.011708327587294383
+      ],
+      "recall_wilson_95": [
+        0.3461651905860969,
+        0.4563634036588123
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.01,
+        "B: 過程震盪": 0.52,
+        "C: 緩慢漂移": 0.67
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.6868131868131868,
+        "prevalence_0.01": 0.29620853080568726,
+        "prevalence_0.001": 0.040038436899423456
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": 0.9351851851851852,
+        "B: 過程震盪": 0.6207115009746589,
+        "C: 緩慢漂移": 0.8932038834951457
+      }
+    },
+    {
+      "precision": 0.655367231638418,
+      "recall": 0.38666666666666666,
+      "f1": 0.4863731656184486,
+      "fpr": 0.0061,
+      "auc": 0.7564653333333333,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.005,
+      "threshold": 2.351264676808,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 300,
+      "false_alarms": 61,
+      "detected_anomalies": 116,
+      "fpr_wilson_95": [
+        0.00475210315987151,
+        0.00782721043068283
+      ],
+      "recall_wilson_95": [
+        0.3333235932848012,
+        0.44287548019276246
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.01,
+        "B: 過程震盪": 0.49,
+        "C: 緩慢漂移": 0.66
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.7693838296743384,
+        "prevalence_0.01": 0.39034895850859774,
+        "prevalence_0.001": 0.059665564225350666
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": 0.9722222222222222,
+        "B: 過程震盪": 0.6285714285714286,
+        "C: 緩慢漂移": 0.8965147975077882
+      }
+    },
+    {
+      "precision": 0.8640776699029126,
+      "recall": 0.2966666666666667,
+      "f1": 0.44168734491315137,
+      "fpr": 0.0014,
+      "auc": 0.7564653333333333,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.001,
+      "threshold": 2.673215401953641,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 300,
+      "false_alarms": 14,
+      "detected_anomalies": 89,
+      "fpr_wilson_95": [
+        0.000834162028874972,
+        0.002348761146363729
+      ],
+      "recall_wilson_95": [
+        0.24781139053784687,
+        0.35066341776013515
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.0,
+        "B: 過程震盪": 0.38,
+        "C: 緩慢漂移": 0.51
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.917714992782017,
+        "prevalence_0.01": 0.6815745137080716,
+        "prevalence_0.001": 0.17499705061150655
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": null,
+        "B: 過程震盪": 0.6601941747572816,
+        "C: 緩慢漂移": 0.9191919191919192
+      }
+    },
+    {
+      "precision": 0.6099071207430341,
+      "recall": 0.6566666666666666,
+      "f1": 0.6324237560192616,
+      "fpr": 0.0126,
+      "auc": 0.887144,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.01,
+      "threshold": 1.8905760878170357,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 300,
+      "false_alarms": 126,
+      "detected_anomalies": 197,
+      "fpr_wilson_95": [
+        0.010593432231852846,
+        0.014980889379882699
+      ],
+      "recall_wilson_95": [
+        0.6012598041861229,
+        0.7081120648301859
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.75,
+        "B: 過程震盪": 0.55,
+        "C: 緩慢漂移": 0.67
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.7328323785432631,
+        "prevalence_0.01": 0.344875879696089,
+        "prevalence_0.001": 0.04958195116303653
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": 0.08653846153846154,
+        "B: 過程震盪": 0.5648148148148148,
+        "C: 緩慢漂移": 0.865979381443299
+      }
+    },
+    {
+      "precision": 0.7458333333333333,
+      "recall": 0.5966666666666667,
+      "f1": 0.662962962962963,
+      "fpr": 0.0061,
+      "auc": 0.887144,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.005,
+      "threshold": 2.0213459486802994,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 300,
+      "false_alarms": 61,
+      "detected_anomalies": 179,
+      "fpr_wilson_95": [
+        0.00475210315987151,
+        0.00782721043068283
+      ],
+      "recall_wilson_95": [
+        0.540271195643406,
+        0.6506178299198485
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.65,
+        "B: 過程震盪": 0.51,
+        "C: 緩慢漂移": 0.63
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.8373485521822519,
+        "prevalence_0.01": 0.4969875336646583,
+        "prevalence_0.001": 0.0891802886651355
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": 0.08737864077669903,
+        "B: 過程震盪": 0.5851063829787234,
+        "C: 緩慢漂移": 0.8673469387755102
+      }
+    },
+    {
+      "precision": 0.9137931034482759,
+      "recall": 0.53,
+      "f1": 0.6708860759493671,
+      "fpr": 0.0015,
+      "auc": 0.887144,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.001,
+      "threshold": 2.1939320976179055,
+      "normal_test_count": 10000,
+      "anomaly_test_count": 300,
+      "false_alarms": 15,
+      "detected_anomalies": 159,
+      "fpr_wilson_95": [
+        0.0009092618255931228,
+        0.002473584549971443
+      ],
+      "recall_wilson_95": [
+        0.4735002333859323,
+        0.5857411883405951
+      ],
+      "pre_onset_alarm_rate": 0.0,
+      "per_type_recall": {
+        "A: 暫態響應速度異常": 0.53,
+        "B: 過程震盪": 0.47,
+        "C: 緩慢漂移": 0.59
+      },
+      "projected_precision": {
+        "prevalence_0.05": 0.9489704565801254,
+        "prevalence_0.01": 0.7811348563006631,
+        "prevalence_0.001": 0.2612768055213212
+      },
+      "median_alert_progress_detected": {
+        "A: 暫態響應速度異常": 0.08653846153846154,
+        "B: 過程震盪": 0.6019417475728155,
+        "C: 緩慢漂移": 0.8910891089108911
+      }
+    }
+  ],
+  "existing_complete_wafer_baselines": [
+    {
+      "method": "SPC X-bar",
+      "precision": 0.8823529411764706,
+      "recall": 0.05,
+      "f1": 0.0946372239747634,
+      "fpr": 0.01,
+      "A: 暫態到位過快": 0.01,
+      "B: 過程震盪": 0.0,
+      "C: 緩慢漂移": 0.14
+    },
+    {
+      "method": "Dense AE",
+      "precision": 0.9317269076305221,
+      "recall": 0.7733333333333333,
+      "f1": 0.8451730418943534,
+      "fpr": 0.085,
+      "A: 暫態到位過快": 0.84,
+      "B: 過程震盪": 0.71,
+      "C: 緩慢漂移": 0.77
+    },
+    {
+      "method": "Isolation Forest",
+      "precision": 0.6666666666666666,
+      "recall": 0.04,
+      "f1": 0.07547169811320754,
+      "fpr": 0.03,
+      "A: 暫態到位過快": 0.02,
+      "B: 過程震盪": 0.01,
+      "C: 緩慢漂移": 0.09
+    },
+    {
+      "method": "LSTM-AE",
+      "precision": 0.9858490566037735,
+      "recall": 0.6966666666666667,
+      "f1": 0.81640625,
+      "fpr": 0.015,
+      "A: 暫態到位過快": 0.71,
+      "B: 過程震盪": 0.66,
+      "C: 緩慢漂移": 0.72
+    }
+  ],
+  "limitations": [
+    "Prevalence values are explicit scenarios, not measured fab rates.",
+    "Projected precision assumes recall and FPR transfer to deployment.",
+    "Large normal cohorts are synthetic and cannot replace long real production runs.",
+    "Complete-wafer baselines are not directly comparable on alert timing."
+  ]
+}

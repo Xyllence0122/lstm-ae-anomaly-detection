@@ -7,10 +7,19 @@ import torch
 
 from models import (
     LSTMForecaster,
+    SlidingWindowLSTMAutoEncoder,
     forecaster_pointwise_errors,
+    sliding_window_errors,
+    sliding_window_last_errors,
     streaming_score_curves,
 )
 from edge_runtime import StreamingAnomalyDetector
+from edge_window_runtime import SlidingWindowAnomalyDetector
+from online_evaluation import (
+    persistence_score_curve,
+    threshold_for_target_fpr,
+    wilson_interval,
+)
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -33,6 +42,104 @@ def load_streaming_experiment_module():
 
 
 class StreamingModelTests(unittest.TestCase):
+    def test_sliding_window_autoencoder_does_not_use_future_samples(self):
+        torch.manual_seed(9)
+        model = SlidingWindowLSTMAutoEncoder(
+            n_features=1, hidden_size=4, latent_size=2)
+        common = np.arange(6, dtype=np.float32)[:, None]
+        first = np.vstack([common, [[6.0], [7.0], [8.0]]])
+        second = np.vstack([common, [[60.0], [70.0], [80.0]]])
+
+        errors = sliding_window_last_errors(
+            model, [first, second], window_size=4)
+
+        # Rows 0..2 end at source samples 3..5, before the sequences diverge.
+        np.testing.assert_allclose(errors[0][:3], errors[1][:3], atol=1e-7)
+        self.assertFalse(np.allclose(errors[0][3:], errors[1][3:]))
+
+    def test_persistence_score_is_kth_largest_in_trailing_span(self):
+        scores = np.asarray([1.0, 4.0, 2.0, 5.0])
+        curve = persistence_score_curve(scores, required=2, span=3)
+        np.testing.assert_allclose(curve, [2.0, 4.0])
+
+    def test_target_fpr_threshold_respects_empirical_budget(self):
+        normal_scores = np.asarray([5.0, 4.0, 3.0, 2.0, 1.0])
+        threshold = threshold_for_target_fpr(normal_scores, 0.2)
+        self.assertLessEqual(np.mean(normal_scores > threshold), 0.2)
+        zero_fpr_threshold = threshold_for_target_fpr(normal_scores, 0.0)
+        self.assertEqual(np.count_nonzero(normal_scores > zero_fpr_threshold), 0)
+
+    def test_wilson_interval_handles_boundary_proportions(self):
+        lower_zero, upper_zero = wilson_interval(0, 10)
+        lower_one, upper_one = wilson_interval(10, 10)
+        self.assertEqual(lower_zero, 0.0)
+        self.assertAlmostEqual(upper_zero, 0.2775328, places=6)
+        self.assertAlmostEqual(lower_one, 0.7224672, places=6)
+        self.assertAlmostEqual(upper_one, 1.0, places=12)
+
+    def test_sliding_window_edge_runtime_and_reset(self):
+        class ZeroAutoEncoder(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.dummy = torch.nn.Parameter(torch.tensor(0.0))
+
+            def forward(self, window):
+                return torch.zeros_like(window) + self.dummy
+
+        detector = SlidingWindowAnomalyDetector(
+            ZeroAutoEncoder(), mean=[0.0], std=[1.0], threshold=0.5,
+            window_size=3, calib=[1.0], persistence_required=2,
+            persistence_span=3, sensor_names=["Pressure"])
+        outputs = [
+            detector.update([0.0], timestamp=0.0),
+            detector.update([0.0], timestamp=1.0),
+            detector.update([1.0], timestamp=2.0),
+            detector.update([0.0], timestamp=3.0),
+            detector.update([1.0], timestamp=4.0),
+        ]
+
+        self.assertFalse(outputs[1]["window_ready"])
+        self.assertTrue(outputs[2]["window_ready"])
+        self.assertFalse(outputs[3]["alarm_ready"])
+        self.assertTrue(outputs[4]["alarm_ready"])
+        self.assertAlmostEqual(outputs[4]["score"], 1.0)
+        self.assertTrue(outputs[4]["alarm"])
+        detector.reset()
+        self.assertFalse(detector.update([0.0], timestamp=0.0)["window_ready"])
+
+    def test_sliding_window_runtime_rejects_nonmonotonic_timestamps(self):
+        class IdentityAutoEncoder(torch.nn.Module):
+            def forward(self, window):
+                return window
+
+        detector = SlidingWindowAnomalyDetector(
+            IdentityAutoEncoder(), mean=[0.0], std=[1.0], threshold=1.0,
+            window_size=2, calib=[1.0], sensor_names=["Pressure"])
+        detector.update([0.0], timestamp=5.0)
+        with self.assertRaises(ValueError):
+            detector.update([0.0], timestamp=5.0)
+
+    def test_sliding_window_mean_score_matches_edge_runtime(self):
+        class ZeroAutoEncoder(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.dummy = torch.nn.Parameter(torch.tensor(0.0))
+
+            def forward(self, window):
+                return torch.zeros_like(window) + self.dummy
+
+        model = ZeroAutoEncoder()
+        sequence = np.asarray(
+            [[0.0], [1.0], [2.0], [3.0]], dtype=np.float32)
+        expected = sliding_window_errors(
+            model, [sequence], window_size=3, reduction="mean")[0][:, 0]
+        detector = SlidingWindowAnomalyDetector(
+            model, mean=[0.0], std=[1.0], threshold=100.0,
+            window_size=3, calib=[1.0], score_mode="mean")
+        actual = [detector.update(sample)["raw_score"] for sample in sequence]
+        actual = np.asarray([value for value in actual if value is not None])
+        np.testing.assert_allclose(actual, expected, atol=1e-7)
+
     def test_edge_runtime_matches_online_error_order(self):
         class EchoStep(torch.nn.Module):
             def forward(self, sample, hidden, cell):

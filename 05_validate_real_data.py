@@ -27,9 +27,13 @@ from config import (DATA_MAT, OUTPUT_DIR, FIGURE_DIR, SENSOR_IDX, STEP_COL,
                     set_plot_style)
 import matplotlib.pyplot as plt
 from models import (DEVICE, LSTMAutoEncoder, DenseAutoEncoder, LSTMForecaster,
-                    pointwise_errors, forecaster_pointwise_errors,
+                    SlidingWindowLSTMAutoEncoder, pointwise_errors,
+                    forecaster_pointwise_errors, sliding_window_errors,
                     sensor_peak_scores, streaming_score_curves, combine_peaks,
                     make_threshold)
+from online_evaluation import (apply_persistence, calibrate_sensor_errors,
+                               sensor_error_score_curves,
+                               threshold_for_target_fpr)
 
 
 def load_real_wafers():
@@ -236,6 +240,99 @@ def main():
               f"AUC={f_auc:.3f}  已偵測樣本首次告警進度中位數="
               f"{results['streaming_forecaster']['median_first_alarm_progress_detected']:.3f}")
 
+    # ---------- V2 主模型：因果 Sliding-Window LSTM-AE ----------
+    sliding_plot = None
+    sliding_pt = OUTPUT_DIR / "sliding_window_lstm_ae.pt"
+    if sliding_pt.exists():
+        sck = torch.load(sliding_pt, map_location="cpu", weights_only=False)
+        sliding = SlidingWindowLSTMAutoEncoder(
+            len(SENSOR_IDX), sck["hidden_size"], sck["latent_size"])
+        sliding.load_state_dict(sck["state_dict"])
+        sliding.to(DEVICE)
+        s_mean, s_std = sck["mean"], sck["std"]
+        s_window = int(sck["window_size"])
+        s_required = int(sck["persistence_required"])
+        s_span = int(sck["persistence_span"])
+        s_score_mode = sck.get("score_mode", "last")
+
+        def s_errors(wafers):
+            z = [(w - s_mean) / s_std for w in wafers]
+            return sliding_window_errors(
+                sliding, z, s_window, s_score_mode)
+
+        serr_calib = s_errors(normal_calib)
+        serr_eval = s_errors(normal_eval)
+        serr_fault = s_errors(faulty)
+        s_calib = calibrate_sensor_errors(serr_calib)
+
+        def s_curves(errors):
+            raw_curves = sensor_error_score_curves(errors, s_calib)
+            return apply_persistence(raw_curves, s_required, s_span)
+
+        scurves_calib = s_curves(serr_calib)
+        scurves_eval = s_curves(serr_eval)
+        scurves_fault = s_curves(serr_fault)
+        ss_calib = np.asarray([curve.max() for curve in scurves_calib])
+        ss_eval = np.asarray([curve.max() for curve in scurves_eval])
+        ss_fault = np.asarray([curve.max() for curve in scurves_fault])
+        s_target_fpr = float(sck.get("validation_target_fpr", 0.01))
+        s_thr = threshold_for_target_fpr(ss_calib, s_target_fpr)
+        s_detected = ss_fault > s_thr
+        s_auc = float(roc_auc_score(
+            np.concatenate([np.zeros(len(ss_eval)), np.ones(len(ss_fault))]),
+            np.concatenate([ss_eval, ss_fault])))
+        s_first_sample = s_window - 1 + s_span - 1
+        s_alert_progress = []
+        for wafer, curve, is_detected in zip(
+                faulty, scurves_fault, s_detected):
+            if is_detected:
+                first = int(np.flatnonzero(curve > s_thr)[0]) + s_first_sample
+                s_alert_progress.append(first / max(len(wafer) - 1, 1))
+        results["sliding_window_lstm_ae"] = {
+            "threshold": float(s_thr),
+            "calibration_target_fpr": s_target_fpr,
+            "calibration_observed_fpr": float((ss_calib > s_thr).mean()),
+            "calibration_count": int(len(ss_calib)),
+            "calibration_fpr_resolution": float(1 / len(ss_calib)),
+            "fpr": float((ss_eval > s_thr).mean()),
+            "false_alarms": int((ss_eval > s_thr).sum()),
+            "normal_eval_count": int(len(ss_eval)),
+            "recall": float(s_detected.mean()),
+            "detected_faults": int(s_detected.sum()),
+            "fault_count": int(len(s_detected)),
+            "auc": s_auc,
+            "window_size": s_window,
+            "persistence_required": s_required,
+            "persistence_span": s_span,
+            "score_mode": s_score_mode,
+            "median_first_alarm_progress_detected": (
+                float(np.median(s_alert_progress))
+                if s_alert_progress else None),
+            "timing_note": (
+                "Process progress only; the real dataset has no verified "
+                "fault-onset timestamp."
+            ),
+        }
+        sliding_plot = {
+            "normal_scores": ss_eval,
+            "fault_scores": ss_fault,
+            "threshold": s_thr,
+            "auc": s_auc,
+        }
+        print(
+            f"\n[Sliding-window LSTM-AE] W={s_window}, "
+            f"score={s_score_mode}, persistence={s_required}/{s_span}  "
+            f"誤報率={results['sliding_window_lstm_ae']['fpr']:.3f} "
+            f"({results['sliding_window_lstm_ae']['false_alarms']}/"
+            f"{len(ss_eval)})  偵測率={s_detected.mean():.3f} "
+            f"({s_detected.sum()}/{len(s_detected)})  AUC={s_auc:.3f}"
+        )
+        print(
+            "  真實校準集只有 "
+            f"{len(ss_calib)} 片，FPR 最小觀察解析度為 "
+            f"{1 / len(ss_calib):.3%}。"
+        )
+
     (OUTPUT_DIR / "real_validation.json").write_text(
         json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n結果已存檔：{OUTPUT_DIR / 'real_validation.json'}")
@@ -275,6 +372,54 @@ def main():
     fig.tight_layout()
     fig.savefig(FIGURE_DIR / "05_real_validation.png", bbox_inches="tight")
     print(f"圖已存檔：{FIGURE_DIR / '05_real_validation.png'}")
+
+    if sliding_plot is not None:
+        fig, axes = plt.subplots(1, 2, figsize=(12, 4.8))
+        ax = axes[0]
+        rj = np.random.default_rng(7)
+        ax.scatter(
+            rj.uniform(-0.12, 0.12, len(sliding_plot["normal_scores"])),
+            sliding_plot["normal_scores"], s=18, color=COLORS["normal"],
+            alpha=0.65, edgecolors="none", label=f"Normal (n={len(ss_eval)})")
+        ax.scatter(
+            1 + rj.uniform(-0.12, 0.12, len(sliding_plot["fault_scores"])),
+            sliding_plot["fault_scores"], s=22, color=COLORS["faulty"],
+            alpha=0.75, edgecolors="none", label=f"Faulty (n={len(ss_fault)})")
+        ax.axhline(sliding_plot["threshold"], color=COLORS["ink"],
+                   linestyle="--", linewidth=1.3, label="Real-normal threshold")
+        ax.set_xticks([0, 1], ["Normal", "Faulty"])
+        ax.set_yscale("log")
+        ax.set_ylabel("Anomaly score")
+        ax.set_title(
+            f"(a) Sliding-window LSTM-AE (AUC={sliding_plot['auc']:.3f})")
+        ax.legend(frameon=False, fontsize=8)
+
+        method_keys = [
+            ("recalibrated", "Full LSTM-AE"),
+            ("dense_ae", "Dense AE"),
+            ("spc", "SPC"),
+            ("streaming_forecaster", "Forecaster"),
+            ("sliding_window_lstm_ae", "Sliding LSTM-AE"),
+        ]
+        available = [(key, name) for key, name in method_keys if key in results]
+        x = np.arange(len(available))
+        width = 0.36
+        axes[1].bar(
+            x - width / 2, [results[key]["recall"] for key, _ in available],
+            width, color=COLORS["faulty"], label="Recall")
+        axes[1].bar(
+            x + width / 2, [results[key]["fpr"] for key, _ in available],
+            width, color=COLORS["normal"], label="FPR")
+        axes[1].set_xticks(x, [name for _, name in available],
+                           rotation=25, ha="right")
+        axes[1].set_ylim(0, 1.05)
+        axes[1].set_ylabel("Rate")
+        axes[1].set_title("(b) Real-data comparison")
+        axes[1].legend(frameon=False)
+        fig.tight_layout()
+        output = FIGURE_DIR / "10_real_online_validation.png"
+        fig.savefig(output, bbox_inches="tight")
+        print(f"圖已存檔：{output}")
 
 
 if __name__ == "__main__":
