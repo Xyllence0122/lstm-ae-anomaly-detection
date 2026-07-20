@@ -24,7 +24,7 @@
 | Sliding-Window LSTM-AE | V2 主模型：線上重建與連續告警 | 最近 8/16/32/64 點 | 是 |
 | Causal LSTM forecaster | 線上一步預測比較模型 | 逐筆 sensor 樣本 | 是 |
 
-Sliding-Window LSTM-AE 在時間 `t` 只重建最近的 trailing window，不使用 `t` 之後的資料。發布設定為 32 點視窗、視窗平均重建誤差與 `3-of-5` 連續告警。Forecaster 只保留為相同因果條件下的比較模型。
+Sliding-Window LSTM-AE 在時間 `t` 只重建最近的 trailing window，不使用 `t` 之後的資料。V2 沒有重新用視窗訓練新權重，而是重用 Step 3 以完整 normal cycle 訓練的 LSTM-AE 權重，僅在推論時改成因果滑動視窗。發布設定為 32 點視窗、視窗平均重建誤差與 `3-of-5` 連續告警。Forecaster 只保留為相同因果條件下的比較模型。
 
 ## 已核實的資料狀態
 
@@ -58,6 +58,8 @@ Sliding-Window LSTM-AE 在時間 `t` 只重建最近的 trailing window，不使
 | Causal LSTM forecaster | 1.0% | 0.98% (0.80%-1.19%) | 0.603 (0.585-0.620) |
 
 主模型在 1% 目標下的 A/B/C Recall 為 `0.015/0.492/0.566`。這支持低誤報的因果邊緣原型，但也顯示 LSTM-AE 對快速暫態明顯不足；結果不支持直接產線上線或「全面優於 Forecaster」。
+
+部署 operating point 已明確分開：checkpoint 原始 validation threshold 為 `2.079145039482915`；正式預設 profile `final_calibration_fpr_1pct` 使用 5,000 片獨立 synthetic normal 校準所得的 `2.2915715737547067`，沒有使用 final holdout 的 anomaly labels 調整閾值。0.5% 與 0.1% profile 也各自保留且具有獨立 content hash。
 
 最終 holdout 與訓練資料仍共用同一合成機制，因此只能降低調參洩漏，不能取代新的真實高頻製程資料。
 
@@ -121,12 +123,19 @@ V2 主模型有 53,588 parameters，TorchScript 約 223.7 KiB。發布 artifact 
 from edge_window_runtime import SlidingWindowAnomalyDetector
 
 detector = SlidingWindowAnomalyDetector.from_artifacts()
-result = detector.update([753.0, 101.0, 1204.0, 50.0], timestamp=1.0)
+result = detector.update({
+    "Cl2 Flow": 753.0,
+    "He Press": 101.0,
+    "Pressure": 1204.0,
+    "Vat Valve": 50.0,
+}, timestamp=1.0)
 if result["alarm"]:
     print(result)
 ```
 
-每片 wafer、recipe 或監控區段開始時必須呼叫 `reset()`。模型不接受 NaN/Infinity，也會拒絕重複或倒退的時間戳。
+`from_artifacts()` 會驗證 manifest、profile、checkpoint 與 TorchScript hash，預設載入最終 1% calibration profile。輸入必須是順序完全符合 schema 的具名 mapping；錯序、缺欄、多欄與重欄會 fail closed。CSV replay 必須包含 header。每片 wafer、recipe 或監控區段開始時必須呼叫 `reset()`。模型不接受 NaN/Infinity；同一 stream 一旦選擇提供或不提供 timestamp，後續不得混用，提供時必須嚴格遞增。
+
+`outputs/edge_deployment_manifest.json` 與 `.sha256` 鎖定 checkpoint、TorchScript、sensor statistics、生成/評估程式、設定、依賴版本及最終評估 commit。`11_build_deployment_manifest.py` 在 manifest 已存在時只驗證，不會覆寫。
 
 舊版 Forecaster artifact 仍保留作為比較：
 
@@ -229,7 +238,7 @@ $env:LAM9600_DATA_MAT = 'D:\data\MACHINE_Data.mat'
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-測試涵蓋：因果模型不可讀取未來資料、trailing-window 分數、k-of-n 告警、目標 FPR 閾值、Wilson interval、時間戳與 reset、離線/邊緣評分一致性、Type A 終值一致性及 B/C onset metadata。
+測試涵蓋：因果模型不可讀取未來資料、trailing-window 分數、k-of-n 告警、目標 FPR 閾值、Wilson interval、sensor schema、嚴格時間戳與 reset、final profile 載入、離線/TorchScript 決策一致性、Type A 終值一致性及 B/C onset metadata。
 
 ## 研究限制
 

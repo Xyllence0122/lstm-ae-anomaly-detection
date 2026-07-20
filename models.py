@@ -40,14 +40,13 @@ class LSTMAutoEncoder(nn.Module):
 
 
 class SlidingWindowLSTMAutoEncoder(LSTMAutoEncoder):
-    """LSTM-AE trained and evaluated on causal trailing windows.
+    """Deployment label for the complete-cycle-trained LSTM-AE architecture.
 
-    The network is intentionally identical to ``LSTMAutoEncoder``. Its online
-    behavior comes from the data contract: at sample ``t`` it receives only
-    ``x[t-window+1:t+1]``. A configured reduction converts that window's
-    reconstruction errors into a per-sensor score. This preserves the thesis'
-    LSTM-AE core without allowing future observations to influence an
-    already-emitted decision.
+    V2 reuses weights trained by Step 3 on complete normal process cycles; it
+    does not retrain this subclass on sampled windows. The class intentionally
+    has no architectural differences from ``LSTMAutoEncoder``. Causal behavior
+    is introduced only at inference, where sample ``t`` is scored from
+    ``x[t-window+1:t+1]`` without future observations.
     """
 
 
@@ -256,33 +255,6 @@ def pointwise_errors(model, X_list, batch_size=64):
             for k, j in enumerate(idx[i:i + batch_size]):
                 out[j] = err[k]
     return out
-
-
-def sample_sliding_windows(X_list, window_sizes=(8, 16, 32),
-                           samples_per_size=4, seed=42):
-    """Sample normal trailing windows for efficient mixed-length AE training."""
-    if samples_per_size < 1:
-        raise ValueError("samples_per_size must be at least 1")
-    sizes = tuple(sorted({int(value) for value in window_sizes}))
-    if not sizes or sizes[0] < 2:
-        raise ValueError("window sizes must contain integers of at least 2")
-
-    rng = np.random.default_rng(seed)
-    windows = []
-    for sequence in X_list:
-        for size in sizes:
-            if len(sequence) < size:
-                raise ValueError(
-                    f"window size {size} exceeds sequence length {len(sequence)}")
-            starts = np.arange(len(sequence) - size + 1)
-            replace = len(starts) < samples_per_size
-            selected = rng.choice(
-                starts, size=samples_per_size, replace=replace)
-            windows.extend(
-                np.asarray(sequence[start:start + size], dtype=np.float32)
-                for start in selected
-            )
-    return windows
 
 
 @torch.no_grad()

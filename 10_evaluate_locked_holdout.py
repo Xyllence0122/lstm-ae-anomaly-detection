@@ -7,7 +7,6 @@ model hyperparameters; any later model change requires a new holdout seed.
 """
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
 import os
@@ -24,6 +23,11 @@ import numpy as np
 import torch
 
 from config import COLORS, FIGURE_DIR, OUTPUT_DIR, set_plot_style
+from deployment_manifest import (
+    file_sha256,
+    load_deployment_manifest,
+    verify_report_digest,
+)
 
 
 CALIBRATION_NORMALS = 5000
@@ -40,14 +44,6 @@ def load_numbered_module(filename, module_name):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
-
-def sha256(path):
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def generate_holdout():
@@ -111,26 +107,18 @@ def main():
     output = OUTPUT_DIR / "final_holdout_evaluation.json"
     if output.exists():
         report = json.loads(output.read_text(encoding="utf-8"))
-        artifact_paths = {
-            "sliding_window_lstm_ae.pt": (
-                OUTPUT_DIR / "sliding_window_lstm_ae.pt"),
-            "streaming_lstm_forecaster.pt": (
-                OUTPUT_DIR / "streaming_lstm_forecaster.pt"),
-        }
-        expected_hashes = report["protocol"]["artifact_sha256"]
-        mismatches = [
-            name for name, path in artifact_paths.items()
-            if sha256(path) != expected_hashes.get(name)
-        ]
-        if mismatches:
-            raise RuntimeError(
-                "Frozen artifacts changed after holdout evaluation: "
-                + ", ".join(mismatches)
-                + ". Use new holdout seeds and a new report file."
-            )
+        manifest = load_deployment_manifest(
+            OUTPUT_DIR / "edge_deployment_manifest.json",
+            verify_artifacts=True, verify_provenance=True)
+        final_report_entry = next(
+            item for item in manifest["payload"]["reports"]
+            if item["path"] == "outputs/final_holdout_evaluation.json")
+        verify_report_digest(
+            output, final_report_entry["json_pointer"],
+            final_report_entry["sha256"])
         print(
-            "Existing locked-holdout report found; preserving its results "
-            "and regenerating only the figure.")
+            "Existing locked-holdout report and complete provenance verified; "
+            "preserving results and regenerating only the figure.")
         plot_results(report["results"])
         return
 
@@ -166,8 +154,8 @@ def main():
                 "anomaly_holdout": ANOMALY_HOLDOUT_SEED,
             },
             "artifact_sha256": {
-                "sliding_window_lstm_ae.pt": sha256(sliding_path),
-                "streaming_lstm_forecaster.pt": sha256(forecaster_path),
+                "sliding_window_lstm_ae.pt": file_sha256(sliding_path),
+                "streaming_lstm_forecaster.pt": file_sha256(forecaster_path),
             },
             "warning": (
                 "Changing model settings after reading this report invalidates "

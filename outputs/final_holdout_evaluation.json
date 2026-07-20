@@ -13,7 +13,11 @@
       "sliding_window_lstm_ae.pt": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
       "streaming_lstm_forecaster.pt": "1e580fe05aa9a346bcec7ef034acb11fc0b89155b06caa76b64d5cc37762ef22"
     },
-    "warning": "Changing model settings after reading this report invalidates its final-holdout status."
+    "warning": "Changing model settings after reading this report invalidates its final-holdout status.",
+    "provenance_manifest": {
+      "path": "outputs/edge_deployment_manifest.json",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4"
+    }
   },
   "results": [
     {
@@ -243,6 +247,71 @@
         "B: 過程震盪": 0.52,
         "C: 緩慢漂移": 0.8787878787878788
       }
+    }
+  ],
+  "result_bindings": [
+    {
+      "result_index": 0,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.01,
+      "threshold": 2.2915715737547067,
+      "checkpoint_artifact": "sliding_checkpoint",
+      "checkpoint_sha256": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
+      "calibration_scope": "final_holdout_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4",
+      "profile_id": "final_calibration_fpr_1pct"
+    },
+    {
+      "result_index": 1,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.005,
+      "threshold": 2.446301998730784,
+      "checkpoint_artifact": "sliding_checkpoint",
+      "checkpoint_sha256": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
+      "calibration_scope": "final_holdout_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4",
+      "profile_id": "final_calibration_fpr_0_5pct"
+    },
+    {
+      "result_index": 2,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.001,
+      "threshold": 2.7322752216943855,
+      "checkpoint_artifact": "sliding_checkpoint",
+      "checkpoint_sha256": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
+      "calibration_scope": "final_holdout_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4",
+      "profile_id": "final_calibration_fpr_0_1pct"
+    },
+    {
+      "result_index": 3,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.01,
+      "threshold": 1.9290071762398335,
+      "checkpoint_artifact": "forecaster_checkpoint",
+      "checkpoint_sha256": "1e580fe05aa9a346bcec7ef034acb11fc0b89155b06caa76b64d5cc37762ef22",
+      "calibration_scope": "final_holdout_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4"
+    },
+    {
+      "result_index": 4,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.005,
+      "threshold": 2.0021187603538886,
+      "checkpoint_artifact": "forecaster_checkpoint",
+      "checkpoint_sha256": "1e580fe05aa9a346bcec7ef034acb11fc0b89155b06caa76b64d5cc37762ef22",
+      "calibration_scope": "final_holdout_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4"
+    },
+    {
+      "result_index": 5,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.001,
+      "threshold": 2.103906614598055,
+      "checkpoint_artifact": "forecaster_checkpoint",
+      "checkpoint_sha256": "1e580fe05aa9a346bcec7ef034acb11fc0b89155b06caa76b64d5cc37762ef22",
+      "calibration_scope": "final_holdout_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4"
     }
   ]
 }

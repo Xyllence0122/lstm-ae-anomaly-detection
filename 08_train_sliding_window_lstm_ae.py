@@ -351,9 +351,9 @@ def export_release(model, checkpoint, sensor_names):
 
 
 def benchmark_runtime(checkpoint_path, model_path, runs):
-    detector = SlidingWindowAnomalyDetector.from_artifacts(
+    detector = SlidingWindowAnomalyDetector.from_validation_artifacts(
         checkpoint_path, model_path)
-    sample = detector.mean.copy()
+    sample = dict(zip(detector.sensor_names, detector.mean.copy()))
     previous_threads = torch.get_num_threads()
     torch.set_num_threads(1)
     try:
@@ -414,9 +414,10 @@ def verify_artifact_parity(checkpoint_path, model_path, sequences):
     decisions_match = True
     for sequence, expected_raw, expected_persistent in zip(
             sequences, offline_raw, offline_persistent):
-        detector = SlidingWindowAnomalyDetector.from_artifacts(
+        detector = SlidingWindowAnomalyDetector.from_validation_artifacts(
             checkpoint_path, model_path)
-        emitted = [detector.update(sample) for sample in sequence]
+        emitted = [detector.update(dict(zip(detector.sensor_names, sample)))
+                   for sample in sequence]
         actual_raw = np.asarray([
             item["raw_score"] for item in emitted
             if item["raw_score"] is not None])

@@ -293,5 +293,67 @@
     "Projected precision assumes recall and FPR transfer to deployment.",
     "Large normal cohorts are synthetic and cannot replace long real production runs.",
     "Complete-wafer baselines are not directly comparable on alert timing."
+  ],
+  "result_bindings": [
+    {
+      "result_index": 0,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.01,
+      "threshold": 2.2730147634453783,
+      "checkpoint_artifact": "sliding_checkpoint",
+      "checkpoint_sha256": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
+      "calibration_scope": "development_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4"
+    },
+    {
+      "result_index": 1,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.005,
+      "threshold": 2.351264676808,
+      "checkpoint_artifact": "sliding_checkpoint",
+      "checkpoint_sha256": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
+      "calibration_scope": "development_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4"
+    },
+    {
+      "result_index": 2,
+      "model": "Sliding-Window LSTM-AE",
+      "target_fpr": 0.001,
+      "threshold": 2.673215401953641,
+      "checkpoint_artifact": "sliding_checkpoint",
+      "checkpoint_sha256": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
+      "calibration_scope": "development_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4"
+    },
+    {
+      "result_index": 3,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.01,
+      "threshold": 1.8905760878170357,
+      "checkpoint_artifact": "forecaster_checkpoint",
+      "checkpoint_sha256": "1e580fe05aa9a346bcec7ef034acb11fc0b89155b06caa76b64d5cc37762ef22",
+      "calibration_scope": "development_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4"
+    },
+    {
+      "result_index": 4,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.005,
+      "threshold": 2.0213459486802994,
+      "checkpoint_artifact": "forecaster_checkpoint",
+      "checkpoint_sha256": "1e580fe05aa9a346bcec7ef034acb11fc0b89155b06caa76b64d5cc37762ef22",
+      "calibration_scope": "development_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4"
+    },
+    {
+      "result_index": 5,
+      "model": "Causal LSTM Forecaster",
+      "target_fpr": 0.001,
+      "threshold": 2.1939320976179055,
+      "checkpoint_artifact": "forecaster_checkpoint",
+      "checkpoint_sha256": "1e580fe05aa9a346bcec7ef034acb11fc0b89155b06caa76b64d5cc37762ef22",
+      "calibration_scope": "development_normal_only_calibration",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4"
+    }
   ]
 }

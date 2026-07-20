@@ -593,5 +593,12 @@
     "The fixed benchmark oversamples anomalies and does not represent fab prevalence.",
     "LAM 9600 sampling cannot validate sub-second process dynamics.",
     "Host CPU latency is not Raspberry Pi or production IPC latency."
-  ]
+  ],
+  "deployment_binding": {
+    "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4",
+    "profile_id": "validation_operating_point",
+    "checkpoint_artifact": "sliding_checkpoint",
+    "checkpoint_sha256": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
+    "threshold": 2.079145039482915
+  }
 }

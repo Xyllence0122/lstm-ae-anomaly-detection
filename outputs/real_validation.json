@@ -71,5 +71,16 @@
     "score_mode": "mean",
     "median_first_alarm_progress_detected": 0.3804347826086957,
     "timing_note": "Process progress only; the real dataset has no verified fault-onset timestamp."
-  }
+  },
+  "result_bindings": [
+    {
+      "result_key": "sliding_window_lstm_ae",
+      "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4",
+      "checkpoint_artifact": "sliding_checkpoint",
+      "checkpoint_sha256": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
+      "operating_point": "real_normal_recalibration_sanity_check",
+      "deployment_profile": false,
+      "threshold": 2.5091353484033694
+    }
+  ]
 }
