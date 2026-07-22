@@ -1,0 +1,30 @@
+{
+  "status": "v3_2_normal_only_threshold_calibration",
+  "model_weights_changed": false,
+  "profiles_changed": false,
+  "anomaly_labels_accessed": false,
+  "normal_count": 10000,
+  "seed": 396001,
+  "target_fpr": 0.001,
+  "allowed_false_positives": 10,
+  "observed_false_positives": 10,
+  "observed_fpr": 0.001,
+  "old_threshold": 1.0455643552008689,
+  "new_threshold": 1.1795640023513194,
+  "source_artifact_sha256": "93c229250ec980f461c409ee962b24badc899ea4a303a25d712614f8b0b891bc",
+  "statistics_sha256": "79118aea76f3d3bf8eb41c2b5d62e20ff56ab5adc073e00cc419dbbfb77b2aa6",
+  "calibrated_artifact_sha256": "e3ab0ba9954114bf4b8db5842838be88160ef7b65a308c4c8ffe6c0603a56b5d",
+  "resolved_command": [
+    "C:\\Max\\Paper\\AIoT\\lstm-ae\\.venv\\Scripts\\python.exe",
+    "C:\\Max\\Paper\\AIoT\\lstm-ae\\23_calibrate_v3_2.py"
+  ],
+  "code_sha256": "da068fd091cf23434e6f5458cbe5a8e39e900016a77e37bd5c29e6f706779d1a",
+  "git_commit": "a1f2507a8e1b60eac7e3ec46cb146794ae53bc8c",
+  "git_status_before_report": "?? outputs/v3/sliding_window_lstm_ae_v3_2.pt",
+  "environment": {
+    "python": "3.12.13",
+    "torch": "2.13.0+cpu",
+    "numpy": "2.5.1",
+    "device": "cpu"
+  }
+}

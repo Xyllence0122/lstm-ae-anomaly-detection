@@ -26,6 +26,7 @@ V2_STATS_PATH = OUTPUT_DIR / "sensor_stats.json"
 V2_REAL_REPORT_PATH = OUTPUT_DIR / "real_validation.json"
 EXPECTED_ARTIFACT_SHA256 = (
     "5225deea1e1af34fc5fcab987af03d0aefaebae0c42433b71be4868dac6468b2")
+EXTRA_PROVENANCE_PATHS = []
 
 
 def file_sha256(path):
@@ -150,6 +151,10 @@ def main():
                     "16_evaluate_v3_locked_holdout.py"),
                 "v3_data.py": file_sha256("v3_data.py"),
                 "v3_features.py": file_sha256("v3_features.py"),
+                **{
+                    str(path): file_sha256(path)
+                    for path in EXTRA_PROVENANCE_PATHS
+                },
             },
             "git_commit": git_value("rev-parse", "HEAD"),
             "git_status_porcelain": git_value("status", "--porcelain"),
