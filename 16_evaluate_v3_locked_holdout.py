@@ -43,6 +43,7 @@ ANOMALY_NAMES = {
     2: "B: oscillation",
     3: "C: drift",
 }
+EXTRA_PROVENANCE_PATHS = []
 
 
 def file_sha256(path):
@@ -227,7 +228,7 @@ def main():
         Path("models.py"), Path("online_evaluation.py"),
         Path("14_train_v3_window_lstm_ae.py"),
         Path("15_select_v3_multiscale.py"),
-    ]
+    ] + list(EXTRA_PROVENANCE_PATHS)
     report = {
         "status": "locked_final_holdout_no_further_tuning",
         "protocol": {
