@@ -33,7 +33,7 @@ PERSISTENCE_OPTIONS = ((1, 1), (2, 3), (3, 5))
 DEFAULT_TARGET_VALIDATION_FPR = 0.005
 TOP_PER_TYPE = 8
 ANOMALY_NAMES = {
-    1: "A: dynamic slew excursion",
+    1: "A: per-sample difference excursion",
     2: "B: oscillation",
     3: "C: drift",
 }

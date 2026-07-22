@@ -40,7 +40,7 @@ TARGET_VALIDATION_FPR = 0.005
 HIDDEN_SIZE = 64
 LATENT_SIZE = 16
 ANOMALY_NAMES = {
-    1: "A: dynamic slew excursion",
+    1: "A: per-sample difference excursion",
     2: "B: oscillation",
     3: "C: drift",
 }
