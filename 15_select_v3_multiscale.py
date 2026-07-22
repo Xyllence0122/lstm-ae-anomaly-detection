@@ -46,6 +46,7 @@ def parse_args():
         default=str(
             V3_DIR / "experiment_observable_contract_quick" / "candidate.pt"))
     parser.add_argument("--experiment", default="multiscale_quick")
+    parser.add_argument("--data-path", default=str(DATA_PATH))
     parser.add_argument(
         "--target-fpr", type=float, default=DEFAULT_TARGET_VALIDATION_FPR)
     parser.add_argument("--publish", action="store_true")
@@ -63,8 +64,8 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
-def load_selection_data():
-    raw = np.load(DATA_PATH, allow_pickle=True)
+def load_selection_data(path):
+    raw = np.load(path, allow_pickle=True)
     return {
         "normal": list(raw["X_val"]),
         "anomaly": list(raw["X_val_anom"]),
@@ -90,6 +91,20 @@ def profile_key(profile):
         profile["window_size"], profile["score_mode"],
         profile["persistence_required"], profile["persistence_span"],
     )
+
+
+def calibrate_profile_events(curves, first_sample, labels, metadata,
+                             evidence_span, target_fpr, normal_count):
+    """Calibrate on normal event scores, then compute real pre-onset flags."""
+    _, _, _, event_scores = event_decisions(
+        curves, np.inf, first_sample, labels, metadata,
+        evidence_span=evidence_span)
+    base_scale = threshold_for_target_fpr(
+        event_scores[:normal_count], target_fpr)
+    predictions, _, pre_onset, event_scores = event_decisions(
+        curves, base_scale, first_sample, labels, metadata,
+        evidence_span=evidence_span)
+    return base_scale, predictions, pre_onset, event_scores
 
 
 def enumerate_profiles(model, normal, anomaly, labels, metadata,
@@ -121,12 +136,10 @@ def enumerate_profiles(model, normal, anomaly, labels, metadata,
                 curves = apply_persistence(
                     normal_raw + anomaly_raw, required, span)
                 first_sample = window_size - 1 + span - 1
-                _, _, pre_onset, event_scores = event_decisions(
-                    curves, np.inf, first_sample, all_labels,
-                    all_metadata, evidence_span=span)
-                base_scale = threshold_for_target_fpr(
-                    event_scores[:len(normal)], target_fpr)
-                predictions = event_scores > base_scale
+                base_scale, predictions, pre_onset, event_scores = (
+                    calibrate_profile_events(
+                        curves, first_sample, all_labels, all_metadata,
+                        span, target_fpr, len(normal)))
                 metrics = binary_event_metrics(
                     all_labels, predictions, event_scores)
                 per_type = {
@@ -210,12 +223,13 @@ def select_ensemble(profiles, labels, normal_count, target_fpr):
 def main():
     args = parse_args()
     source_path = Path(args.source)
+    data_path = Path(args.data_path)
     source = torch.load(source_path, map_location="cpu", weights_only=False)
-    current_data_hash = file_sha256(DATA_PATH)
+    current_data_hash = file_sha256(data_path)
     if source["data_sha256"] != current_data_hash:
         raise RuntimeError(
             "source checkpoint and current selection data hashes differ")
-    data = load_selection_data()
+    data = load_selection_data(data_path)
     normal = transform_sequences(data["normal"], source["feature_spec"])
     anomaly = transform_sequences(data["anomaly"], source["feature_spec"])
     model = SlidingWindowLSTMAutoEncoder(
@@ -247,6 +261,8 @@ def main():
         "dynamic_weight": source["dynamic_weight"],
         "selection_data_sha256": current_data_hash,
         "source_checkpoint_sha256": file_sha256(source_path),
+        "selection_data_path": str(data_path),
+        "selection_data_sha256": current_data_hash,
     }, artifact_path)
     metrics = {
         **best["metrics"],

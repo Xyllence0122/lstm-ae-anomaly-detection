@@ -23,10 +23,35 @@ SPLIT_SEED = 123
 STATS_FRACTION = 0.6
 ANOMALY_NAMES = {
     0: "Normal",
-    1: "A: fast transient response",
+    1: "A: per-sample difference excursion",
     2: "B: process oscillation",
     3: "C: gradual drift",
 }
+
+
+def intervention_support(delta, affected, tolerance=1e-12):
+    """Return exact pre-quantization bounds of an injected intervention."""
+    values = np.asarray(delta, dtype=np.float64)
+    by_sensor = []
+    all_indices = []
+    for feature in affected:
+        indices = np.flatnonzero(np.abs(values[:, feature]) > tolerance)
+        if not len(indices):
+            continue
+        all_indices.extend(indices.tolist())
+        by_sensor.append({
+            "sensor_position": int(feature),
+            "first_index": int(indices[0]),
+            "last_index": int(indices[-1]),
+        })
+    return {
+        "definition": (
+            "indices where the pre-quantization intervention changes the "
+            "generated normal baseline by more than 1e-12"),
+        "by_sensor": by_sensor,
+        "onset_index": min(all_indices) if all_indices else None,
+        "end_index": max(all_indices) if all_indices else None,
+    }
 
 
 def load_lam_data(path=DATA_MAT):
@@ -364,7 +389,9 @@ def generate_wafer(rng, statistics, anomaly=0, return_metadata=False):
     fast_transition = None
     anomaly_strength_sigma = None
     anomaly_slew_ratio = None
+    support = None
     if anomaly == 1:
+        baseline_before_intervention = base.copy()
         speed_factor = float(rng.uniform(
             *anomaly_protocol["fast_transition_speed_factor"]))
         anomaly_slew_ratio = float(rng.uniform(
@@ -398,9 +425,12 @@ def generate_wafer(rng, statistics, anomaly=0, return_metadata=False):
                 direction = 1.0
             base[pulse, feature] = (
                 base[pulse - 1, feature] + direction * target_slew)
-        onset_indices.append(0)
-        end_indices.append(min(
-            int(np.ceil((transition + 0.08) * length)), length - 1))
+        support = intervention_support(
+            base - baseline_before_intervention, affected)
+        if support["onset_index"] is None:
+            raise RuntimeError("Type A intervention has empty support")
+        onset_indices.append(support["onset_index"])
+        end_indices.append(support["end_index"])
 
     if anomaly == 2:
         anomaly_strength_sigma = float(rng.uniform(
@@ -454,6 +484,7 @@ def generate_wafer(rng, statistics, anomaly=0, return_metadata=False):
         "speed_factor": speed_factor,
         "anomaly_slew_ratio": anomaly_slew_ratio,
         "anomaly_strength_sigma": anomaly_strength_sigma,
+        "intervention_support": support,
     }
     return (base.astype(np.float32), metadata) if return_metadata else base.astype(np.float32)
 

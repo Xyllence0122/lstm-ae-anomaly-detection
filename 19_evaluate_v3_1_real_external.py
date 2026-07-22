@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""External V3.1 challenge on untouched real normal and faulty wafers."""
+"""Historical-reuse audit on real wafers already evaluated during V2."""
 from __future__ import annotations
 
 import hashlib
@@ -21,7 +21,9 @@ from v3_features import transform_sequences
 PROJECT_DIR = Path(__file__).resolve().parent
 V3_DIR = OUTPUT_DIR / "v3"
 ARTIFACT_PATH = V3_DIR / "sliding_window_lstm_ae_v3_1.pt"
-REPORT_PATH = V3_DIR / "external_real_data_v3_1.json"
+REPORT_PATH = V3_DIR / "historical_real_data_reuse_audit_v3_1.json"
+V2_STATS_PATH = OUTPUT_DIR / "sensor_stats.json"
+V2_REAL_REPORT_PATH = OUTPUT_DIR / "real_validation.json"
 EXPECTED_ARTIFACT_SHA256 = (
     "5225deea1e1af34fc5fcab987af03d0aefaebae0c42433b71be4868dac6468b2")
 
@@ -64,7 +66,7 @@ def main():
     if file_sha256(ARTIFACT_PATH) != EXPECTED_ARTIFACT_SHA256:
         raise RuntimeError("V3.1 artifact hash mismatch")
     if REPORT_PATH.exists():
-        raise FileExistsError("refusing to overwrite real external report")
+        raise FileExistsError("refusing to overwrite historical reuse audit")
     splits = real_data_splits()
     normal = [
         np.asarray(wafer[:, SENSOR_IDX], dtype=np.float32)
@@ -103,10 +105,12 @@ def main():
         for name, values in sorted(by_fault_name.items())
     }
     report = {
-        "status": "external_real_data_no_tuning",
+        "status": "historically_reused_real_data_audit_no_v3_tuning",
         "interpretation": (
-            "Binary normal/faulty challenge only; real fault names do not map "
-            "to the three synthetic anomaly mechanisms."),
+            "These wafers were excluded from V3 weights and threshold fitting, "
+            "but the same 43 normal and 20 faulty wafers were already evaluated "
+            "during V2. This is a historical reuse audit, not unseen or "
+            "independent external validation."),
         "data": {
             "normal_holdout_count": len(normal),
             "faulty_count": len(faulty),
@@ -114,6 +118,14 @@ def main():
             "source_mat_sha256": file_sha256(DATA_MAT),
             "chronology_repair": (
                 "sort monitored step 4/5 samples by Time and average duplicates"),
+            "historical_reuse": {
+                "same_split_as_v2": True,
+                "previously_evaluated_during_v2": True,
+                "v2_statistics_path": str(V2_STATS_PATH),
+                "v2_statistics_sha256": file_sha256(V2_STATS_PATH),
+                "v2_real_report_path": str(V2_REAL_REPORT_PATH),
+                "v2_real_report_sha256": file_sha256(V2_REAL_REPORT_PATH),
+            },
         },
         "counts": {
             "normal_false_positives": int(normal_predictions.sum()),
@@ -143,9 +155,10 @@ def main():
             "git_status_porcelain": git_value("status", "--porcelain"),
         },
         "limitations": [
-            "Only 43 untouched real normal wafers are available, so the FPR confidence interval is wide.",
+            "The same real wafers and split were evaluated during V2, so this is not a fresh external validation set.",
+            "Only 43 V3-weight/threshold-excluded real normal wafers are available, so the FPR confidence interval is wide.",
             "Only 20 real faulty wafers are available and reliable fault onset labels are absent.",
-            "The real dataset is an external challenge, not a representative prevalence-weighted production trial.",
+            "The historically reused real dataset is not a representative prevalence-weighted production trial.",
         ],
     }
     REPORT_PATH.write_text(

@@ -25,6 +25,7 @@ from online_evaluation import (
 from v3_data import (
     chronological_process_segment,
     generate_wafer,
+    intervention_support,
     load_statistics,
     phase_map,
 )
@@ -49,6 +50,14 @@ def load_generator_module():
 def load_streaming_experiment_module():
     path = PROJECT_DIR / "07_streaming_early_warning.py"
     spec = importlib.util.spec_from_file_location("streaming_experiment", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_v3_multiscale_module():
+    path = PROJECT_DIR / "15_select_v3_multiscale.py"
+    spec = importlib.util.spec_from_file_location("v3_multiscale", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -358,6 +367,20 @@ class SyntheticMetadataTests(unittest.TestCase):
 
 
 class V3DataContractTests(unittest.TestCase):
+    def test_intervention_support_uses_actual_nonzero_bounds(self):
+        delta = np.zeros((10, 3), dtype=np.float64)
+        delta[2:7, 0] = 1.0
+        delta[4:9, 2] = -2.0
+
+        support = intervention_support(delta, affected=[0, 2])
+
+        self.assertEqual(support["onset_index"], 2)
+        self.assertEqual(support["end_index"], 8)
+        self.assertEqual(support["by_sensor"], [
+            {"sensor_position": 0, "first_index": 2, "last_index": 6},
+            {"sensor_position": 2, "first_index": 4, "last_index": 8},
+        ])
+
     def test_chronology_repair_sorts_and_averages_duplicate_times(self):
         wafer = np.zeros((5, 21), dtype=np.float64)
         wafer[:, 0] = [3.0, 1.0, 2.0, 1.0, 4.0]
@@ -416,6 +439,40 @@ class V3DataContractTests(unittest.TestCase):
                     metadata["anomaly_slew_ratio"] *
                     group["early_slew_abs_p99"][feature])
                 self.assertGreaterEqual(observed + 1e-6, required)
+
+    def test_dynamic_anomaly_metadata_matches_full_intervention_support(self):
+        statistics = load_statistics(
+            PROJECT_DIR / "outputs" / "v3" / "sensor_stats_v3.json")
+        for seed in range(10, 20):
+            _, metadata = generate_wafer(
+                np.random.default_rng(seed), statistics,
+                anomaly=1, return_metadata=True)
+            support = metadata["intervention_support"]
+            first = min(item["first_index"] for item in support["by_sensor"])
+            last = max(item["last_index"] for item in support["by_sensor"])
+            self.assertEqual(metadata["onset_index"], first)
+            self.assertEqual(metadata["end_index"], last)
+            self.assertGreater(last, int(np.ceil(
+                (metadata["normal_transition_fraction"] + 0.08) *
+                metadata["sequence_length"])) - 1)
+
+    def test_multiscale_pre_onset_diagnostic_uses_calibrated_threshold(self):
+        multiscale = load_v3_multiscale_module()
+        curves = [
+            np.asarray([0.4, 0.5]),
+            np.asarray([5.0, 0.1, 0.1]),
+        ]
+        labels = np.asarray([0, 1])
+        metadata = [{}, {"onset_index": 1}]
+
+        _, predictions, pre_onset, _ = (
+            multiscale.calibrate_profile_events(
+                curves, first_sample=0, labels=labels,
+                metadata=metadata, evidence_span=1,
+                target_fpr=0.005, normal_count=1))
+
+        np.testing.assert_array_equal(predictions, [False, False])
+        np.testing.assert_array_equal(pre_onset, [False, True])
 
 
 if __name__ == "__main__":

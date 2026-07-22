@@ -39,11 +39,15 @@ ANOMALY_HOLDOUT_SEED = 295001
 HOLDOUT_NORMALS = 10000
 HOLDOUT_PER_ANOMALY = 1000
 ANOMALY_NAMES = {
-    1: "A: dynamic slew excursion",
+    1: "A: per-sample difference excursion",
     2: "B: oscillation",
     3: "C: drift",
 }
 EXTRA_PROVENANCE_PATHS = []
+REPORT_STATUS = "versioned_locked_holdout"
+REPORT_LINEAGE = {}
+CALIBRATION_REPORT_PATH = None
+CALIBRATION_CODE_PATH = None
 
 
 def file_sha256(path):
@@ -175,6 +179,38 @@ def interval_record(successes, total):
     }
 
 
+def threshold_source_record(artifact):
+    calibration = artifact.get("calibration_provenance")
+    if calibration is None and "calibration_v3_1" in artifact:
+        calibration = artifact["calibration_v3_1"]
+    if calibration is None:
+        return {
+            "type": "selection_normal_profile",
+            "description": (
+                "threshold frozen during multiscale selection; no holdout "
+                "recalibration"),
+        }
+    record = {
+        "type": "post_selection_normal_only_calibration",
+        "normal_count": calibration["normal_count"],
+        "seed": calibration["seed"],
+        "target_fpr": calibration["target_fpr"],
+        "observed_fpr": calibration["observed_fpr"],
+        "source_artifact_sha256": calibration["source_artifact_sha256"],
+    }
+    if CALIBRATION_REPORT_PATH is not None:
+        record["calibration_report"] = {
+            "path": str(CALIBRATION_REPORT_PATH),
+            "sha256": file_sha256(CALIBRATION_REPORT_PATH),
+        }
+    if CALIBRATION_CODE_PATH is not None:
+        record["calibration_code"] = {
+            "path": str(CALIBRATION_CODE_PATH),
+            "sha256": file_sha256(CALIBRATION_CODE_PATH),
+        }
+    return record
+
+
 def git_value(*args):
     result = subprocess.run(
         ["git", *args], check=True, capture_output=True,
@@ -230,7 +266,8 @@ def main():
         Path("15_select_v3_multiscale.py"),
     ] + list(EXTRA_PROVENANCE_PATHS)
     report = {
-        "status": "locked_final_holdout_no_further_tuning",
+        "status": REPORT_STATUS,
+        "lineage": REPORT_LINEAGE,
         "protocol": {
             "normal_count": HOLDOUT_NORMALS,
             "anomaly_count_per_type": HOLDOUT_PER_ANOMALY,
@@ -238,8 +275,7 @@ def main():
                 "normal": NORMAL_HOLDOUT_SEED,
                 "anomaly": ANOMALY_HOLDOUT_SEED,
             },
-            "threshold_source": (
-                "frozen selection-normal profile; no holdout recalibration"),
+            "threshold_source": threshold_source_record(artifact),
             "same_family_synthetic_holdout": True,
         },
         "operating_point": {
@@ -281,6 +317,9 @@ def main():
             },
             "detected_before_injection_end_rate": (
                 detected_before_end / true_positives),
+            "injection_end_definition": (
+                "last sample where the pre-quantization intervention changes "
+                "the generated normal baseline by more than 1e-12"),
         },
         "provenance": {
             "artifact_sha256": locked_hashes["artifact"],

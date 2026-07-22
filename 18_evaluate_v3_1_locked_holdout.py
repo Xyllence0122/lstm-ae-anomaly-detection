@@ -22,6 +22,14 @@ evaluator.EXPECTED_ARTIFACT_SHA256 = (
 evaluator.NORMAL_HOLDOUT_SEED = 394001
 evaluator.ANOMALY_HOLDOUT_SEED = 395001
 evaluator.EXTRA_PROVENANCE_PATHS = [Path(__file__)]
+evaluator.REPORT_STATUS = "v3_1_locked_holdout_after_normal_only_calibration"
+evaluator.REPORT_LINEAGE = {
+    "predecessor": "outputs/v3/final_holdout_v3.json",
+    "reason": "larger normal-only threshold calibration",
+}
+evaluator.CALIBRATION_REPORT_PATH = (
+    OUTPUT_DIR / "v3" / "deployment_calibration_v3_1.json")
+evaluator.CALIBRATION_CODE_PATH = PROJECT_DIR / "17_calibrate_v3_1.py"
 
 
 if __name__ == "__main__":

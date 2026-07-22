@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Causal raw, first-difference, and elapsed-phase features for V3."""
+"""Causal raw, per-sample-difference, and sample-progress V3 features."""
 from __future__ import annotations
 
 import numpy as np
@@ -42,6 +42,9 @@ def fit_feature_spec(sequences, sensor_names):
         "causality": (
             "features at t use raw values through t, x[t]-x[t-1], and "
             "elapsed sample count since reset; actual cycle length is unused"),
+        "timing_contract": (
+            "no timestamp, delta-t, or resampling is used; delta features are "
+            "per-sample differences and elapsed_phase is sample progress"),
     }
 
 

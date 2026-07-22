@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -47,11 +49,12 @@ ANOMALY_NAMES = {
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seeds", default="34001")
-    parser.add_argument("--epochs", type=int, default=80)
+    parser.add_argument("--epochs", type=int, default=40)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--samples-per-size", type=int, default=4)
     parser.add_argument("--dynamic-weight", type=float, default=0.5)
     parser.add_argument("--experiment", default="dynamic")
+    parser.add_argument("--data-path", default=str(DATA_PATH))
     parser.add_argument("--publish", action="store_true")
     args = parser.parse_args()
     args.seeds = [
@@ -75,8 +78,8 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
-def load_data():
-    raw = np.load(DATA_PATH, allow_pickle=True)
+def load_data(path):
+    raw = np.load(path, allow_pickle=True)
     return {
         "train": list(raw["X_train"]),
         "validation": list(raw["X_val"]),
@@ -281,7 +284,42 @@ def serialize_candidate(candidate):
 def main():
     args = parse_args()
     V3_DIR.mkdir(exist_ok=True)
-    data = load_data()
+    data_path = Path(args.data_path)
+    data = load_data(data_path)
+    command_argv = [
+        sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]
+    ]
+    resolved_run = {
+        "command_argv": command_argv,
+        "command_line_windows": subprocess.list2cmdline(command_argv),
+        "arguments": {
+            "seeds": args.seeds,
+            "epochs": args.epochs,
+            "batch_size": args.batch_size,
+            "samples_per_size": args.samples_per_size,
+            "dynamic_weight": args.dynamic_weight,
+            "experiment": args.experiment,
+            "publish": args.publish,
+            "data_path": str(data_path),
+        },
+        "fixed_config": {
+            "window_sizes": list(WINDOW_SIZES),
+            "persistence_options": [list(item) for item in PERSISTENCE_OPTIONS],
+            "score_modes": list(SCORE_MODES),
+            "target_validation_fpr": TARGET_VALIDATION_FPR,
+            "hidden_size": HIDDEN_SIZE,
+            "latent_size": LATENT_SIZE,
+            "optimizer": "Adam",
+            "learning_rate": 0.001,
+            "validation_window_sequence_count": 500,
+            "validation_windows_per_size": 2,
+            "validation_window_seed": 35001,
+        },
+        "selection_data_path": str(data_path),
+        "selection_data_sha256": file_sha256(data_path),
+        "torch_version": torch.__version__,
+        "device": str(DEVICE),
+    }
     feature_spec = fit_feature_spec(data["train"], data["sensor_names"])
     train = transform_sequences(data["train"], feature_spec)
     validation = transform_sequences(data["validation"], feature_spec)
@@ -310,6 +348,8 @@ def main():
             "state_dict": best["state_dict"],
             "calibration": best["calibration"],
             "diagnostics": diagnostics,
+            "completed_epochs": len(history["train"]),
+            "checkpoint_epochs": [epoch for epoch, _ in checkpoints],
         }
         results.append(result)
         print(
@@ -336,7 +376,8 @@ def main():
         "hidden_size": HIDDEN_SIZE,
         "latent_size": LATENT_SIZE,
         "dynamic_weight": args.dynamic_weight,
-        "data_sha256": file_sha256(DATA_PATH),
+        "data_sha256": file_sha256(data_path),
+        "training_run": resolved_run,
     }, artifact_path)
     report = {
         "protocol": {
@@ -350,12 +391,16 @@ def main():
             "holdout_access": "none",
         },
         "feature_spec": feature_spec,
+        "resolved_run": resolved_run,
         "seeds": [
             {
                 "seed": item["seed"],
                 "selection": item["selection"],
                 "final_train_loss": item["history"]["train"][-1],
                 "final_validation_loss": item["history"]["validation"][-1],
+                "requested_epochs": args.epochs,
+                "completed_epochs": item["completed_epochs"],
+                "checkpoint_epochs": item["checkpoint_epochs"],
                 "diagnostics": item["diagnostics"],
             }
             for item in results
