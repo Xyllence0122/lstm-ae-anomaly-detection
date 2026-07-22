@@ -22,6 +22,17 @@ from online_evaluation import (
     threshold_for_target_fpr,
     wilson_interval,
 )
+from v3_data import (
+    chronological_process_segment,
+    generate_wafer,
+    load_statistics,
+    phase_map,
+)
+from v3_features import (
+    fit_feature_spec,
+    sample_training_windows,
+    transform_sequence,
+)
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -344,6 +355,67 @@ class SyntheticMetadataTests(unittest.TestCase):
             self.assertGreater(metadata["onset_index"], 0)
             self.assertLess(metadata["onset_index"], 99)
             self.assertGreaterEqual(metadata["end_index"], metadata["onset_index"])
+
+
+class V3DataContractTests(unittest.TestCase):
+    def test_chronology_repair_sorts_and_averages_duplicate_times(self):
+        wafer = np.zeros((5, 21), dtype=np.float64)
+        wafer[:, 0] = [3.0, 1.0, 2.0, 1.0, 4.0]
+        wafer[:, 1] = [4.0, 4.0, 4.0, 4.0, 2.0]
+        wafer[:, 8] = [30.0, 10.0, 20.0, 14.0, 999.0]
+
+        repaired = chronological_process_segment(wafer)
+
+        np.testing.assert_allclose(repaired[:, 0], [1.0, 2.0, 3.0])
+        np.testing.assert_allclose(repaired[:, 8], [12.0, 20.0, 30.0])
+        self.assertTrue(np.all(np.diff(repaired[:, 0]) > 0))
+
+    def test_phase_map_preserves_endpoints_and_transition(self):
+        progress = np.asarray([0.0, 0.1, 1.0])
+        mapped = phase_map(progress, transition=0.1, canonical=0.04)
+
+        np.testing.assert_allclose(mapped, [0.0, 0.04, 1.0])
+
+    def test_v3_features_do_not_use_future_or_actual_cycle_length(self):
+        train = [np.arange(32, dtype=np.float32)[:, None]]
+        spec = fit_feature_spec(train, ["Pressure"])
+        common = np.arange(6, dtype=np.float32)[:, None]
+        first = np.vstack([common, [[6.0], [7.0], [8.0]]])
+        second = np.vstack([common, [[60.0], [70.0], [80.0], [90.0]]])
+
+        first_features = transform_sequence(first, spec)
+        second_features = transform_sequence(second, spec)
+
+        np.testing.assert_allclose(
+            first_features[:6], second_features[:6], atol=1e-7)
+        self.assertFalse(np.allclose(
+            first_features[6:], second_features[6:9]))
+
+    def test_window_sampler_always_includes_start_and_end(self):
+        sequence = np.arange(10, dtype=np.float32)[:, None]
+        windows = sample_training_windows(
+            [sequence], window_sizes=[4], samples_per_size=2, seed=123)
+
+        self.assertEqual(len(windows), 2)
+        np.testing.assert_array_equal(windows[0], sequence[:4])
+        np.testing.assert_array_equal(windows[1], sequence[-4:])
+
+    def test_dynamic_anomaly_obeys_observable_slew_contract(self):
+        statistics = load_statistics(
+            PROJECT_DIR / "outputs" / "v3" / "sensor_stats_v3.json")
+        rng = np.random.default_rng(9981)
+        for _ in range(20):
+            sequence, metadata = generate_wafer(
+                rng, statistics, anomaly=1, return_metadata=True)
+            group = statistics["recipe_groups"][metadata["recipe_group_id"]]
+            stop = max(10, int(np.ceil(0.25 * len(sequence))))
+            for feature in metadata["affected_sensor_positions"]:
+                observed = np.max(np.abs(np.diff(
+                    sequence[:stop, feature])))
+                required = (
+                    metadata["anomaly_slew_ratio"] *
+                    group["early_slew_abs_p99"][feature])
+                self.assertGreaterEqual(observed + 1e-6, required)
 
 
 if __name__ == "__main__":
