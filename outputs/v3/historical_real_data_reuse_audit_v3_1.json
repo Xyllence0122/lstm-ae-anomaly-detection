@@ -1,0 +1,306 @@
+{
+  "status": "historically_reused_real_data_audit_no_v3_tuning",
+  "interpretation": "These wafers were excluded from V3 weights and threshold fitting, but the same 43 normal and 20 faulty wafers were already evaluated during V2. This is a historical reuse audit, not unseen or independent external validation.",
+  "data": {
+    "normal_holdout_count": 43,
+    "faulty_count": 20,
+    "normal_split_indices": [
+      26,
+      95,
+      82,
+      85,
+      79,
+      68,
+      30,
+      19,
+      60,
+      80,
+      90,
+      42,
+      24,
+      94,
+      100,
+      103,
+      59,
+      63,
+      29,
+      69,
+      27,
+      61,
+      45,
+      75,
+      62,
+      6,
+      8,
+      33,
+      44,
+      88,
+      12,
+      16,
+      73,
+      76,
+      86,
+      49,
+      5,
+      46,
+      22,
+      91,
+      35,
+      25,
+      77
+    ],
+    "source_mat_sha256": "8d4e40f2c692c0a80a3e307665d31207037f52ed4bba89ecad60d8de86aa24c7",
+    "chronology_repair": "sort monitored step 4/5 samples by Time and average duplicates",
+    "historical_reuse": {
+      "same_split_as_v2": true,
+      "previously_evaluated_during_v2": true,
+      "v2_statistics_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\sensor_stats.json",
+      "v2_statistics_sha256": "8c58f319da8593f5350d0c9ac79c0bf40b3f126918d32ed14f8acf3b4f135320",
+      "v2_real_report_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\real_validation.json",
+      "v2_real_report_sha256": "81cec182aa2e5877e3bde7cd2db0ddf39b9e69f0a34751042562501290e68c43"
+    }
+  },
+  "counts": {
+    "normal_false_positives": 2,
+    "normal_true_negatives": 41,
+    "faulty_detected": 14,
+    "faulty_missed": 6
+  },
+  "metrics": {
+    "precision": 0.875,
+    "recall": 0.7,
+    "f1": 0.7777777777777778,
+    "fpr": 0.046511627906976744,
+    "auc": 0.813953488372093,
+    "normal_fpr_interval": {
+      "successes": 2,
+      "total": 43,
+      "rate": 0.046511627906976744,
+      "wilson_95pct": [
+        0.012849260094380227,
+        0.15455498004063967
+      ]
+    },
+    "faulty_detection_interval": {
+      "successes": 14,
+      "total": 20,
+      "rate": 0.7,
+      "wilson_95pct": [
+        0.4810271816464765,
+        0.8545227551323956
+      ]
+    },
+    "per_fault_name": {
+      "BCl3 +10": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "BCl3 +5": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "BCl3 -5": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Cl2 +5": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Cl2 -10": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Cl2 -5": {
+        "successes": 0,
+        "total": 1,
+        "rate": 0.0,
+        "wilson_95pct": [
+          0.0,
+          0.7934506856227626
+        ]
+      },
+      "He Chuck": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Pr +1": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Pr +2": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Pr +3": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Pr -2": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "RF +10": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "RF -12": {
+        "successes": 1,
+        "total": 2,
+        "rate": 0.5,
+        "wilson_95pct": [
+          0.09453120573423074,
+          0.9054687942657693
+        ]
+      },
+      "TCP +10": {
+        "successes": 0,
+        "total": 1,
+        "rate": 0.0,
+        "wilson_95pct": [
+          0.0,
+          0.7934506856227626
+        ]
+      },
+      "TCP +20": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "TCP +30": {
+        "successes": 0,
+        "total": 1,
+        "rate": 0.0,
+        "wilson_95pct": [
+          0.0,
+          0.7934506856227626
+        ]
+      },
+      "TCP +50": {
+        "successes": 0,
+        "total": 1,
+        "rate": 0.0,
+        "wilson_95pct": [
+          0.0,
+          0.7934506856227626
+        ]
+      },
+      "TCP -15": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "TCP -20": {
+        "successes": 0,
+        "total": 1,
+        "rate": 0.0,
+        "wilson_95pct": [
+          0.0,
+          0.7934506856227626
+        ]
+      }
+    },
+    "alert_sample_indices": [
+      null,
+      null,
+      7,
+      7,
+      null,
+      7,
+      7,
+      null,
+      67,
+      null,
+      9,
+      7,
+      7,
+      null,
+      7,
+      94,
+      7,
+      7,
+      7,
+      9
+    ]
+  },
+  "provenance": {
+    "artifact_sha256": "5225deea1e1af34fc5fcab987af03d0aefaebae0c42433b71be4868dac6468b2",
+    "code_sha256": {
+      "C:\\Max\\Paper\\AIoT\\lstm-ae\\19_evaluate_v3_1_real_external.py": "c8aad2e11cfc863952a773574076549e22e34ec97f61c1cdfc7e30d3eebdd009",
+      "16_evaluate_v3_locked_holdout.py": "7dc7e87a301ed3f8a845537356fc79c363fa2b722f54bbd66107e8e7568aeb86",
+      "v3_data.py": "f9ef8feab4dee45cef5c0507bba2005785ab17481b707fdaf0b52aa5000a53dd",
+      "v3_features.py": "288a9eb8c7936ae1b770a715cec8573f7474f7887daf7c353994f50d2b4b938c"
+    },
+    "git_commit": "58f594680799b25f732504090b4f302d573f8db6",
+    "git_status_porcelain": ""
+  },
+  "limitations": [
+    "The same real wafers and split were evaluated during V2, so this is not a fresh external validation set.",
+    "Only 43 V3-weight/threshold-excluded real normal wafers are available, so the FPR confidence interval is wide.",
+    "Only 20 real faulty wafers are available and reliable fault onset labels are absent.",
+    "The historically reused real dataset is not a representative prevalence-weighted production trial."
+  ]
+}
