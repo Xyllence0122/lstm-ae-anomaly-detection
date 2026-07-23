@@ -188,21 +188,25 @@ class V4RuntimeTests(unittest.TestCase):
             {"Pressure": 1.0, "Valve": 2.0}, timestamp=11.0)
 
     def test_liveness_nonfinite_time_latches_stream(self):
-        for value in (np.nan, np.inf, -np.inf):
-            with self.subTest(value=value):
-                model = detector()
-                model.start_stream(
-                    "W1", "R1", "EQ1", f"stream-{value}")
-                model.update(
-                    {"Pressure": 1.0, "Valve": 2.0}, timestamp=10.0)
-                with self.assertRaises(ValueError):
-                    model.liveness(value)
-                self.assertTrue(model.timeout_latched)
-                with self.assertRaises(RuntimeError):
-                    model.update(
-                        {"Pressure": 1.0, "Valve": 2.0},
-                        timestamp=11.0,
-                    )
+        for phase in ("before_first_sample", "after_first_sample"):
+            for value in (np.nan, np.inf, -np.inf):
+                with self.subTest(phase=phase, value=value):
+                    model = detector()
+                    model.start_stream(
+                        "W1", "R1", "EQ1", f"stream-{phase}-{value}")
+                    if phase == "after_first_sample":
+                        model.update(
+                            {"Pressure": 1.0, "Valve": 2.0},
+                            timestamp=10.0,
+                        )
+                    with self.assertRaises(ValueError):
+                        model.liveness(value)
+                    self.assertTrue(model.timeout_latched)
+                    with self.assertRaises(RuntimeError):
+                        model.update(
+                            {"Pressure": 1.0, "Valve": 2.0},
+                            timestamp=11.0,
+                        )
 
     def test_jsonl_recorder_saves_pre_and_post_alarm_context(self):
         with tempfile.TemporaryDirectory() as directory:

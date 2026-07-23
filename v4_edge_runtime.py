@@ -439,12 +439,6 @@ class V4MultiscaleDetector:
 
     def liveness(self, current_timestamp):
         """Report a sensor timeout using the same timestamp domain as samples."""
-        if self.previous_timestamp is None:
-            return {
-                "healthy": False,
-                "reason": "no_sample_received",
-                "seconds_since_last_sample": None,
-            }
         try:
             current_timestamp = float(current_timestamp)
         except (TypeError, ValueError) as exc:
@@ -455,6 +449,13 @@ class V4MultiscaleDetector:
             self.timeout_latched = True
             raise ValueError(
                 "current_timestamp must be finite and numeric")
+        if self.previous_timestamp is None:
+            return {
+                "healthy": False,
+                "reason": "no_sample_received",
+                "seconds_since_last_sample": None,
+                "timeout_latched": self.timeout_latched,
+            }
         elapsed = current_timestamp - self.previous_timestamp
         if elapsed < 0:
             raise ValueError("current_timestamp precedes the last sample")
