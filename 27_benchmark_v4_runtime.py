@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import json
+import os
 import platform
 import sys
 import time
@@ -57,11 +59,36 @@ def percentile_summary(values):
 
 
 def process_rss_bytes():
-    try:
-        import psutil
-    except ImportError:
-        return None
-    return int(psutil.Process().memory_info().rss)
+    statm = Path("/proc/self/statm")
+    if statm.is_file():
+        try:
+            resident_pages = int(
+                statm.read_text(encoding="ascii").split()[1])
+            return resident_pages * int(os.sysconf("SC_PAGE_SIZE"))
+        except (OSError, ValueError, IndexError):
+            return None
+    if sys.platform == "win32":
+        class ProcessMemoryCounters(ctypes.Structure):
+            _fields_ = [
+                ("cb", ctypes.c_ulong),
+                ("PageFaultCount", ctypes.c_ulong),
+                ("PeakWorkingSetSize", ctypes.c_size_t),
+                ("WorkingSetSize", ctypes.c_size_t),
+                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                ("PagefileUsage", ctypes.c_size_t),
+                ("PeakPagefileUsage", ctypes.c_size_t),
+            ]
+
+        counters = ProcessMemoryCounters()
+        counters.cb = ctypes.sizeof(counters)
+        handle = ctypes.windll.kernel32.GetCurrentProcess()
+        success = ctypes.windll.psapi.GetProcessMemoryInfo(
+            handle, ctypes.byref(counters), counters.cb)
+        return int(counters.WorkingSetSize) if success else None
+    return None
 
 
 def cpu_temperature_celsius():
