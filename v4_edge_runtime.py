@@ -215,15 +215,13 @@ class V4MultiscaleDetector:
         self.context = None
 
     def start_stream(self, wafer_id, recipe_id, equipment_id,
-                     stream_instance_id=None):
+                     stream_instance_id):
         """Start a new explicitly identified process stream."""
         values = {
             "wafer_id": wafer_id,
             "recipe_id": recipe_id,
             "equipment_id": equipment_id,
-            "stream_instance_id": (
-                stream_instance_id
-                if stream_instance_id is not None else uuid.uuid4()),
+            "stream_instance_id": stream_instance_id,
         }
         for name, value in values.items():
             if value is None or not str(value).strip():
@@ -447,7 +445,16 @@ class V4MultiscaleDetector:
                 "reason": "no_sample_received",
                 "seconds_since_last_sample": None,
             }
-        current_timestamp = float(current_timestamp)
+        try:
+            current_timestamp = float(current_timestamp)
+        except (TypeError, ValueError) as exc:
+            self.timeout_latched = True
+            raise ValueError(
+                "current_timestamp must be finite and numeric") from exc
+        if not math.isfinite(current_timestamp):
+            self.timeout_latched = True
+            raise ValueError(
+                "current_timestamp must be finite and numeric")
         elapsed = current_timestamp - self.previous_timestamp
         if elapsed < 0:
             raise ValueError("current_timestamp precedes the last sample")
@@ -682,7 +689,7 @@ def main():
     parser.add_argument("--recipe-id", required=True)
     parser.add_argument("--equipment-id", required=True)
     parser.add_argument(
-        "--stream-instance-id",
+        "--stream-instance-id", required=True,
         help="Stable process-run ID for idempotent replay after restart")
     parser.add_argument("--event-log", type=Path)
     parser.add_argument("--show-all", action="store_true")

@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import ctypes
 import json
-import os
 import platform
 import sys
 import time
@@ -58,15 +57,27 @@ def percentile_summary(values):
     }
 
 
-def process_rss_bytes():
-    statm = Path("/proc/self/statm")
-    if statm.is_file():
+def process_memory_snapshot():
+    status_path = Path("/proc/self/status")
+    if status_path.is_file():
         try:
-            resident_pages = int(
-                statm.read_text(encoding="ascii").split()[1])
-            return resident_pages * int(os.sysconf("SC_PAGE_SIZE"))
-        except (OSError, ValueError, IndexError):
-            return None
+            values = {}
+            for line in status_path.read_text(
+                    encoding="ascii").splitlines():
+                if line.startswith(("VmRSS:", "VmHWM:")):
+                    key, value, unit = line.split()
+                    if unit != "kB":
+                        raise ValueError("unexpected /proc memory unit")
+                    values[key.rstrip(":")] = int(value) * 1024
+            return {
+                "current_rss_bytes": values.get("VmRSS"),
+                "process_peak_rss_bytes": values.get("VmHWM"),
+            }
+        except (OSError, ValueError):
+            return {
+                "current_rss_bytes": None,
+                "process_peak_rss_bytes": None,
+            }
     if sys.platform == "win32":
         from ctypes import wintypes
 
@@ -101,8 +112,16 @@ def process_rss_bytes():
             ctypes.byref(counters),
             counters.cb,
         )
-        return int(counters.WorkingSetSize) if success else None
-    return None
+        return {
+            "current_rss_bytes": (
+                int(counters.WorkingSetSize) if success else None),
+            "process_peak_rss_bytes": (
+                int(counters.PeakWorkingSetSize) if success else None),
+        }
+    return {
+        "current_rss_bytes": None,
+        "process_peak_rss_bytes": None,
+    }
 
 
 def cpu_temperature_celsius():
@@ -128,7 +147,7 @@ def hardware_model():
 def main():
     args = parse_args()
     torch.set_num_threads(args.torch_threads)
-    process_start_rss = process_rss_bytes()
+    process_start_memory = process_memory_snapshot()
     start_temperature = cpu_temperature_celsius()
     manifest, _, manifest_hash = load_v4_manifest(args.manifest)
     statistics_document = load_statistics(args.statistics)
@@ -138,13 +157,16 @@ def main():
         args.sequences,
         anomaly=0,
     )
-    after_data_rss = process_rss_bytes()
+    after_data_memory = process_memory_snapshot()
     expected_samples = int(sum(map(len, sequences)))
 
     load_start = time.perf_counter()
     detector = V4MultiscaleDetector.from_manifest(args.manifest)
     model_load_seconds = time.perf_counter() - load_start
-    after_model_rss = process_rss_bytes()
+    after_model_memory = process_memory_snapshot()
+    process_start_rss = process_start_memory["current_rss_bytes"]
+    after_data_rss = after_data_memory["current_rss_bytes"]
+    after_model_rss = after_model_memory["current_rss_bytes"]
     peak_rss = max(
         value for value in (
             process_start_rss, after_data_rss, after_model_rss)
@@ -161,7 +183,8 @@ def main():
     benchmark_start = time.perf_counter()
     for sequence_index, sequence in enumerate(sequences):
         detector.start_stream(
-            f"benchmark-{sequence_index}", "synthetic-normal", "host")
+            f"benchmark-{sequence_index}", "synthetic-normal", "host",
+            f"benchmark-seed-{args.seed}-sequence-{sequence_index}")
         for sample_index, row in enumerate(sequence):
             sample = dict(zip(sensor_names, row))
             started = time.perf_counter_ns()
@@ -173,14 +196,15 @@ def main():
                 inference_latencies.append(elapsed_ms)
             alarm_count += int(result["alarm"])
             samples += 1
-        current_rss = process_rss_bytes()
+        current_rss = process_memory_snapshot()["current_rss_bytes"]
         if current_rss is not None:
             peak_rss = (
                 current_rss if peak_rss is None
                 else max(peak_rss, current_rss)
             )
     wall_seconds = time.perf_counter() - benchmark_start
-    after_replay_rss = process_rss_bytes()
+    after_replay_memory = process_memory_snapshot()
+    after_replay_rss = after_replay_memory["current_rss_bytes"]
     if after_replay_rss is not None:
         peak_rss = (
             after_replay_rss if peak_rss is None
@@ -226,8 +250,13 @@ def main():
             "rss_process_start_bytes": process_start_rss,
             "rss_after_data_generation_bytes": after_data_rss,
             "rss_after_model_load_bytes": after_model_rss,
-            "rss_peak_during_replay_bytes": peak_rss,
+            "rss_observed_max_at_checkpoints_bytes": peak_rss,
             "rss_after_replay_bytes": after_replay_rss,
+            "os_process_peak_rss_bytes": after_replay_memory[
+                "process_peak_rss_bytes"],
+            "os_peak_scope": (
+                "operating-system process high-water mark since process "
+                "start; checkpoint maximum is separately reported"),
             "rss_model_load_increment_bytes": (
                 after_model_rss - after_data_rss
                 if after_model_rss is not None and after_data_rss is not None

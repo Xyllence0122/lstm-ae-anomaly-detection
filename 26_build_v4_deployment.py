@@ -264,7 +264,8 @@ def runtime_parity(model, scripted, artifact, profiles, timing):
             model_version="v4-parity",
             artifact_sha256=file_sha256(TORCHSCRIPT_PATH),
         )
-        detector.start_stream(sequence_id, "parity", "offline")
+        detector.start_stream(
+            sequence_id, "parity", "offline", f"parity:{sequence_id}")
         first_runtime_alarm = None
         first_offline_alarm = None
         for sample_index, row in enumerate(sequence):
@@ -448,7 +449,8 @@ def main():
         "timing_contract": timing,
         "event_contract": {
             "required_context": [
-                "wafer_id", "recipe_id", "equipment_id"],
+                "wafer_id", "recipe_id", "equipment_id",
+                "stream_instance_id"],
             "default_pre_alarm_samples": 64,
             "default_post_alarm_samples": 16,
             "storage_format": "append-only JSON Lines",
@@ -501,6 +503,9 @@ def main():
             "requirements": source_record(
                 PROJECT_DIR / "requirements.txt",
                 "project minimum dependency declarations"),
+            "benchmark_generator": source_record(
+                PROJECT_DIR / "v3_data.py",
+                "synthetic benchmark workload generator"),
         },
         "build": {
             "command_argv": [sys.executable, *sys.argv],
@@ -530,7 +535,7 @@ def main():
 
     verified, _, verified_hash = load_v4_manifest(MANIFEST_PATH)
     detector = V4MultiscaleDetector.from_manifest(MANIFEST_PATH)
-    detector.start_stream("smoke", "smoke", "smoke")
+    detector.start_stream("smoke", "smoke", "smoke", "smoke-run")
     print(json.dumps({
         "status": "built_and_verified",
         "manifest_sha256": verified_hash,

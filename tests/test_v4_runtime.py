@@ -89,7 +89,7 @@ def detector(threshold=0.5):
 class V4RuntimeTests(unittest.TestCase):
     def test_runtime_feature_rows_match_offline_transform(self):
         model = detector(threshold=100.0)
-        model.start_stream("W1", "R1", "EQ1")
+        model.start_stream("W1", "R1", "EQ1", "stream-1")
         sequence = np.asarray([
             [1.0, 3.0],
             [2.0, 4.0],
@@ -110,11 +110,13 @@ class V4RuntimeTests(unittest.TestCase):
             model.update(
                 {"Pressure": 1.0, "Valve": 2.0}, timestamp=0.0)
         with self.assertRaises(ValueError):
-            model.start_stream("", "R1", "EQ1")
+            model.start_stream("", "R1", "EQ1", "stream-1")
+        with self.assertRaises(ValueError):
+            model.start_stream("W1", "R1", "EQ1", "")
 
     def test_runtime_rejects_schema_and_nonfinite_values(self):
         model = detector()
-        model.start_stream("W1", "R1", "EQ1")
+        model.start_stream("W1", "R1", "EQ1", "stream-1")
         with self.assertRaises(ValueError):
             model.update(
                 {"Valve": 2.0, "Pressure": 1.0}, timestamp=0.0)
@@ -124,7 +126,7 @@ class V4RuntimeTests(unittest.TestCase):
 
     def test_runtime_enforces_timestamp_and_cadence_contract(self):
         model = detector()
-        model.start_stream("W1", "R1", "EQ1")
+        model.start_stream("W1", "R1", "EQ1", "stream-1")
         with self.assertRaises(ValueError):
             model.update(
                 {"Pressure": 1.0, "Valve": 2.0}, timestamp=None)
@@ -146,7 +148,7 @@ class V4RuntimeTests(unittest.TestCase):
     def test_multiscale_readiness_and_reset_are_deterministic(self):
         model = detector(threshold=0.1)
         sample = {"Pressure": 1.0, "Valve": 2.0}
-        model.start_stream("W1", "R1", "EQ1")
+        model.start_stream("W1", "R1", "EQ1", "stream-1")
         first_run = [
             model.update(sample, float(index))
             for index in range(6)
@@ -158,7 +160,7 @@ class V4RuntimeTests(unittest.TestCase):
             "alarm_ready"])
         self.assertTrue(first_run[5]["profiles"]["long_mean_2of3"][
             "alarm_ready"])
-        model.start_stream("W2", "R1", "EQ1")
+        model.start_stream("W2", "R1", "EQ1", "stream-2")
         second_run = [
             model.update(sample, float(index))
             for index in range(6)
@@ -171,7 +173,7 @@ class V4RuntimeTests(unittest.TestCase):
 
     def test_liveness_reports_sensor_timeout(self):
         model = detector()
-        model.start_stream("W1", "R1", "EQ1")
+        model.start_stream("W1", "R1", "EQ1", "stream-1")
         self.assertEqual(
             model.liveness(0.0)["reason"], "no_sample_received")
         model.update(
@@ -181,9 +183,26 @@ class V4RuntimeTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             model.update(
                 {"Pressure": 1.0, "Valve": 2.0}, timestamp=11.0)
-        model.start_stream("W1", "R1", "EQ1")
+        model.start_stream("W1", "R1", "EQ1", "stream-2")
         model.update(
             {"Pressure": 1.0, "Valve": 2.0}, timestamp=11.0)
+
+    def test_liveness_nonfinite_time_latches_stream(self):
+        for value in (np.nan, np.inf, -np.inf):
+            with self.subTest(value=value):
+                model = detector()
+                model.start_stream(
+                    "W1", "R1", "EQ1", f"stream-{value}")
+                model.update(
+                    {"Pressure": 1.0, "Valve": 2.0}, timestamp=10.0)
+                with self.assertRaises(ValueError):
+                    model.liveness(value)
+                self.assertTrue(model.timeout_latched)
+                with self.assertRaises(RuntimeError):
+                    model.update(
+                        {"Pressure": 1.0, "Valve": 2.0},
+                        timestamp=11.0,
+                    )
 
     def test_jsonl_recorder_saves_pre_and_post_alarm_context(self):
         with tempfile.TemporaryDirectory() as directory:

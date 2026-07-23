@@ -40,6 +40,7 @@ timestamp欄位：
   --wafer-id WAFER-001 `
   --recipe-id RECIPE-A `
   --equipment-id LAM-9600 `
+  --stream-instance-id PROCESS-RUN-20260723-001 `
   --event-log outputs\v4\events.jsonl
 ```
 
