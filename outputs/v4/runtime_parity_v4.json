@@ -1,0 +1,75 @@
+{
+  "alarm_decision_mismatches": 0,
+  "all_first_alarm_indices_match": true,
+  "compared_profile_scores": 1854,
+  "eager_torchscript_maximum_absolute_output_difference": 0.0,
+  "ensemble_threshold": 1.1795640023513194,
+  "maximum_absolute_profile_score_difference": 4.3278374040056633e-07,
+  "parity_data": {
+    "path": "outputs/v3/selection_data_v3_2.npz",
+    "selection_data_only": true,
+    "sha256": "7b0f325d54e8957ba0f95a07d4d05d26d95bcfb05fdadfcee07a313cb4ae2a37"
+  },
+  "sequence_count": 8,
+  "sequences": [
+    {
+      "first_alarm_match": true,
+      "first_offline_alarm_sample": null,
+      "first_runtime_alarm_sample": null,
+      "length": 109,
+      "sequence_id": "normal_0"
+    },
+    {
+      "first_alarm_match": true,
+      "first_offline_alarm_sample": null,
+      "first_runtime_alarm_sample": null,
+      "length": 100,
+      "sequence_id": "normal_1"
+    },
+    {
+      "first_alarm_match": true,
+      "first_offline_alarm_sample": null,
+      "first_runtime_alarm_sample": null,
+      "length": 100,
+      "sequence_id": "anomaly_1_0"
+    },
+    {
+      "first_alarm_match": true,
+      "first_offline_alarm_sample": 7,
+      "first_runtime_alarm_sample": 7,
+      "length": 107,
+      "sequence_id": "anomaly_1_1"
+    },
+    {
+      "first_alarm_match": true,
+      "first_offline_alarm_sample": 48,
+      "first_runtime_alarm_sample": 48,
+      "length": 112,
+      "sequence_id": "anomaly_2_0"
+    },
+    {
+      "first_alarm_match": true,
+      "first_offline_alarm_sample": 47,
+      "first_runtime_alarm_sample": 47,
+      "length": 95,
+      "sequence_id": "anomaly_2_1"
+    },
+    {
+      "first_alarm_match": true,
+      "first_offline_alarm_sample": 97,
+      "first_runtime_alarm_sample": 97,
+      "length": 111,
+      "sequence_id": "anomaly_3_0"
+    },
+    {
+      "first_alarm_match": true,
+      "first_offline_alarm_sample": 87,
+      "first_runtime_alarm_sample": 87,
+      "length": 100,
+      "sequence_id": "anomaly_3_1"
+    }
+  ],
+  "source_model_sha256": "e3ab0ba9954114bf4b8db5842838be88160ef7b65a308c4c8ffe6c0603a56b5d",
+  "status": "pass",
+  "torchscript_model_sha256": "75bffffc770ac4ca6ee732ad91276fd1507b892261f2ba7d9797c2fe8a3e2055"
+}

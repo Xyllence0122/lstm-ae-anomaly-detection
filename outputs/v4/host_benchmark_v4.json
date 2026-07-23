@@ -1,0 +1,66 @@
+{
+  "environment": {
+    "numpy": "2.5.1",
+    "python": "3.12.13 (main, Mar  3 2026, 15:01:35) [MSC v.1944 64 bit (AMD64)]",
+    "torch": "2.13.0+cpu",
+    "torch_threads": 1
+  },
+  "hardware": {
+    "is_raspberry_pi_5": false,
+    "machine": "AMD64",
+    "model": "Windows-11-10.0.26200-SP0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD"
+  },
+  "interpretation": "Only a report with hardware.is_raspberry_pi_5=true may be cited as Raspberry Pi 5 performance. This replay excludes equipment protocol I/O and external alarm delivery latency.",
+  "latency": {
+    "all_updates": {
+      "count": 10292,
+      "maximum_ms": 47.0747,
+      "mean_ms": 0.8198047609794015,
+      "p50_ms": 0.60745,
+      "p95_ms": 1.6575449999999998,
+      "p99_ms": 2.1275620000000006
+    },
+    "updates_with_model_inference": {
+      "count": 9592,
+      "maximum_ms": 47.0747,
+      "mean_ms": 0.8776152939949958,
+      "p50_ms": 0.6573,
+      "p95_ms": 1.6782849999999987,
+      "p99_ms": 2.136853
+    }
+  },
+  "protocol": {
+    "model_load_seconds": 0.021734699956141412,
+    "nominal_interval_seconds": 1.0198999999999927,
+    "sample_count": 10292,
+    "seed": 496001,
+    "synthetic_normal_sequences": 100,
+    "throughput_samples_per_second": 1213.6587647880326,
+    "wall_seconds": 8.48014310002327
+  },
+  "provenance": {
+    "benchmark_code_sha256": "ce94ad21120bc2a29f61a7c6c518512533978cb05679c63a64505cb677b513cb",
+    "manifest_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v4\\deployment_manifest_v4.json",
+    "manifest_sha256": "5420720380f3bc939d1db6ab7fd172cf36d69311020fe58758b66998d2be4036",
+    "model_version": "v4-runtime-v3.2-weights",
+    "statistics_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\sensor_stats_v3_2.json",
+    "statistics_sha256": "79118aea76f3d3bf8eb41c2b5d62e20ff56ab5adc073e00cc419dbbfb77b2aa6"
+  },
+  "resources": {
+    "cpu_temperature_end_celsius": null,
+    "cpu_temperature_start_celsius": null,
+    "power_note": "requires an external meter or supported Pi sensor",
+    "power_watts": null,
+    "rss_after_bytes": 230277120,
+    "rss_before_bytes": 223444992,
+    "rss_change_bytes": 6832128
+  },
+  "runtime_observations": {
+    "alarm_sample_count_on_synthetic_normal": 0,
+    "dropped_samples": 0,
+    "exceptions": 0
+  },
+  "status": "non_pi_host_development_measurement"
+}
