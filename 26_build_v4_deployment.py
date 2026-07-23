@@ -324,6 +324,11 @@ def main():
         }, indent=2))
         return
 
+    source_git = git_record()
+    if source_git["status_porcelain"]:
+        raise RuntimeError(
+            "V4 deployment build requires a clean source worktree; "
+            f"found {source_git['status_porcelain']}")
     artifact, final_report = load_locked_source()
     statistics = json.loads(SOURCE_STATS.read_text(encoding="utf-8"))
     model = model_from_artifact(artifact)
@@ -424,7 +429,7 @@ def main():
         },
         "build": {
             "command_argv": [sys.executable, *sys.argv],
-            "git": git_record(),
+            "git": source_git,
             "python": sys.version,
             "torch": torch.__version__,
             "numpy": np.__version__,
