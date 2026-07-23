@@ -273,7 +273,20 @@ def main():
             report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    print(json.dumps(report, ensure_ascii=False, indent=2))
+    print(json.dumps({
+        "status": report["status"],
+        "hardware": report["hardware"],
+        "protocol": report["protocol"],
+        "latency_summary": {
+            "all_updates": report["latency"]["all_updates"],
+            "updates_with_model_inference": report["latency"][
+                "updates_with_model_inference"],
+        },
+        "resources": report["resources"],
+        "runtime_observations": report["runtime_observations"],
+        "provenance": report["provenance"],
+        "full_report_path": str(args.output.resolve()),
+    }, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
