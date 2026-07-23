@@ -50,7 +50,7 @@
       "--force"
     ],
     "git": {
-      "commit": "daf6e9d777f5b76b1a3eda253e3bf72e947032b4",
+      "commit": "597e679abe4bd8053c592cd2f0803bbd0be1ba70",
       "status_porcelain": []
     },
     "numpy": "2.5.1",
@@ -305,18 +305,18 @@
       "sha256": "b0fc694677228330955f054fc3564f6bfa18536d203dbcb6d7488b2db16c8bca"
     },
     "runtime": {
-      "bytes": 30602,
+      "bytes": 30659,
       "hash_mode": "normalized_text_sha256",
       "path": "v4_edge_runtime.py",
       "role": "runtime source",
-      "sha256": "5f7e1835ec8338da8ecce944dbe23279091ee24c35452796f4e086946753f444"
+      "sha256": "95abd0b5eb7a920e15a17e04a5b94a86eb45978d0d02114e8a68cde1c75ebf81"
     },
     "runtime_tests": {
-      "bytes": 15927,
+      "bytes": 16192,
       "hash_mode": "normalized_text_sha256",
       "path": "tests/test_v4_runtime.py",
       "role": "V4 runtime tests",
-      "sha256": "5d8393d1233be751fce35071fd57bd5e9373523c2ede8b25c0b0b2b75017257a"
+      "sha256": "e8ca8b79870a9dba2cd1481f16cb451a587cada6879a045350b56b53c57d4baf"
     }
   },
   "status": "paper_edge_runtime_prototype_not_production_release",
