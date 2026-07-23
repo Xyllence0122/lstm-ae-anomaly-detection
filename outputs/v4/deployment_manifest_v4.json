@@ -1,5 +1,11 @@
 {
   "artifacts": {
+    "build_environment": {
+      "bytes": 757,
+      "path": "outputs/v4/deployment_environment_v4.json",
+      "role": "exact successful build environment",
+      "sha256": "81fbe53f1114f2be235357168ba0a9e5469000b8bb2f5d847c9f478f4f9ed224"
+    },
     "locked_final_report": {
       "bytes": 5947,
       "path": "outputs/v3/final_holdout_v3_2.json",
@@ -13,10 +19,10 @@
       "sha256": "a602f9c210a798640e20d6e3cc8502b64c9b91ebad497ab05cffdacfaeefb56c"
     },
     "runtime_parity": {
-      "bytes": 2268,
+      "bytes": 8337,
       "path": "outputs/v4/runtime_parity_v4.json",
       "role": "offline versus streaming parity",
-      "sha256": "22f1886cf202f7429666afa48a0cbde06d768e2894848acc100e2f32f02721c7"
+      "sha256": "9c2c5e008b3a529d00bb3555cd4eb11bdf6190d5d5a2e8e36d4538f6edc32820"
     },
     "source_checkpoint": {
       "bytes": 229001,
@@ -34,16 +40,17 @@
       "bytes": 235643,
       "path": "outputs/v4/sliding_window_lstm_ae_v4.ts",
       "role": "V4 CPU streaming inference model",
-      "sha256": "75bffffc770ac4ca6ee732ad91276fd1507b892261f2ba7d9797c2fe8a3e2055"
+      "sha256": "50246f52da7801619021c40ba29f8af043b4cf372a73080b42be592c1d8c4400"
     }
   },
   "build": {
     "command_argv": [
       "C:\\Max\\Paper\\AIoT\\lstm-ae\\.venv\\Scripts\\python.exe",
-      "26_build_v4_deployment.py"
+      "26_build_v4_deployment.py",
+      "--force"
     ],
     "git": {
-      "commit": "2e52dd3dd2da10a1ebed54d4717b8a88751d3d61",
+      "commit": "1e3fc0a12d6a1a8402fe1102243eb887bcbc1a50",
       "status_porcelain": []
     },
     "numpy": "2.5.1",
@@ -73,7 +80,8 @@
     "The approximately 1 Hz source data cannot validate subsecond faults.",
     "Raspberry Pi 5 latency, temperature, power, and long-duration stability require measurement on the physical device.",
     "The historical 43 normal and 20 faulty wafers are not an independent unseen external validation set.",
-    "The runtime accepts CSV replay; a production equipment protocol adapter remains site-specific."
+    "The runtime accepts CSV replay; a production equipment protocol adapter remains site-specific.",
+    "Runtime parity uses selection data and shared mathematical components; it validates implementation consistency, not model accuracy or independent external validity."
   ],
   "lineage": {
     "holdout_reuse_for_tuning": false,
@@ -226,18 +234,25 @@
   "model_version": "v4-runtime-v3.2-weights",
   "source_provenance": {
     "benchmark": {
-      "bytes": 8644,
+      "bytes": 11258,
       "hash_mode": "normalized_text_sha256",
       "path": "27_benchmark_v4_runtime.py",
       "role": "benchmark source",
-      "sha256": "ce94ad21120bc2a29f61a7c6c518512533978cb05679c63a64505cb677b513cb"
+      "sha256": "5349d55e006c488b61ab2d2bda1ce3268a228a26cd22f0773e584e5cb172f14f"
     },
     "builder": {
-      "bytes": 18142,
+      "bytes": 21696,
       "hash_mode": "normalized_text_sha256",
       "path": "26_build_v4_deployment.py",
       "role": "deployment builder source",
-      "sha256": "d732950daa951e296e0b1ce2e603897b5f1230216eb02195d7e11587d59e0ce6"
+      "sha256": "d0abb4da5644b9418f1fad8d8bffa240e4739f812930d7775afca20658d4b577"
+    },
+    "configuration": {
+      "bytes": 3790,
+      "hash_mode": "normalized_text_sha256",
+      "path": "config.py",
+      "role": "project path and sensor config",
+      "sha256": "d93204902304b1a96e3c544774e8efd681a1d3372ba48bdf0b92adf8d95398fa"
     },
     "feature_transform": {
       "bytes": 3388,
@@ -245,6 +260,13 @@
       "path": "v3_features.py",
       "role": "feature source",
       "sha256": "288a9eb8c7936ae1b770a715cec8573f7474f7887daf7c353994f50d2b4b938c"
+    },
+    "hash_verifier": {
+      "bytes": 10300,
+      "hash_mode": "normalized_text_sha256",
+      "path": "deployment_manifest.py",
+      "role": "hash and schema verifier source",
+      "sha256": "12d22ce4be8fb9a155ead93980bad657f3bc85935b73a1859519b379273cfaa9"
     },
     "locked_evaluator": {
       "bytes": 1938,
@@ -267,26 +289,35 @@
       "role": "score source",
       "sha256": "be2f8d9574386a84a505ca206ce4a6920d6a2cb9495f3b7d43b440bf5bf71cfb"
     },
+    "requirements": {
+      "bytes": 81,
+      "hash_mode": "normalized_text_sha256",
+      "path": "requirements.txt",
+      "role": "project minimum dependency declarations",
+      "sha256": "b0fc694677228330955f054fc3564f6bfa18536d203dbcb6d7488b2db16c8bca"
+    },
     "runtime": {
-      "bytes": 25870,
+      "bytes": 30289,
       "hash_mode": "normalized_text_sha256",
       "path": "v4_edge_runtime.py",
       "role": "runtime source",
-      "sha256": "04c447a2c516757b3bd5c375cd23140c4ebb26d2205fc7f5ddf3eadb52e77a8a"
+      "sha256": "f9095286b74b39005ba2a4535e31827b5a26891d0243a21eb043fb5b51140529"
     },
     "runtime_tests": {
-      "bytes": 10596,
+      "bytes": 14997,
       "hash_mode": "normalized_text_sha256",
       "path": "tests/test_v4_runtime.py",
       "role": "V4 runtime tests",
-      "sha256": "4faebc89112626d0483c2b8a48e647ce347ea45b209778e96b1cb0a4ece76b9e"
+      "sha256": "b9c6cdde08e77a377a414ffe848c3af082cda9e47763f29bdd680309258a6215"
     }
   },
   "status": "paper_edge_runtime_prototype_not_production_release",
   "timing_contract": {
     "interpretation": "per-sample differences are valid only inside this enforced cadence band; samples outside the band are rejected and must not be silently scored",
-    "maximum_interval_seconds": 1.529849999999989,
-    "minimum_interval_seconds": 0.5099499999999964,
+    "interval_margin_seconds": 0.05099499999999964,
+    "interval_rule": "training p05/p95 extended by 5% of median",
+    "maximum_interval_seconds": 1.0997949999999996,
+    "minimum_interval_seconds": 0.9431450000000001,
     "mode": "fixed_cadence_fail_closed",
     "nominal_interval_seconds": 1.0198999999999927,
     "sensor_timeout_seconds": 3.059699999999978,

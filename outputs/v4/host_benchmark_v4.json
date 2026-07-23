@@ -16,34 +16,41 @@
   "latency": {
     "all_updates": {
       "count": 10292,
-      "maximum_ms": 47.0747,
-      "mean_ms": 0.8198047609794015,
-      "p50_ms": 0.60745,
-      "p95_ms": 1.6575449999999998,
-      "p99_ms": 2.1275620000000006
+      "maximum_ms": 53.6815,
+      "mean_ms": 0.8803477361057132,
+      "p50_ms": 0.6845,
+      "p95_ms": 1.8061799999999997,
+      "p99_ms": 2.2942780000000003
+    },
+    "raw_samples": {
+      "all_update_count": 10292,
+      "format": "NumPy NPZ with all_update_ms and inference_update_ms",
+      "inference_update_count": 9592,
+      "path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v4\\host_benchmark_v4_latencies.npz",
+      "sha256": "d4494869dbd43e94bba701744a88e6da369558a026ddb5ecb3155d68c6681e2a"
     },
     "updates_with_model_inference": {
       "count": 9592,
-      "maximum_ms": 47.0747,
-      "mean_ms": 0.8776152939949958,
-      "p50_ms": 0.6573,
-      "p95_ms": 1.6782849999999987,
-      "p99_ms": 2.136853
+      "maximum_ms": 53.6815,
+      "mean_ms": 0.9420209758131777,
+      "p50_ms": 0.7395,
+      "p95_ms": 1.8233699999999993,
+      "p99_ms": 2.310235
     }
   },
   "protocol": {
-    "model_load_seconds": 0.021734699956141412,
+    "model_load_seconds": 0.024820600054226816,
     "nominal_interval_seconds": 1.0198999999999927,
     "sample_count": 10292,
     "seed": 496001,
     "synthetic_normal_sequences": 100,
-    "throughput_samples_per_second": 1213.6587647880326,
-    "wall_seconds": 8.48014310002327
+    "throughput_samples_per_second": 1125.6973305069064,
+    "wall_seconds": 9.142777299974114
   },
   "provenance": {
-    "benchmark_code_sha256": "ce94ad21120bc2a29f61a7c6c518512533978cb05679c63a64505cb677b513cb",
+    "benchmark_code_sha256": "5349d55e006c488b61ab2d2bda1ce3268a228a26cd22f0773e584e5cb172f14f",
     "manifest_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v4\\deployment_manifest_v4.json",
-    "manifest_sha256": "5420720380f3bc939d1db6ab7fd172cf36d69311020fe58758b66998d2be4036",
+    "manifest_sha256": "78ecf445cebb2edba82b8673fddeb6197dcb67c25bc9b84130e9d0371c7f659c",
     "model_version": "v4-runtime-v3.2-weights",
     "statistics_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\sensor_stats_v3_2.json",
     "statistics_sha256": "79118aea76f3d3bf8eb41c2b5d62e20ff56ab5adc073e00cc419dbbfb77b2aa6"
@@ -53,14 +60,21 @@
     "cpu_temperature_start_celsius": null,
     "power_note": "requires an external meter or supported Pi sensor",
     "power_watts": null,
-    "rss_after_bytes": 230277120,
-    "rss_before_bytes": 223444992,
-    "rss_change_bytes": 6832128
+    "rss_after_data_generation_bytes": 220708864,
+    "rss_after_model_load_bytes": 223539200,
+    "rss_after_replay_bytes": 230940672,
+    "rss_model_load_increment_bytes": 2830336,
+    "rss_peak_during_replay_bytes": 230940672,
+    "rss_process_start_bytes": 219885568
   },
   "runtime_observations": {
     "alarm_sample_count_on_synthetic_normal": 0,
-    "dropped_samples": 0,
-    "exceptions": 0
+    "equipment_input_dropped_samples": null,
+    "equipment_input_exceptions": null,
+    "equipment_io_note": "Synthetic in-process replay has no equipment transport; live dropped samples and I/O exceptions are not measured.",
+    "expected_replay_samples": 10292,
+    "processed_replay_samples": 10292,
+    "replay_sample_count_match": true
   },
   "status": "non_pi_host_development_measurement"
 }
