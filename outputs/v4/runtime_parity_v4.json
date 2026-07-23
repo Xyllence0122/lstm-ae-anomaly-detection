@@ -295,5 +295,5 @@
   ],
   "source_model_sha256": "e3ab0ba9954114bf4b8db5842838be88160ef7b65a308c4c8ffe6c0603a56b5d",
   "status": "pass",
-  "torchscript_model_sha256": "50246f52da7801619021c40ba29f8af043b4cf372a73080b42be592c1d8c4400"
+  "torchscript_model_sha256": "220e5bc78d748de36920a0bbabbc654db40e8b5c8c8c5d5fb676fc5b88f1865a"
 }

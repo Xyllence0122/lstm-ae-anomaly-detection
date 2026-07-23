@@ -16,41 +16,41 @@
   "latency": {
     "all_updates": {
       "count": 10292,
-      "maximum_ms": 53.6815,
-      "mean_ms": 0.8803477361057132,
-      "p50_ms": 0.6845,
-      "p95_ms": 1.8061799999999997,
-      "p99_ms": 2.2942780000000003
+      "maximum_ms": 54.5706,
+      "mean_ms": 0.8320424212980957,
+      "p50_ms": 0.62705,
+      "p95_ms": 1.6857449999999998,
+      "p99_ms": 2.0608140000000006
     },
     "raw_samples": {
       "all_update_count": 10292,
       "format": "NumPy NPZ with all_update_ms and inference_update_ms",
       "inference_update_count": 9592,
       "path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v4\\host_benchmark_v4_latencies.npz",
-      "sha256": "d4494869dbd43e94bba701744a88e6da369558a026ddb5ecb3155d68c6681e2a"
+      "sha256": "bfdfa94113450beff0abb2791241eea97b18c3502bd81937dbf474d5ca347a5e"
     },
     "updates_with_model_inference": {
       "count": 9592,
-      "maximum_ms": 53.6815,
-      "mean_ms": 0.9420209758131777,
-      "p50_ms": 0.7395,
-      "p95_ms": 1.8233699999999993,
-      "p99_ms": 2.310235
+      "maximum_ms": 54.5706,
+      "mean_ms": 0.8904335383653043,
+      "p50_ms": 0.6746,
+      "p95_ms": 1.7025,
+      "p99_ms": 2.0728170000000006
     }
   },
   "protocol": {
-    "model_load_seconds": 0.024820600054226816,
+    "model_load_seconds": 0.025930000003427267,
     "nominal_interval_seconds": 1.0198999999999927,
     "sample_count": 10292,
     "seed": 496001,
     "synthetic_normal_sequences": 100,
-    "throughput_samples_per_second": 1125.6973305069064,
-    "wall_seconds": 9.142777299974114
+    "throughput_samples_per_second": 1191.2589235035543,
+    "wall_seconds": 8.639599500107579
   },
   "provenance": {
-    "benchmark_code_sha256": "5349d55e006c488b61ab2d2bda1ce3268a228a26cd22f0773e584e5cb172f14f",
+    "benchmark_code_sha256": "d86d19a43d9b90594a3145df6c78640f94045e6784da0c1fb4c5c239976e8f1c",
     "manifest_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v4\\deployment_manifest_v4.json",
-    "manifest_sha256": "78ecf445cebb2edba82b8673fddeb6197dcb67c25bc9b84130e9d0371c7f659c",
+    "manifest_sha256": "478a106177d2ae8ba84ebb864bef61882514292c466bbe48214f04c2b271f2ca",
     "model_version": "v4-runtime-v3.2-weights",
     "statistics_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\sensor_stats_v3_2.json",
     "statistics_sha256": "79118aea76f3d3bf8eb41c2b5d62e20ff56ab5adc073e00cc419dbbfb77b2aa6"
@@ -58,14 +58,16 @@
   "resources": {
     "cpu_temperature_end_celsius": null,
     "cpu_temperature_start_celsius": null,
+    "os_peak_scope": "operating-system process high-water mark since process start; checkpoint maximum is separately reported",
+    "os_process_peak_rss_bytes": 230850560,
     "power_note": "requires an external meter or supported Pi sensor",
     "power_watts": null,
-    "rss_after_data_generation_bytes": 220708864,
-    "rss_after_model_load_bytes": 223539200,
-    "rss_after_replay_bytes": 230940672,
-    "rss_model_load_increment_bytes": 2830336,
-    "rss_peak_during_replay_bytes": 230940672,
-    "rss_process_start_bytes": 219885568
+    "rss_after_data_generation_bytes": 219459584,
+    "rss_after_model_load_bytes": 222298112,
+    "rss_after_replay_bytes": 230850560,
+    "rss_model_load_increment_bytes": 2838528,
+    "rss_observed_max_at_checkpoints_bytes": 230850560,
+    "rss_process_start_bytes": 218640384
   },
   "runtime_observations": {
     "alarm_sample_count_on_synthetic_normal": 0,
