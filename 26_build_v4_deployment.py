@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import json
+import platform
 import subprocess
 import sys
 from pathlib import Path
@@ -35,6 +37,7 @@ SOURCE_CALIBRATION = V3_DIR / "deployment_calibration_v3_2.json"
 PARITY_DATA = V3_DIR / "selection_data_v3_2.npz"
 TORCHSCRIPT_PATH = V4_DIR / "sliding_window_lstm_ae_v4.ts"
 PARITY_REPORT_PATH = V4_DIR / "runtime_parity_v4.json"
+ENVIRONMENT_PATH = V4_DIR / "deployment_environment_v4.json"
 MANIFEST_PATH = V4_DIR / "deployment_manifest_v4.json"
 MANIFEST_SIDECAR = MANIFEST_PATH.with_suffix(".sha256")
 
@@ -86,6 +89,8 @@ def git_record():
 
 def load_locked_source():
     report = json.loads(SOURCE_FINAL_REPORT.read_text(encoding="utf-8"))
+    calibration = json.loads(
+        SOURCE_CALIBRATION.read_text(encoding="utf-8"))
     expected_artifact_hash = report["provenance"]["artifact_sha256"]
     actual_artifact_hash = file_sha256(SOURCE_ARTIFACT)
     if actual_artifact_hash != expected_artifact_hash:
@@ -94,8 +99,35 @@ def load_locked_source():
     expected_stats_hash = report["provenance"]["statistics_sha256"]
     if file_sha256(SOURCE_STATS) != expected_stats_hash:
         raise RuntimeError("V3.2 statistics do not match the locked report")
+    expected_calibration_hash = report["protocol"]["threshold_source"][
+        "calibration_report"]["sha256"]
+    if file_sha256(SOURCE_CALIBRATION) != expected_calibration_hash:
+        raise RuntimeError(
+            "V3.2 calibration report does not match the locked report")
     artifact = torch.load(
         SOURCE_ARTIFACT, map_location="cpu", weights_only=False)
+    threshold = float(report["operating_point"]["ensemble_threshold"])
+    if not (
+        float(artifact["threshold"]) == threshold ==
+        float(calibration["new_threshold"])
+    ):
+        raise RuntimeError(
+            "V3.2 artifact, calibration, and locked threshold differ")
+    if calibration["calibrated_artifact_sha256"] != actual_artifact_hash:
+        raise RuntimeError(
+            "calibration report does not bind the V3.2 artifact")
+    if calibration["statistics_sha256"] != expected_stats_hash:
+        raise RuntimeError(
+            "calibration report does not bind the V3.2 statistics")
+    report_profiles = report["operating_point"]["profiles"]
+    artifact_profile_contract = [{
+        key: profile[key] for key in (
+            "window_size", "score_mode", "persistence_required",
+            "persistence_span", "base_scale")
+    } for profile in artifact["profiles"]]
+    if artifact_profile_contract != report_profiles:
+        raise RuntimeError(
+            "V3.2 artifact profiles differ from the locked report")
     return artifact, report
 
 
@@ -146,18 +178,21 @@ def profile_contracts(artifact):
 
 def timing_contract(statistics):
     nominal = float(statistics["sampling"]["median_interval"])
+    p05 = float(statistics["sampling"]["p05_interval"])
+    p95 = float(statistics["sampling"]["p95_interval"])
+    margin = nominal * 0.05
     return {
         "timestamp_required": True,
         "strictly_increasing": True,
         "mode": "fixed_cadence_fail_closed",
         "nominal_interval_seconds": nominal,
-        "minimum_interval_seconds": nominal * 0.5,
-        "maximum_interval_seconds": nominal * 1.5,
+        "minimum_interval_seconds": max(p05 - margin, 1e-6),
+        "maximum_interval_seconds": p95 + margin,
         "sensor_timeout_seconds": nominal * 3.0,
-        "training_interval_p05_seconds": float(
-            statistics["sampling"]["p05_interval"]),
-        "training_interval_p95_seconds": float(
-            statistics["sampling"]["p95_interval"]),
+        "training_interval_p05_seconds": p05,
+        "training_interval_p95_seconds": p95,
+        "interval_margin_seconds": margin,
+        "interval_rule": "training p05/p95 extended by 5% of median",
         "subsecond_claim": (
             "not supported; the source data cadence is approximately 1 Hz"),
         "interpretation": (
@@ -173,12 +208,12 @@ def parity_sequences():
     anomaly = list(raw["X_val_anom"])
     labels = np.asarray(raw["y_val_anom"], dtype=int)
     selected = [
-        ("normal_0", normal[0]),
-        ("normal_1", normal[1]),
+        (f"normal_{index}", sequence)
+        for index, sequence in enumerate(normal[:10])
     ]
     for kind in (1, 2, 3):
         indices = np.flatnonzero(labels == kind)
-        for local, index in enumerate(indices[:2]):
+        for local, index in enumerate(indices[:10]):
             selected.append((f"anomaly_{kind}_{local}", anomaly[index]))
     return selected
 
@@ -312,6 +347,35 @@ def source_record(path, role):
     }
 
 
+def environment_record():
+    packages = {}
+    for name in (
+            "numpy", "torch", "scipy", "scikit-learn", "matplotlib",
+            "pandas"):
+        try:
+            packages[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            packages[name] = None
+    return {
+        "python": {
+            "version": sys.version,
+            "implementation": platform.python_implementation(),
+            "executable_name": Path(sys.executable).name,
+        },
+        "platform": {
+            "system": platform.system(),
+            "release": platform.release(),
+            "machine": platform.machine(),
+        },
+        "packages": packages,
+        "runtime_minimum_direct_dependencies": ["numpy", "torch"],
+        "builder_additional_dependencies": ["scipy", "scikit-learn"],
+        "interpretation": (
+            "This records the exact successful build environment; Pi wheels "
+            "may differ and must be recorded in the Pi benchmark report."),
+    }
+
+
 def main():
     args = parse_args()
     V4_DIR.mkdir(parents=True, exist_ok=True)
@@ -329,6 +393,7 @@ def main():
         raise RuntimeError(
             "V4 deployment build requires a clean source worktree; "
             f"found {source_git['status_porcelain']}")
+    write_json(ENVIRONMENT_PATH, environment_record())
     artifact, final_report = load_locked_source()
     statistics = json.loads(SOURCE_STATS.read_text(encoding="utf-8"))
     model = model_from_artifact(artifact)
@@ -405,6 +470,8 @@ def main():
                 SOURCE_CALIBRATION, "V3.2 normal-only calibration"),
             "runtime_parity": artifact_record(
                 PARITY_REPORT_PATH, "offline versus streaming parity"),
+            "build_environment": artifact_record(
+                ENVIRONMENT_PATH, "exact successful build environment"),
         },
         "source_provenance": {
             "runtime": source_record(
@@ -426,6 +493,14 @@ def main():
             "locked_evaluator": source_record(
                 PROJECT_DIR / "24_evaluate_v3_2_locked_holdout.py",
                 "locked evaluator entry point"),
+            "configuration": source_record(
+                PROJECT_DIR / "config.py", "project path and sensor config"),
+            "hash_verifier": source_record(
+                PROJECT_DIR / "deployment_manifest.py",
+                "hash and schema verifier source"),
+            "requirements": source_record(
+                PROJECT_DIR / "requirements.txt",
+                "project minimum dependency declarations"),
         },
         "build": {
             "command_argv": [sys.executable, *sys.argv],
@@ -443,6 +518,9 @@ def main():
             "independent unseen external validation set.",
             "The runtime accepts CSV replay; a production equipment protocol "
             "adapter remains site-specific.",
+            "Runtime parity uses selection data and shared mathematical "
+            "components; it validates implementation consistency, not model "
+            "accuracy or independent external validity.",
         ],
     }
     write_json(MANIFEST_PATH, manifest)

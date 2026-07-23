@@ -6,6 +6,7 @@ import argparse
 import csv
 import json
 import math
+import os
 import uuid
 from collections import deque
 from collections.abc import Mapping
@@ -210,14 +211,19 @@ class V4MultiscaleDetector:
         self.previous_raw = None
         self.previous_timestamp = None
         self.sample_index = -1
+        self.timeout_latched = False
         self.context = None
 
-    def start_stream(self, wafer_id, recipe_id, equipment_id):
+    def start_stream(self, wafer_id, recipe_id, equipment_id,
+                     stream_instance_id=None):
         """Start a new explicitly identified process stream."""
         values = {
             "wafer_id": wafer_id,
             "recipe_id": recipe_id,
             "equipment_id": equipment_id,
+            "stream_instance_id": (
+                stream_instance_id
+                if stream_instance_id is not None else uuid.uuid4()),
         }
         for name, value in values.items():
             if value is None or not str(value).strip():
@@ -303,6 +309,9 @@ class V4MultiscaleDetector:
     def update(self, sample, timestamp):
         if self.context is None:
             raise RuntimeError("start_stream() must be called before update()")
+        if self.timeout_latched:
+            raise RuntimeError(
+                "sensor timeout is latched; start_stream() is required")
         if not isinstance(sample, Mapping):
             raise TypeError("sample must be an ordered sensor-name mapping")
         columns = self._validate_columns(sample.keys())
@@ -337,6 +346,7 @@ class V4MultiscaleDetector:
             "model_version": self.model_version,
             "model_artifact_sha256": self.artifact_sha256,
             "deployment_manifest_sha256": self.manifest_sha256,
+            "sensor_timeout_latched": self.timeout_latched,
         }
 
         by_window = {}
@@ -442,11 +452,16 @@ class V4MultiscaleDetector:
         if elapsed < 0:
             raise ValueError("current_timestamp precedes the last sample")
         limit = float(self.timing_contract["sensor_timeout_seconds"])
+        if elapsed > limit:
+            self.timeout_latched = True
         return {
-            "healthy": elapsed <= limit,
-            "reason": None if elapsed <= limit else "sensor_timeout",
+            "healthy": not self.timeout_latched,
+            "reason": (
+                None if not self.timeout_latched
+                else "sensor_timeout_latched"),
             "seconds_since_last_sample": elapsed,
             "timeout_seconds": limit,
+            "timeout_latched": self.timeout_latched,
         }
 
 
@@ -460,10 +475,59 @@ class JsonlAlarmRecorder:
         if self.pre_samples < 1 or self.post_samples < 0:
             raise ValueError("invalid event context lengths")
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.lock_path = Path(f"{self.path}.lock")
+        try:
+            self.lock_fd = os.open(
+                self.lock_path,
+                os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+            )
+        except FileExistsError as exc:
+            raise RuntimeError(
+                f"event log is already locked: {self.lock_path}") from exc
+        os.write(
+            self.lock_fd,
+            f"pid={os.getpid()}\n".encode("ascii"),
+        )
         self.pre_buffer = deque(maxlen=self.pre_samples)
         self.active = []
         self.last_alarm = False
         self.stream_key = None
+        self.storage_error_latched = False
+        try:
+            self.known_event_ids = self._load_known_event_ids()
+        except Exception:
+            self._release_lock()
+            raise
+
+    def _load_known_event_ids(self):
+        identifiers = set()
+        if not self.path.is_file():
+            return identifiers
+        for line_number, line in enumerate(
+                self.path.read_text(encoding="utf-8").splitlines(), start=1):
+            if not line.strip():
+                continue
+            try:
+                item = json.loads(line)
+                event_id = str(item["event_id"])
+            except (json.JSONDecodeError, KeyError, TypeError) as exc:
+                raise RuntimeError(
+                    f"invalid event log record at line {line_number}") from exc
+            if event_id in identifiers:
+                raise RuntimeError(
+                    f"duplicate event_id in event log: {event_id}")
+            identifiers.add(event_id)
+        return identifiers
+
+    def _release_lock(self):
+        if getattr(self, "lock_fd", None) is None:
+            return
+        os.close(self.lock_fd)
+        self.lock_fd = None
+        try:
+            self.lock_path.unlink()
+        except FileNotFoundError:
+            pass
 
     @staticmethod
     def _sample_record(sample, result):
@@ -480,16 +544,44 @@ class JsonlAlarmRecorder:
         }
 
     def _write(self, event):
-        with self.path.open("a", encoding="utf-8", newline="\n") as handle:
-            handle.write(json.dumps(
-                event, ensure_ascii=False, sort_keys=True) + "\n")
+        event_id = str(event["event_id"])
+        if event_id in self.known_event_ids:
+            return
+        payload = (
+            json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n"
+        ).encode("utf-8")
+        with self.path.open("ab+") as handle:
+            handle.seek(0, os.SEEK_END)
+            offset = handle.tell()
+            try:
+                handle.write(payload)
+                handle.flush()
+                os.fsync(handle.fileno())
+            except Exception:
+                try:
+                    handle.seek(offset)
+                    handle.truncate()
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                finally:
+                    raise
+        self.known_event_ids.add(event_id)
+
+    @staticmethod
+    def _finalized_event(event, status):
+        finalized = {
+            key: value for key, value in event.items()
+            if key not in ("remaining_post_samples", "_pending_status")
+        }
+        finalized["status"] = status
+        return finalized
 
     def update(self, sample, result):
-        stream_key = (
-            result["wafer_id"],
-            result["recipe_id"],
-            result["equipment_id"],
-        )
+        if self.storage_error_latched:
+            raise RuntimeError(
+                "event storage error is latched; "
+                "retry_pending_writes() is required")
+        stream_key = result["stream_instance_id"]
         if self.stream_key is not None and stream_key != self.stream_key:
             self._flush_active("truncated_on_stream_boundary")
             self.pre_buffer.clear()
@@ -497,23 +589,32 @@ class JsonlAlarmRecorder:
         self.stream_key = stream_key
         record = self._sample_record(sample, result)
         for item in list(self.active):
-            if record["sample_index"] > item["alarm_sample_index"]:
+            if item.get("_pending_status") is not None:
+                continue
+            if (
+                item["remaining_post_samples"] > 0 and
+                record["sample_index"] > item["alarm_sample_index"]
+            ):
                 item["post_context"].append(record)
                 item["remaining_post_samples"] -= 1
             if item["remaining_post_samples"] <= 0:
-                item["status"] = "complete"
-                item.pop("remaining_post_samples", None)
-                self._write(item)
-                self.active.remove(item)
+                item["_pending_status"] = "complete"
 
         rising_edge = bool(result["alarm"] and not self.last_alarm)
         if rising_edge:
+            event_identity = (
+                f"v4:{result['stream_instance_id']}:"
+                f"{result['sample_index']}:"
+                f"{result['deployment_manifest_sha256']}"
+            )
             event = {
-                "event_id": str(uuid.uuid4()),
+                "event_id": str(uuid.uuid5(
+                    uuid.NAMESPACE_URL, event_identity)),
                 "status": "collecting_post_context",
                 "wafer_id": result["wafer_id"],
                 "recipe_id": result["recipe_id"],
                 "equipment_id": result["equipment_id"],
+                "stream_instance_id": result["stream_instance_id"],
                 "alarm_sample_index": int(result["sample_index"]),
                 "alarm_timestamp": float(result["timestamp"]),
                 "score": float(result["score"]),
@@ -532,25 +633,43 @@ class JsonlAlarmRecorder:
                 "remaining_post_samples": self.post_samples,
             }
             if self.post_samples == 0:
-                event["status"] = "complete"
-                event.pop("remaining_post_samples", None)
-                self._write(event)
-            else:
-                self.active.append(event)
+                event["_pending_status"] = "complete"
+            self.active.append(event)
         self.pre_buffer.append(record)
         self.last_alarm = bool(result["alarm"])
+        self._persist_pending()
         return rising_edge
 
-    def _flush_active(self, status):
+    def _persist_pending(self):
         for event in list(self.active):
-            event["status"] = status
-            event.pop("remaining_post_samples", None)
-            self._write(event)
+            status = event.get("_pending_status")
+            if status is None:
+                continue
+            try:
+                self._write(self._finalized_event(event, status))
+            except Exception:
+                self.storage_error_latched = True
+                raise
             self.active.remove(event)
+        self.storage_error_latched = False
+
+    def retry_pending_writes(self):
+        """Retry latched event writes before accepting another sample."""
+        self._persist_pending()
+
+    def _flush_active(self, status):
+        for event in self.active:
+            event.setdefault("_pending_status", status)
+        self._persist_pending()
 
     def flush(self):
         """Write incomplete events on shutdown without inventing future data."""
         self._flush_active("truncated_on_shutdown")
+
+    def close(self):
+        """Flush pending events and release the single-writer lock."""
+        self.flush()
+        self._release_lock()
 
 
 def main():
@@ -562,13 +681,17 @@ def main():
     parser.add_argument("--wafer-id", required=True)
     parser.add_argument("--recipe-id", required=True)
     parser.add_argument("--equipment-id", required=True)
+    parser.add_argument(
+        "--stream-instance-id",
+        help="Stable process-run ID for idempotent replay after restart")
     parser.add_argument("--event-log", type=Path)
     parser.add_argument("--show-all", action="store_true")
     args = parser.parse_args()
 
     detector = V4MultiscaleDetector.from_manifest(args.manifest)
     detector.start_stream(
-        args.wafer_id, args.recipe_id, args.equipment_id)
+        args.wafer_id, args.recipe_id, args.equipment_id,
+        args.stream_instance_id)
     recorder = (
         JsonlAlarmRecorder(args.event_log)
         if args.event_log is not None else None
@@ -605,7 +728,7 @@ def main():
                     print(json.dumps(result, ensure_ascii=False))
         finally:
             if recorder is not None:
-                recorder.flush()
+                recorder.close()
 
 
 if __name__ == "__main__":

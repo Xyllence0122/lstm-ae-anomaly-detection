@@ -128,6 +128,8 @@ def hardware_model():
 def main():
     args = parse_args()
     torch.set_num_threads(args.torch_threads)
+    process_start_rss = process_rss_bytes()
+    start_temperature = cpu_temperature_celsius()
     manifest, _, manifest_hash = load_v4_manifest(args.manifest)
     statistics_document = load_statistics(args.statistics)
     sequences = generate_set(
@@ -136,10 +138,19 @@ def main():
         args.sequences,
         anomaly=0,
     )
+    after_data_rss = process_rss_bytes()
+    expected_samples = int(sum(map(len, sequences)))
 
     load_start = time.perf_counter()
     detector = V4MultiscaleDetector.from_manifest(args.manifest)
     model_load_seconds = time.perf_counter() - load_start
+    after_model_rss = process_rss_bytes()
+    peak_rss = max(
+        value for value in (
+            process_start_rss, after_data_rss, after_model_rss)
+        if value is not None
+    ) if any(value is not None for value in (
+            process_start_rss, after_data_rss, after_model_rss)) else None
     sensor_names = detector.raw_sensor_names
     nominal_interval = detector.timing_contract[
         "nominal_interval_seconds"]
@@ -147,8 +158,6 @@ def main():
     inference_latencies = []
     alarm_count = 0
     samples = 0
-    start_temperature = cpu_temperature_celsius()
-    start_rss = process_rss_bytes()
     benchmark_start = time.perf_counter()
     for sequence_index, sequence in enumerate(sequences):
         detector.start_stream(
@@ -164,8 +173,19 @@ def main():
                 inference_latencies.append(elapsed_ms)
             alarm_count += int(result["alarm"])
             samples += 1
+        current_rss = process_rss_bytes()
+        if current_rss is not None:
+            peak_rss = (
+                current_rss if peak_rss is None
+                else max(peak_rss, current_rss)
+            )
     wall_seconds = time.perf_counter() - benchmark_start
-    end_rss = process_rss_bytes()
+    after_replay_rss = process_rss_bytes()
+    if after_replay_rss is not None:
+        peak_rss = (
+            after_replay_rss if peak_rss is None
+            else max(peak_rss, after_replay_rss)
+        )
     end_temperature = cpu_temperature_celsius()
     model_name = hardware_model()
     is_pi5 = "Raspberry Pi 5" in model_name
@@ -201,13 +221,21 @@ def main():
             "all_updates": percentile_summary(all_latencies),
             "updates_with_model_inference": percentile_summary(
                 inference_latencies),
+            "raw_all_update_ms": [
+                round(value, 6) for value in all_latencies],
+            "raw_inference_update_ms": [
+                round(value, 6) for value in inference_latencies],
         },
         "resources": {
-            "rss_before_bytes": start_rss,
-            "rss_after_bytes": end_rss,
-            "rss_change_bytes": (
-                end_rss - start_rss
-                if start_rss is not None and end_rss is not None else None
+            "rss_process_start_bytes": process_start_rss,
+            "rss_after_data_generation_bytes": after_data_rss,
+            "rss_after_model_load_bytes": after_model_rss,
+            "rss_peak_during_replay_bytes": peak_rss,
+            "rss_after_replay_bytes": after_replay_rss,
+            "rss_model_load_increment_bytes": (
+                after_model_rss - after_data_rss
+                if after_model_rss is not None and after_data_rss is not None
+                else None
             ),
             "cpu_temperature_start_celsius": start_temperature,
             "cpu_temperature_end_celsius": end_temperature,
@@ -216,8 +244,14 @@ def main():
         },
         "runtime_observations": {
             "alarm_sample_count_on_synthetic_normal": alarm_count,
-            "exceptions": 0,
-            "dropped_samples": 0,
+            "expected_replay_samples": expected_samples,
+            "processed_replay_samples": samples,
+            "replay_sample_count_match": samples == expected_samples,
+            "equipment_input_dropped_samples": None,
+            "equipment_input_exceptions": None,
+            "equipment_io_note": (
+                "Synthetic in-process replay has no equipment transport; "
+                "live dropped samples and I/O exceptions are not measured."),
         },
         "provenance": {
             "manifest_path": str(Path(args.manifest).resolve()),

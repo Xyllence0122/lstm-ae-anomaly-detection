@@ -12,9 +12,12 @@ V4 新增：
   與 ensemble 即時分數。
 - 嚴格具名 sensor schema、必要時間戳、固定 cadence 契約及 sensor
   timeout 檢查。
-- 每個 stream 必須提供 wafer ID、recipe ID及equipment ID。
+- 每個 stream 必須提供 wafer ID、recipe ID、equipment ID及唯一
+  stream instance ID；timeout後必須重新開啟stream。
 - append-only JSONL 警報事件，保存警報前後波形、模型版本、artifact、
   manifest、schema、threshold及異常證據特徵。
+- JSONL採single-writer lock、deterministic event ID及可重試寫入；
+  storage error解除前拒絕後續sample。
 - `26_build_v4_deployment.py`：輸出具 SHA-256 驗證的 TorchScript、
   deployment manifest及離線/即時 parity report。
 - `27_benchmark_v4_runtime.py`：同一工具可在開發機或 Raspberry Pi 5

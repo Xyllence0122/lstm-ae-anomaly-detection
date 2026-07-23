@@ -178,6 +178,12 @@ class V4RuntimeTests(unittest.TestCase):
             {"Pressure": 1.0, "Valve": 2.0}, timestamp=10.0)
         self.assertTrue(model.liveness(12.9)["healthy"])
         self.assertFalse(model.liveness(13.1)["healthy"])
+        with self.assertRaises(RuntimeError):
+            model.update(
+                {"Pressure": 1.0, "Valve": 2.0}, timestamp=11.0)
+        model.start_stream("W1", "R1", "EQ1")
+        model.update(
+            {"Pressure": 1.0, "Valve": 2.0}, timestamp=11.0)
 
     def test_jsonl_recorder_saves_pre_and_post_alarm_context(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -188,6 +194,7 @@ class V4RuntimeTests(unittest.TestCase):
                 "wafer_id": "W1",
                 "recipe_id": "R1",
                 "equipment_id": "EQ1",
+                "stream_instance_id": "stream-1",
                 "threshold": 1.0,
                 "trigger_profile_id": "short",
                 "top_evidence": [],
@@ -207,7 +214,7 @@ class V4RuntimeTests(unittest.TestCase):
                 }
                 recorder.update(
                     {"Pressure": index, "Valve": index + 1}, result)
-            recorder.flush()
+            recorder.close()
             lines = path.read_text(encoding="utf-8").splitlines()
             self.assertEqual(len(lines), 1)
             event = json.loads(lines[0])
@@ -228,6 +235,7 @@ class V4RuntimeTests(unittest.TestCase):
             recorder = JsonlAlarmRecorder(
                 path, pre_samples=2, post_samples=0)
             base = {
+                "wafer_id": "W1",
                 "recipe_id": "R1",
                 "equipment_id": "EQ1",
                 "threshold": 1.0,
@@ -238,24 +246,26 @@ class V4RuntimeTests(unittest.TestCase):
                 "deployment_manifest_sha256": "manifest",
                 "raw_sensor_schema_hash": "schema",
             }
-            for wafer_id, index, pressure, alarm in (
-                    ("W1", 0, 99.0, False),
-                    ("W2", 0, 0.0, False),
-                    ("W2", 1, 1.0, True)):
+            for stream_id, index, pressure, alarm in (
+                    ("stream-1", 0, 99.0, False),
+                    ("stream-2", 0, 0.0, False),
+                    ("stream-2", 1, 1.0, True)):
                 recorder.update(
                     {"Pressure": pressure, "Valve": pressure + 1},
                     {
                         **base,
-                        "wafer_id": wafer_id,
+                        "stream_instance_id": stream_id,
                         "sample_index": index,
                         "timestamp": float(index),
                         "score": 2.0 if alarm else 0.0,
                         "alarm": alarm,
                     },
                 )
+            recorder.close()
             event = json.loads(path.read_text(
                 encoding="utf-8").splitlines()[0])
-            self.assertEqual(event["wafer_id"], "W2")
+            self.assertEqual(event["wafer_id"], "W1")
+            self.assertEqual(event["stream_instance_id"], "stream-2")
             self.assertEqual(
                 {item["sample_index"] for item in event["pre_context"]},
                 {0, 1},
@@ -263,6 +273,103 @@ class V4RuntimeTests(unittest.TestCase):
             self.assertTrue(all(
                 item["sensors"]["Pressure"] in (0.0, 1.0)
                 for item in event["pre_context"]))
+
+    def test_jsonl_write_failure_preserves_active_event_for_retry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            recorder = JsonlAlarmRecorder(
+                path, pre_samples=2, post_samples=1)
+            base = {
+                "wafer_id": "W1",
+                "recipe_id": "R1",
+                "equipment_id": "EQ1",
+                "stream_instance_id": "stream-1",
+                "threshold": 1.0,
+                "trigger_profile_id": "short",
+                "top_evidence": [],
+                "model_version": "v4",
+                "model_artifact_sha256": "model",
+                "deployment_manifest_sha256": "manifest",
+                "raw_sensor_schema_hash": "schema",
+            }
+
+            def send(index, alarm):
+                recorder.update(
+                    {"Pressure": index, "Valve": index + 1},
+                    {
+                        **base,
+                        "sample_index": index,
+                        "timestamp": float(index),
+                        "score": 2.0 if alarm else 0.0,
+                        "alarm": alarm,
+                    },
+                )
+
+            send(0, False)
+            send(1, True)
+            original_write = recorder._write
+            recorder._write = lambda event: (
+                _ for _ in ()).throw(OSError("disk full"))
+            with self.assertRaises(OSError):
+                send(2, False)
+            self.assertEqual(len(recorder.active), 1)
+            self.assertEqual(
+                recorder.active[0]["remaining_post_samples"], 0)
+            self.assertTrue(recorder.storage_error_latched)
+            with self.assertRaises(RuntimeError):
+                send(3, False)
+            recorder._write = original_write
+            recorder.retry_pending_writes()
+            self.assertFalse(recorder.storage_error_latched)
+            send(3, False)
+            self.assertEqual(len(recorder.active), 0)
+            recorder.close()
+            event = json.loads(path.read_text(
+                encoding="utf-8").splitlines()[0])
+            self.assertEqual(
+                [item["sample_index"] for item in event["post_context"]],
+                [2],
+            )
+
+    def test_jsonl_recorder_uses_single_writer_lock(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            first = JsonlAlarmRecorder(path)
+            with self.assertRaises(RuntimeError):
+                JsonlAlarmRecorder(path)
+            first.close()
+            second = JsonlAlarmRecorder(path)
+            second.close()
+
+    def test_jsonl_event_id_is_idempotent_for_stable_stream_replay(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            result = {
+                "wafer_id": "W1",
+                "recipe_id": "R1",
+                "equipment_id": "EQ1",
+                "stream_instance_id": "stable-run-id",
+                "sample_index": 7,
+                "timestamp": 7.0,
+                "score": 2.0,
+                "threshold": 1.0,
+                "alarm": True,
+                "trigger_profile_id": "short",
+                "top_evidence": [],
+                "model_version": "v4",
+                "model_artifact_sha256": "model",
+                "deployment_manifest_sha256": "manifest",
+                "raw_sensor_schema_hash": "schema",
+            }
+            sample = {"Pressure": 1.0, "Valve": 2.0}
+            first = JsonlAlarmRecorder(path, post_samples=0)
+            first.update(sample, result)
+            first.close()
+            second = JsonlAlarmRecorder(path, post_samples=0)
+            second.update(sample, result)
+            second.close()
+            self.assertEqual(
+                len(path.read_text(encoding="utf-8").splitlines()), 1)
 
     @unittest.skipUnless(
         DEFAULT_MANIFEST.is_file(),
