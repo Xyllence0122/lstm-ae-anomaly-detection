@@ -221,10 +221,6 @@ def main():
             "all_updates": percentile_summary(all_latencies),
             "updates_with_model_inference": percentile_summary(
                 inference_latencies),
-            "raw_all_update_ms": [
-                round(value, 6) for value in all_latencies],
-            "raw_inference_update_ms": [
-                round(value, 6) for value in inference_latencies],
         },
         "resources": {
             "rss_process_start_bytes": process_start_rss,
@@ -268,6 +264,21 @@ def main():
         ),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    latency_path = args.output.with_name(
+        f"{args.output.stem}_latencies.npz")
+    np.savez_compressed(
+        latency_path,
+        all_update_ms=np.asarray(all_latencies, dtype=np.float64),
+        inference_update_ms=np.asarray(
+            inference_latencies, dtype=np.float64),
+    )
+    report["latency"]["raw_samples"] = {
+        "path": str(latency_path.resolve()),
+        "sha256": file_sha256(latency_path),
+        "format": "NumPy NPZ with all_update_ms and inference_update_ms",
+        "all_update_count": len(all_latencies),
+        "inference_update_count": len(inference_latencies),
+    }
     args.output.write_text(
         json.dumps(
             report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
