@@ -68,10 +68,12 @@ def process_rss_bytes():
         except (OSError, ValueError, IndexError):
             return None
     if sys.platform == "win32":
+        from ctypes import wintypes
+
         class ProcessMemoryCounters(ctypes.Structure):
             _fields_ = [
-                ("cb", ctypes.c_ulong),
-                ("PageFaultCount", ctypes.c_ulong),
+                ("cb", wintypes.DWORD),
+                ("PageFaultCount", wintypes.DWORD),
                 ("PeakWorkingSetSize", ctypes.c_size_t),
                 ("WorkingSetSize", ctypes.c_size_t),
                 ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
@@ -84,9 +86,21 @@ def process_rss_bytes():
 
         counters = ProcessMemoryCounters()
         counters.cb = ctypes.sizeof(counters)
-        handle = ctypes.windll.kernel32.GetCurrentProcess()
-        success = ctypes.windll.psapi.GetProcessMemoryInfo(
-            handle, ctypes.byref(counters), counters.cb)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        get_process = kernel32.GetCurrentProcess
+        get_process.restype = wintypes.HANDLE
+        get_memory = kernel32.K32GetProcessMemoryInfo
+        get_memory.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(ProcessMemoryCounters),
+            wintypes.DWORD,
+        ]
+        get_memory.restype = wintypes.BOOL
+        success = get_memory(
+            get_process(),
+            ctypes.byref(counters),
+            counters.cb,
+        )
         return int(counters.WorkingSetSize) if success else None
     return None
 
