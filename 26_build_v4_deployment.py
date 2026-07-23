@@ -12,7 +12,11 @@ import numpy as np
 import torch
 
 from config import OUTPUT_DIR, PROJECT_DIR
-from deployment_manifest import file_sha256, sensor_schema_hash
+from deployment_manifest import (
+    file_sha256,
+    normalized_text_sha256,
+    sensor_schema_hash,
+)
 from models import (
     SlidingWindowLSTMAutoEncoder,
     sliding_window_error_summaries,
@@ -298,6 +302,16 @@ def artifact_record(path, role):
     }
 
 
+def source_record(path, role):
+    return {
+        "path": relative(path),
+        "sha256": normalized_text_sha256(path),
+        "hash_mode": "normalized_text_sha256",
+        "bytes": Path(path).stat().st_size,
+        "role": role,
+    }
+
+
 def main():
     args = parse_args()
     V4_DIR.mkdir(parents=True, exist_ok=True)
@@ -388,17 +402,23 @@ def main():
                 PARITY_REPORT_PATH, "offline versus streaming parity"),
         },
         "source_provenance": {
-            "runtime": artifact_record(
+            "runtime": source_record(
                 PROJECT_DIR / "v4_edge_runtime.py", "runtime source"),
-            "builder": artifact_record(
+            "builder": source_record(
                 Path(__file__), "deployment builder source"),
-            "feature_transform": artifact_record(
+            "benchmark": source_record(
+                PROJECT_DIR / "27_benchmark_v4_runtime.py",
+                "benchmark source"),
+            "runtime_tests": source_record(
+                PROJECT_DIR / "tests" / "test_v4_runtime.py",
+                "V4 runtime tests"),
+            "feature_transform": source_record(
                 PROJECT_DIR / "v3_features.py", "feature source"),
-            "model": artifact_record(
+            "model": source_record(
                 PROJECT_DIR / "models.py", "model source"),
-            "online_scoring": artifact_record(
+            "online_scoring": source_record(
                 PROJECT_DIR / "online_evaluation.py", "score source"),
-            "locked_evaluator": artifact_record(
+            "locked_evaluator": source_record(
                 PROJECT_DIR / "24_evaluate_v3_2_locked_holdout.py",
                 "locked evaluator entry point"),
         },

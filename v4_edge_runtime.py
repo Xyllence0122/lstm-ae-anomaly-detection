@@ -15,7 +15,11 @@ import numpy as np
 import torch
 
 from config import PROJECT_DIR
-from deployment_manifest import file_sha256, sensor_schema_hash
+from deployment_manifest import (
+    file_sha256,
+    normalized_text_sha256,
+    sensor_schema_hash,
+)
 
 
 DEFAULT_MANIFEST = (
@@ -62,7 +66,14 @@ def load_v4_manifest(path=DEFAULT_MANIFEST, verify_provenance=True):
             if not source_path.is_file():
                 raise FileNotFoundError(
                     f"missing provenance source {source_id}: {source_path}")
-            actual = file_sha256(source_path)
+            hash_mode = source.get("hash_mode", "sha256")
+            if hash_mode == "normalized_text_sha256":
+                actual = normalized_text_sha256(source_path)
+            elif hash_mode == "sha256":
+                actual = file_sha256(source_path)
+            else:
+                raise ValueError(
+                    f"unsupported provenance hash mode: {hash_mode}")
             if actual != source["sha256"]:
                 raise ValueError(
                     f"provenance hash mismatch for {source_id}: "
@@ -452,6 +463,7 @@ class JsonlAlarmRecorder:
         self.pre_buffer = deque(maxlen=self.pre_samples)
         self.active = []
         self.last_alarm = False
+        self.stream_key = None
 
     @staticmethod
     def _sample_record(sample, result):
@@ -473,6 +485,16 @@ class JsonlAlarmRecorder:
                 event, ensure_ascii=False, sort_keys=True) + "\n")
 
     def update(self, sample, result):
+        stream_key = (
+            result["wafer_id"],
+            result["recipe_id"],
+            result["equipment_id"],
+        )
+        if self.stream_key is not None and stream_key != self.stream_key:
+            self._flush_active("truncated_on_stream_boundary")
+            self.pre_buffer.clear()
+            self.last_alarm = False
+        self.stream_key = stream_key
         record = self._sample_record(sample, result)
         for item in list(self.active):
             if record["sample_index"] > item["alarm_sample_index"]:
@@ -519,13 +541,16 @@ class JsonlAlarmRecorder:
         self.last_alarm = bool(result["alarm"])
         return rising_edge
 
-    def flush(self):
-        """Write incomplete events on shutdown without inventing future data."""
+    def _flush_active(self, status):
         for event in list(self.active):
-            event["status"] = "truncated_on_shutdown"
+            event["status"] = status
             event.pop("remaining_post_samples", None)
             self._write(event)
             self.active.remove(event)
+
+    def flush(self):
+        """Write incomplete events on shutdown without inventing future data."""
+        self._flush_active("truncated_on_shutdown")
 
 
 def main():

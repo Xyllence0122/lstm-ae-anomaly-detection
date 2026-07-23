@@ -10,8 +10,10 @@ import torch
 from deployment_manifest import sensor_schema_hash
 from v3_features import transform_sequence
 from v4_edge_runtime import (
+    DEFAULT_MANIFEST,
     JsonlAlarmRecorder,
     V4MultiscaleDetector,
+    load_v4_manifest,
 )
 
 
@@ -219,6 +221,74 @@ class V4RuntimeTests(unittest.TestCase):
                 [item["sample_index"] for item in event["post_context"]],
                 [3, 4],
             )
+
+    def test_jsonl_recorder_does_not_mix_stream_context(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            recorder = JsonlAlarmRecorder(
+                path, pre_samples=2, post_samples=0)
+            base = {
+                "recipe_id": "R1",
+                "equipment_id": "EQ1",
+                "threshold": 1.0,
+                "trigger_profile_id": "short",
+                "top_evidence": [],
+                "model_version": "v4",
+                "model_artifact_sha256": "model",
+                "deployment_manifest_sha256": "manifest",
+                "raw_sensor_schema_hash": "schema",
+            }
+            for wafer_id, index, pressure, alarm in (
+                    ("W1", 0, 99.0, False),
+                    ("W2", 0, 0.0, False),
+                    ("W2", 1, 1.0, True)):
+                recorder.update(
+                    {"Pressure": pressure, "Valve": pressure + 1},
+                    {
+                        **base,
+                        "wafer_id": wafer_id,
+                        "sample_index": index,
+                        "timestamp": float(index),
+                        "score": 2.0 if alarm else 0.0,
+                        "alarm": alarm,
+                    },
+                )
+            event = json.loads(path.read_text(
+                encoding="utf-8").splitlines()[0])
+            self.assertEqual(event["wafer_id"], "W2")
+            self.assertEqual(
+                {item["sample_index"] for item in event["pre_context"]},
+                {0, 1},
+            )
+            self.assertTrue(all(
+                item["sensors"]["Pressure"] in (0.0, 1.0)
+                for item in event["pre_context"]))
+
+    @unittest.skipUnless(
+        DEFAULT_MANIFEST.is_file(),
+        "V4 deployment package has not been built")
+    def test_built_manifest_and_runtime_load_with_verified_hashes(self):
+        document, _, manifest_hash = load_v4_manifest(DEFAULT_MANIFEST)
+        model = V4MultiscaleDetector.from_manifest(DEFAULT_MANIFEST)
+        self.assertEqual(document["manifest_version"], 4)
+        self.assertEqual(model.manifest_sha256, manifest_hash)
+        self.assertEqual(
+            model.schema_hash,
+            document["model_contract"]["raw_sensor_schema_hash"],
+        )
+
+    @unittest.skipUnless(
+        DEFAULT_MANIFEST.is_file(),
+        "V4 deployment package has not been built")
+    def test_manifest_sidecar_rejects_modified_document(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "deployment_manifest_v4.json"
+            sidecar = path.with_suffix(".sha256")
+            path.write_bytes(DEFAULT_MANIFEST.read_bytes() + b" ")
+            sidecar.write_bytes(
+                DEFAULT_MANIFEST.with_suffix(".sha256").read_bytes())
+            with self.assertRaises(ValueError):
+                load_v4_manifest(path)
 
 
 if __name__ == "__main__":
