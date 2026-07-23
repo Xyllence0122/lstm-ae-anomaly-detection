@@ -1,5 +1,50 @@
 # Semiconductor Process Anomaly Detection with Edge AI
 
+## V4 即時邊緣原型
+
+V4 將鎖定的 V3.2 多尺度 Sliding-Window LSTM-AE 搬到逐筆推論
+runtime。V3.2 的權重、三組 profile 與 normal-only calibration threshold
+均保持不變，V4 沒有使用既有 locked holdout 重新調參。
+
+V4 新增：
+
+- `v4_edge_runtime.py`：9個因果特徵、8/64點多尺度視窗、persistence
+  與 ensemble 即時分數。
+- 嚴格具名 sensor schema、必要時間戳、固定 cadence 契約及 sensor
+  timeout 檢查。
+- 每個 stream 必須提供 wafer ID、recipe ID及equipment ID。
+- append-only JSONL 警報事件，保存警報前後波形、模型版本、artifact、
+  manifest、schema、threshold及異常證據特徵。
+- `26_build_v4_deployment.py`：輸出具 SHA-256 驗證的 TorchScript、
+  deployment manifest及離線/即時 parity report。
+- `27_benchmark_v4_runtime.py`：同一工具可在開發機或 Raspberry Pi 5
+  量測 p50/p95/p99、throughput、RSS及可取得的CPU溫度。
+
+建立與驗證 V4 package：
+
+```powershell
+.\.venv\Scripts\python.exe 26_build_v4_deployment.py
+.\.venv\Scripts\python.exe 27_benchmark_v4_runtime.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+CSV replay 必須有完全符合 manifest 順序的4個sensor欄位，以及每列都有的
+timestamp欄位：
+
+```powershell
+.\.venv\Scripts\python.exe v4_edge_runtime.py sensor_rows.csv `
+  --timestamp-column Time `
+  --wafer-id WAFER-001 `
+  --recipe-id RECIPE-A `
+  --equipment-id LAM-9600 `
+  --event-log outputs\v4\events.jsonl
+```
+
+V4 的來源資料 cadence 約為1 Hz，因此採取固定 cadence fail-closed
+契約。它不能證明能偵測0.1秒內發生的異常；次秒級主張必須使用更高頻率
+真實sensor資料重新訓練與驗證。完整狀態與限制請見
+`V4_系統實作說明.md`。
+
 以 LAM 9600 蝕刻製程資料建立時間序列異常偵測實驗，研究「最終值相同，但暫態過程不同」的監控盲區。V2 主模型為可在製程途中告警的 Sliding-Window LSTM Autoencoder；完整 wafer LSTM-AE、causal LSTM forecaster、Dense AE、Isolation Forest 與 SPC 作為比較。
 
 > 本專案是研究原型，不是經認證的設備安全聯鎖或良率保證系統。
