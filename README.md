@@ -301,7 +301,8 @@ $env:LAM9600_DATA_MAT = 'D:\data\MACHINE_Data.mat'
 - 合成 onset 是注入規則，不是真實晶圓損傷時間。
 - 目前沒有 yield、damage 或事故標籤，不能宣稱已證明避免損失或事故。
 - 真實驗證樣本小，應補 bootstrap confidence interval。
-- Raspberry Pi 的 p50/p95/p99、CPU、memory、功耗及掉樣率仍待實機量測。
+- Raspberry Pi 5已完成100條合成normal的初步smoke test；正式1,000條重播、
+  設備I/O掉樣率、功耗及長時間穩定性仍待實測。
 - V2 主模型對快速暫態異常的最終 holdout Recall 只有 0.015，尚未達到可靠預警要求。
 
 V2 論文可直接使用的實驗設計、表格與主張邊界見 [論文V2實驗整理.md](論文V2實驗整理.md)；詳細模型檢核見 [研究模型檢核.md](研究模型檢核.md)。

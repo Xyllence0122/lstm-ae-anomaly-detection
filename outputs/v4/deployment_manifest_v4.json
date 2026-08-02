@@ -57,7 +57,7 @@
       "--force"
     ],
     "git": {
-      "commit": "a914f5e51869bb9804e2f951cdc17765584a1297",
+      "commit": "878a4070994ce98c3d000e82c7e1854f4f383573",
       "status_porcelain": []
     },
     "numpy": "2.5.1",
@@ -242,11 +242,11 @@
   "model_version": "v4-runtime-v3.2-weights",
   "source_provenance": {
     "benchmark": {
-      "bytes": 12683,
+      "bytes": 13960,
       "hash_mode": "normalized_text_sha256",
       "path": "27_benchmark_v4_runtime.py",
       "role": "benchmark source",
-      "sha256": "d86d19a43d9b90594a3145df6c78640f94045e6784da0c1fb4c5c239976e8f1c"
+      "sha256": "8ea7c24123e4136d417c8c9b236124aeca4c0cfb0ce371f226720e6d5250695c"
     },
     "benchmark_generator": {
       "bytes": 19952,
