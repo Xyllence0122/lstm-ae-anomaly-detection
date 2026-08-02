@@ -262,3 +262,81 @@ def acceptance_gate(metrics, per_type, targets=ACCEPTANCE_TARGETS):
     }
     return {"passed": all(checks.values()), "checks": checks,
             "targets": dict(targets)}
+
+
+def profile_score_outputs(model, sequences, profiles):
+    """Return normalized causal curves and their first source indices."""
+    summaries_by_window = {
+        window: sliding_window_error_summaries(model, sequences, window)
+        for window in sorted({item["window_size"] for item in profiles})
+    }
+    outputs = []
+    for profile in profiles:
+        indices = list(profile["feature_indices"])
+        errors = [
+            values[:, indices]
+            for values in summaries_by_window[profile["window_size"]][
+                profile["score_mode"]]
+        ]
+        raw = sensor_error_score_curves(errors, profile["calibration"])
+        persistent = apply_persistence(
+            raw, profile["persistence_required"],
+            profile["persistence_span"])
+        outputs.append({
+            "profile": profile,
+            "curves": [curve / profile["base_scale"] for curve in persistent],
+            "first_sample": (
+                profile["window_size"] - 1 +
+                profile["persistence_span"] - 1),
+        })
+    return outputs
+
+
+def normal_ensemble_event_scores(model, sequences, profiles):
+    outputs = profile_score_outputs(model, sequences, profiles)
+    return np.stack([
+        np.asarray([curve.max() for curve in output["curves"]])
+        for output in outputs
+    ]).max(axis=0)
+
+
+def score_profile_outputs(outputs, labels, metadata, threshold):
+    """Score events and return earliest causal alert across V5 profiles."""
+    labels = np.asarray(labels, dtype=int)
+    if len(metadata) != len(labels):
+        raise ValueError("metadata and labels must align")
+    event_scores = []
+    alert_indices = []
+    pre_onset = []
+    for sequence_index, (label, item_metadata) in enumerate(
+            zip(labels, metadata)):
+        profile_scores = []
+        profile_alerts = []
+        early = False
+        onset = item_metadata.get("onset_index") if label > 0 else None
+        for output in outputs:
+            profile = output["profile"]
+            curve = np.asarray(
+                output["curves"][sequence_index], dtype=np.float64)
+            sample_indices = np.arange(len(curve)) + output["first_sample"]
+            eligible = np.ones(len(curve), dtype=bool)
+            if onset is not None:
+                eligible = (
+                    sample_indices - profile["persistence_span"] + 1
+                ) >= int(onset)
+                early = early or bool(np.any(
+                    (curve > threshold) & ~eligible))
+            eligible_scores = curve[eligible]
+            profile_scores.append(
+                float(eligible_scores.max())
+                if len(eligible_scores) else -np.inf)
+            crossings = np.flatnonzero((curve > threshold) & eligible)
+            if len(crossings):
+                profile_alerts.append(int(sample_indices[crossings[0]]))
+        event_scores.append(max(profile_scores))
+        alert_indices.append(min(profile_alerts) if profile_alerts else None)
+        pre_onset.append(early)
+    return (
+        np.asarray(event_scores, dtype=np.float64), alert_indices,
+        np.asarray(pre_onset, dtype=bool),
+    )

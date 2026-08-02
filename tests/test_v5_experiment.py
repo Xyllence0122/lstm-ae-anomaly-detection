@@ -7,6 +7,7 @@ from v5_experiment import (
     ANOMALY_NAMES,
     acceptance_gate,
     feature_groups,
+    score_profile_outputs,
     weighted_reconstruction_loss,
 )
 
@@ -74,6 +75,22 @@ class V5ExperimentTests(unittest.TestCase):
         result = acceptance_gate(metrics, per_type)
         self.assertFalse(result["passed"])
         self.assertFalse(result["checks"]["type_a_recall"])
+
+    def test_profile_scoring_excludes_pre_onset_and_keeps_earliest_alert(self):
+        outputs = [{
+            "profile": {"persistence_span": 1},
+            "curves": [np.asarray([0.1, 2.0, 0.2, 1.5])],
+            "first_sample": 3,
+        }, {
+            "profile": {"persistence_span": 1},
+            "curves": [np.asarray([0.1, 0.2, 0.3, 1.8])],
+            "first_sample": 3,
+        }]
+        scores, alerts, pre_onset = score_profile_outputs(
+            outputs, np.asarray([1]), [{"onset_index": 5}], threshold=1.0)
+        self.assertAlmostEqual(float(scores[0]), 1.8)
+        self.assertEqual(alerts, [6])
+        self.assertTrue(bool(pre_onset[0]))
 
 
 if __name__ == "__main__":
