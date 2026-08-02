@@ -1,0 +1,31 @@
+{
+  "version": 5,
+  "status": "selection_only_no_locked_holdout_generated",
+  "same_generator_family_as_v3_2": true,
+  "counts": {
+    "train_normal": 1500,
+    "validation_normal": 3000,
+    "validation_per_anomaly": 400
+  },
+  "selection_seeds": {
+    "train_normal": 710101,
+    "validation_normal": 710102,
+    "validation_anomaly": 710103
+  },
+  "reserved_unopened_seeds": {
+    "normal_only_calibration": 720101,
+    "locked_holdout_normal": 730101,
+    "locked_holdout_anomaly": 730102
+  },
+  "statistics": {
+    "path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\sensor_stats_v3_2.json",
+    "hash_mode": "normalized_text_sha256",
+    "sha256": "5e9b3aa0cbec720abb4871c771b11584066fb1fab235767ed92e63557bf2f76b"
+  },
+  "data_sha256": "bd5ca5be9090bbb474b17ca09330734a91a31255fc77e8b64ff09380987d621b",
+  "methodology": "Only these cohorts may be used for V5 model, checkpoint, profile, and hyperparameter selection. Reserved calibration is normal-only. Reserved locked holdout seeds must remain unopened until the selection acceptance gate passes.",
+  "limitations": [
+    "All synthetic cohorts use the same generator family as V3.2.",
+    "Real statistics inform the generator; this is not independent external validation."
+  ]
+}
