@@ -26,7 +26,7 @@
       "hash_mode": "normalized_text_sha256",
       "path": "outputs/v5/runtime_parity_v5.json",
       "role": "V5 offline/TorchScript parity",
-      "sha256": "ae9f25957c9c4252a433a18e8beafaa60580d5e40cc6dd4b66a0e1994724d5fe"
+      "sha256": "90ee4708edfddfdff558cd29233bc2baaca7c1e053ba6b299c54d11b45edcf8f"
     },
     "selection_data": {
       "bytes": 2042994,
@@ -68,16 +68,17 @@
       "hash_mode": "sha256",
       "path": "outputs/v5/sliding_window_lstm_ae_v5.ts",
       "role": "V5 CPU streaming model",
-      "sha256": "da5155c6e2fb9eac57c5b47947987fad12a5b29fe24ebd2ae78072900119ac8c"
+      "sha256": "4303a9c13c32359963993d44be0e872c241b6b5bad8ebf2558c80253d02eb8de"
     }
   },
   "build": {
     "command_argv": [
       "C:\\Max\\Paper\\AIoT\\lstm-ae\\.venv\\Scripts\\python.exe",
-      "32_build_v5_deployment.py"
+      "32_build_v5_deployment.py",
+      "--force"
     ],
     "git": {
-      "commit": "8abaac8e1ac42d4ebd06d3449096c1551a97c872",
+      "commit": "943e2540e4752772bfb47f7b095a09e7258c2fae",
       "status_porcelain": []
     },
     "numpy": "2.5.1",
@@ -258,12 +259,26 @@
       "role": "shared safety runtime",
       "sha256": "e1bbce70d1703a3a91f33585c89b26bcfb23922f5f8e4691a1289ccb74f4f46c"
     },
+    "benchmark": {
+      "bytes": 13960,
+      "hash_mode": "normalized_text_sha256",
+      "path": "27_benchmark_v4_runtime.py",
+      "role": "shared host/Pi benchmark core",
+      "sha256": "8ea7c24123e4136d417c8c9b236124aeca4c0cfb0ce371f226720e6d5250695c"
+    },
+    "benchmark_wrapper": {
+      "bytes": 776,
+      "hash_mode": "normalized_text_sha256",
+      "path": "33_benchmark_v5_runtime.py",
+      "role": "V5 benchmark entry point",
+      "sha256": "1997ce273928a69d99bd8e848157b5916461d37b5af72a42f0293a934a023958"
+    },
     "builder": {
-      "bytes": 20135,
+      "bytes": 20438,
       "hash_mode": "normalized_text_sha256",
       "path": "32_build_v5_deployment.py",
       "role": "V5 builder source",
-      "sha256": "0d5f05e45c98e21e4d9f83ffae3639bcc6443074d50343f9d03ccf86dd9938a5"
+      "sha256": "bfe55b5ad14e97f10169221a94887e6378bbaba965db4b5e1d94d8989a11e050"
     },
     "calibrator": {
       "bytes": 6002,

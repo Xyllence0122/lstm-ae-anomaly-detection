@@ -1,5 +1,35 @@
 # Semiconductor Process Anomaly Detection with Edge AI
 
+## V5 最終模型與邊緣套件
+
+V5 是目前論文主模型。V3.2/V4 保持不可覆寫；V5 使用全新的 selection、
+normal-only calibration 與 locked holdout seeds，並在看到 holdout 前預先鎖定
+FPR、Recall、F1及A/B/C Recall門檻。主體仍是 Sliding-Window LSTM-AE，
+主要變更為4點短視窗、4/16/64多尺度profiles及動態敏感normal重建loss。
+
+在10,000 normal加A/B/C各1,000的全新paired locked holdout上：
+
+| 模型 | Precision | Recall | F1 | FPR | A/B/C Recall |
+|---|---:|---:|---:|---:|---:|
+| V5 | 99.83% | 78.77% | 88.06% | 0.04% | 69.0% / 82.9% / 84.4% |
+| 凍結V3.2 baseline | 99.95% | 65.83% | 79.38% | 0.01% | 44.3% / 72.1% / 81.1% |
+
+V5相對同一holdout的V3.2提升整體Recall `12.93`個百分點，Type A提升
+`24.7`個百分點；代價是false positives由1/10,000增加為4/10,000。
+完整方法、信賴區間與主張邊界見`V5_最終結果.md`。
+
+建立與驗證V5 package：
+
+```powershell
+.\.venv\Scripts\python.exe 32_build_v5_deployment.py
+.\.venv\Scripts\python.exe 33_benchmark_v5_runtime.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+V5 TorchScript已通過40條序列、8,944個profile scores的離線/串流parity，
+告警decision mismatch為0。V4的Pi 5結果不能直接當成V5結果；V5仍需在
+實體Pi 5重新執行`33_benchmark_v5_runtime.py`。
+
 ## V4 即時邊緣原型
 
 V4 將鎖定的 V3.2 多尺度 Sliding-Window LSTM-AE 搬到逐筆推論

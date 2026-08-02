@@ -1,0 +1,86 @@
+{
+  "environment": {
+    "inference_device": "cpu",
+    "numpy": "2.5.1",
+    "python": "3.12.13 (main, Mar  3 2026, 15:01:35) [MSC v.1944 64 bit (AMD64)]",
+    "torch": "2.13.0+cpu",
+    "torch_cuda_available": false,
+    "torch_threads": 1
+  },
+  "hardware": {
+    "is_raspberry_pi_5": false,
+    "machine": "AMD64",
+    "model": "Windows-11-10.0.26200-SP0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD"
+  },
+  "interpretation": "Only a report with hardware.is_raspberry_pi_5=true may be cited as Raspberry Pi 5 performance. This replay excludes equipment protocol I/O and external alarm delivery latency.",
+  "latency": {
+    "all_updates": {
+      "count": 10292,
+      "maximum_ms": 47.8032,
+      "mean_ms": 1.234071191216479,
+      "p50_ms": 1.1611,
+      "p95_ms": 2.244945,
+      "p99_ms": 2.6498720000000002
+    },
+    "raw_samples": {
+      "all_update_count": 10292,
+      "format": "NumPy NPZ with all_update_ms and inference_update_ms",
+      "inference_update_count": 9992,
+      "path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v5\\host_benchmark_v5_latencies.npz",
+      "sha256": "6bcafd72cd9a3523c9d18822dc04b7278d1fd27f6919cc1645e17a0af5701f35"
+    },
+    "updates_with_model_inference": {
+      "count": 9992,
+      "maximum_ms": 47.8032,
+      "mean_ms": 1.2697758706965574,
+      "p50_ms": 1.1839499999999998,
+      "p95_ms": 2.249345,
+      "p99_ms": 2.654236
+    }
+  },
+  "protocol": {
+    "model_load_seconds": 0.023565899988170713,
+    "nominal_interval_seconds": 1.0198999999999927,
+    "sample_count": 10292,
+    "seed": 496001,
+    "synthetic_normal_sequences": 100,
+    "throughput_samples_per_second": 805.2981671217152,
+    "wall_seconds": 12.780359400028829
+  },
+  "provenance": {
+    "benchmark_code_hash_mode": "normalized_text_sha256",
+    "benchmark_code_sha256": "8ea7c24123e4136d417c8c9b236124aeca4c0cfb0ce371f226720e6d5250695c",
+    "manifest_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v5\\deployment_manifest_v5.json",
+    "manifest_sha256": "f15ee2f71d9ae0e060c3b896814421e828cfb2d678c12fedcfc86df79bec51c1",
+    "model_version": "v5-runtime-locked-v5-weights",
+    "statistics_hash_mode": "normalized_text_sha256",
+    "statistics_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\sensor_stats_v3_2.json",
+    "statistics_sha256": "5e9b3aa0cbec720abb4871c771b11584066fb1fab235767ed92e63557bf2f76b"
+  },
+  "resources": {
+    "cpu_temperature_end_celsius": null,
+    "cpu_temperature_start_celsius": null,
+    "os_peak_scope": "operating-system process high-water mark since process start; checkpoint maximum is separately reported",
+    "os_process_peak_rss_bytes": 231936000,
+    "power_note": "requires an external meter or supported Pi sensor",
+    "power_watts": null,
+    "rss_after_data_generation_bytes": 218898432,
+    "rss_after_model_load_bytes": 221810688,
+    "rss_after_replay_bytes": 231936000,
+    "rss_model_load_increment_bytes": 2912256,
+    "rss_observed_max_at_checkpoints_bytes": 231936000,
+    "rss_process_start_bytes": 217997312
+  },
+  "runtime_observations": {
+    "alarm_sample_count_on_synthetic_normal": 1,
+    "equipment_input_dropped_samples": null,
+    "equipment_input_exceptions": null,
+    "equipment_io_note": "Synthetic in-process replay has no equipment transport; live dropped samples and I/O exceptions are not measured.",
+    "expected_replay_samples": 10292,
+    "processed_replay_samples": 10292,
+    "replay_sample_count_match": true
+  },
+  "status": "non_pi_host_development_measurement"
+}
