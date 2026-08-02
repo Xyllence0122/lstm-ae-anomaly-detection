@@ -21,6 +21,7 @@ from v4_edge_runtime import (
     V4MultiscaleDetector,
     load_v4_manifest,
 )
+from v4_hashing import normalized_text_sha256
 
 
 DEFAULT_OUTPUT = OUTPUT_DIR / "v4" / "host_benchmark_v4.json"
@@ -144,12 +145,33 @@ def hardware_model():
     return platform.platform()
 
 
+def bound_digest(path, record):
+    hash_mode = record.get("hash_mode")
+    if hash_mode == "normalized_text_sha256":
+        return normalized_text_sha256(path)
+    if hash_mode == "sha256":
+        return file_sha256(path)
+    raise ValueError(f"unsupported benchmark input hash mode: {hash_mode}")
+
+
 def main():
     args = parse_args()
     torch.set_num_threads(args.torch_threads)
     process_start_memory = process_memory_snapshot()
     start_temperature = cpu_temperature_celsius()
-    manifest, _, manifest_hash = load_v4_manifest(args.manifest)
+    manifest, manifest_path, manifest_hash = load_v4_manifest(args.manifest)
+    statistics_record = manifest["artifacts"]["source_statistics"]
+    statistics_hash = bound_digest(args.statistics, statistics_record)
+    if statistics_hash != statistics_record["sha256"]:
+        raise ValueError(
+            "benchmark statistics do not match the deployment manifest: "
+            f"expected {statistics_record['sha256']}, got {statistics_hash}")
+    benchmark_record = manifest["source_provenance"]["benchmark"]
+    benchmark_hash = bound_digest(Path(__file__), benchmark_record)
+    if benchmark_hash != benchmark_record["sha256"]:
+        raise ValueError(
+            "benchmark source does not match the deployment manifest: "
+            f"expected {benchmark_record['sha256']}, got {benchmark_hash}")
     statistics_document = load_statistics(args.statistics)
     sequences = generate_set(
         np.random.default_rng(args.seed),
@@ -231,6 +253,8 @@ def main():
             "torch": torch.__version__,
             "numpy": np.__version__,
             "torch_threads": args.torch_threads,
+            "inference_device": "cpu",
+            "torch_cuda_available": bool(torch.cuda.is_available()),
         },
         "protocol": {
             "synthetic_normal_sequences": args.sequences,
@@ -279,12 +303,14 @@ def main():
                 "live dropped samples and I/O exceptions are not measured."),
         },
         "provenance": {
-            "manifest_path": str(Path(args.manifest).resolve()),
+            "manifest_path": str(manifest_path),
             "manifest_sha256": manifest_hash,
             "model_version": manifest["model_version"],
             "statistics_path": str(Path(args.statistics).resolve()),
-            "statistics_sha256": file_sha256(args.statistics),
-            "benchmark_code_sha256": file_sha256(Path(__file__)),
+            "statistics_sha256": statistics_hash,
+            "statistics_hash_mode": statistics_record["hash_mode"],
+            "benchmark_code_sha256": benchmark_hash,
+            "benchmark_code_hash_mode": benchmark_record["hash_mode"],
         },
         "interpretation": (
             "Only a report with hardware.is_raspberry_pi_5=true may be cited "
@@ -308,11 +334,9 @@ def main():
         "all_update_count": len(all_latencies),
         "inference_update_count": len(inference_latencies),
     }
-    args.output.write_text(
-        json.dumps(
-            report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    args.output.write_bytes((json.dumps(
+        report, ensure_ascii=False, indent=2, sort_keys=True
+    ) + "\n").encode("utf-8"))
     print(json.dumps({
         "status": report["status"],
         "hardware": report["hardware"],
