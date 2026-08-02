@@ -1,0 +1,360 @@
+{
+  "artifacts": {
+    "build_environment": {
+      "bytes": 364,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v5/deployment_environment_v5.json",
+      "role": "exact V5 build environment",
+      "sha256": "51cd3f2660110ba22b1b96ed04020c05759e3e155b64349f511eb1ede4f87322"
+    },
+    "locked_final_report": {
+      "bytes": 10442,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v5/locked_holdout_v5.json",
+      "role": "one-time V5 locked holdout report",
+      "sha256": "24fdff804f3630c248a2e2d7b5d9f19f8add09559495b8a6b43d60042b06b23f"
+    },
+    "normal_calibration": {
+      "bytes": 1679,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v5/normal_calibration_v5.json",
+      "role": "V5 normal-only calibration",
+      "sha256": "697b1dc2c20d8dfe8aa84d9046edc9cb7d680407fb2b323a33974f041626e897"
+    },
+    "runtime_parity": {
+      "bytes": 5958,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v5/runtime_parity_v5.json",
+      "role": "V5 offline/TorchScript parity",
+      "sha256": "ae9f25957c9c4252a433a18e8beafaa60580d5e40cc6dd4b66a0e1994724d5fe"
+    },
+    "selection_data": {
+      "bytes": 2042994,
+      "hash_mode": "sha256",
+      "path": "outputs/v5/selection_data_v5.npz",
+      "role": "V5 selection cohorts",
+      "sha256": "bd5ca5be9090bbb474b17ca09330734a91a31255fc77e8b64ff09380987d621b"
+    },
+    "selection_protocol": {
+      "bytes": 1242,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v5/selection_protocol_v5.json",
+      "role": "V5 preregistered selection protocol",
+      "sha256": "ce0ba71a9001455a5173308bdfbf03820b299c85a5c04837d7ee2334f48bc457"
+    },
+    "selection_report": {
+      "bytes": 55217,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v5/experiment_dynamic_grouped_final/selection_report.json",
+      "role": "V5 three-seed selection report",
+      "sha256": "a7a5d7b2c63aa5bffc5cd53feeacda0445b6f753bc93d808b0dd2981dc272822"
+    },
+    "source_checkpoint": {
+      "bytes": 229409,
+      "hash_mode": "sha256",
+      "path": "outputs/v5/sliding_window_lstm_ae_v5.pt",
+      "role": "locked V5 PyTorch checkpoint",
+      "sha256": "a59a6c1ae1e828bce72dbec396806f36344dcaf326e9cc04df0bf560258085f4"
+    },
+    "source_statistics": {
+      "bytes": 36311,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v3/sensor_stats_v3_2.json",
+      "role": "V3.2 real-informed source statistics",
+      "sha256": "5e9b3aa0cbec720abb4871c771b11584066fb1fab235767ed92e63557bf2f76b"
+    },
+    "torchscript_model": {
+      "bytes": 235643,
+      "hash_mode": "sha256",
+      "path": "outputs/v5/sliding_window_lstm_ae_v5.ts",
+      "role": "V5 CPU streaming model",
+      "sha256": "da5155c6e2fb9eac57c5b47947987fad12a5b29fe24ebd2ae78072900119ac8c"
+    }
+  },
+  "build": {
+    "command_argv": [
+      "C:\\Max\\Paper\\AIoT\\lstm-ae\\.venv\\Scripts\\python.exe",
+      "32_build_v5_deployment.py"
+    ],
+    "git": {
+      "commit": "8abaac8e1ac42d4ebd06d3449096c1551a97c872",
+      "status_porcelain": []
+    },
+    "numpy": "2.5.1",
+    "python": "3.12.13 (main, Mar  3 2026, 15:01:35) [MSC v.1944 64 bit (AMD64)]",
+    "torch": "2.13.0+cpu"
+  },
+  "limitations": [
+    "V5 locked holdout uses the same synthetic generator family.",
+    "V5 has not yet been benchmarked on the physical Raspberry Pi 5; V4 Pi measurements cannot be relabeled as V5 performance.",
+    "Approximately 1 Hz data do not validate subsecond faults.",
+    "No independent new real faulty-wafer validation is available.",
+    "Equipment transport, external alarms, power, and long-duration stability remain deployment-site experiments."
+  ],
+  "lineage": {
+    "holdout_reuse_for_tuning": false,
+    "profiles": "locked V5 profiles, unchanged",
+    "source_final_report_status": "v5_one_time_locked_holdout_no_further_tuning",
+    "threshold": "locked V5 normal-only calibration, unchanged",
+    "weights": "locked V5 weights, unchanged"
+  },
+  "manifest_version": 5,
+  "model_contract": {
+    "alarm_comparison": "strict score > threshold",
+    "architecture": "Sliding-Window LSTM Autoencoder",
+    "ensemble_rule": "maximum available normalized persistent profile score",
+    "ensemble_threshold": 1.1915203284296412,
+    "feature_spec": {
+      "causality": "features at t use raw values through t, x[t]-x[t-1], and elapsed sample count since reset; actual cycle length is unused",
+      "expected_cycle_samples": 104.0,
+      "feature_mean": [
+        753.2332348473145,
+        100.63440444925074,
+        1204.0256546423607,
+        49.834652917246,
+        0.004624980689015912,
+        0.00645630568000412,
+        -0.6444686904577991,
+        0.01591225088830527,
+        0.4991785641210979
+      ],
+      "feature_names": [
+        "Cl2 Flow",
+        "He Press",
+        "Pressure",
+        "Vat Valve",
+        "delta::Cl2 Flow",
+        "delta::He Press",
+        "delta::Pressure",
+        "delta::Vat Valve",
+        "elapsed_phase"
+      ],
+      "feature_std": [
+        0.7559087802716359,
+        0.802964997905795,
+        26.746546600556886,
+        0.8611645705751932,
+        1.0348413353587758,
+        1.092220606880369,
+        12.523949292426144,
+        0.5204051507298572,
+        0.29245090784692035
+      ],
+      "raw_schema_hash": "5a1858053991e3e391601b7442be4ef51accd1842c8eb7285e3c0966c733c0eb",
+      "raw_sensor_names": [
+        "Cl2 Flow",
+        "He Press",
+        "Pressure",
+        "Vat Valve"
+      ],
+      "score_feature_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "timing_contract": "no timestamp, delta-t, or resampling is used; delta features are per-sample differences and elapsed_phase is sample progress",
+      "version": 1
+    },
+    "profiles": [
+      {
+        "base_scale": 16.54791218302937,
+        "calibration": [
+          1.6809673877781721,
+          1.7013826874078095,
+          0.28494023060194446,
+          0.39461489701357094
+        ],
+        "feature_group": "raw",
+        "feature_indices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "persistence_required": 1,
+        "persistence_span": 1,
+        "profile_id": "p1_w4_max_raw_1of1",
+        "score_mode": "max",
+        "validation_fpr": 0.001,
+        "validation_macro_recall": 0.5233333333333333,
+        "validation_per_type_recall": {
+          "A: per-sample difference excursion": 0.8,
+          "B: oscillation": 0.4575,
+          "C: drift": 0.3125
+        },
+        "window_size": 4
+      },
+      {
+        "base_scale": 5.429500133231205,
+        "calibration": [
+          0.9107634704891028,
+          0.9128981743408935,
+          0.1563425677372599,
+          0.27677668590606874
+        ],
+        "feature_group": "raw",
+        "feature_indices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "persistence_required": 3,
+        "persistence_span": 5,
+        "profile_id": "p2_w16_mean_raw_3of5",
+        "score_mode": "mean",
+        "validation_fpr": 0.001,
+        "validation_macro_recall": 0.585,
+        "validation_per_type_recall": {
+          "A: per-sample difference excursion": 0.105,
+          "B: oscillation": 0.9375,
+          "C: drift": 0.7125
+        },
+        "window_size": 16
+      },
+      {
+        "base_scale": 2.4142527568947068,
+        "calibration": [
+          0.9737877832369858,
+          0.9671167209142987,
+          0.2006777318999063,
+          0.384659978197492
+        ],
+        "feature_group": "raw",
+        "feature_indices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "persistence_required": 3,
+        "persistence_span": 5,
+        "profile_id": "p3_w64_mean_raw_3of5",
+        "score_mode": "mean",
+        "validation_fpr": 0.001,
+        "validation_macro_recall": 0.6033333333333334,
+        "validation_per_type_recall": {
+          "A: per-sample difference excursion": 0.07,
+          "B: oscillation": 0.86,
+          "C: drift": 0.88
+        },
+        "window_size": 64
+      }
+    ],
+    "raw_sensor_schema_hash": "5a1858053991e3e391601b7442be4ef51accd1842c8eb7285e3c0966c733c0eb",
+    "stream_boundary": "start_stream/reset required per process stream"
+  },
+  "model_version": "v5-runtime-locked-v5-weights",
+  "source_provenance": {
+    "base_runtime": {
+      "bytes": 31810,
+      "hash_mode": "normalized_text_sha256",
+      "path": "v4_edge_runtime.py",
+      "role": "shared safety runtime",
+      "sha256": "e1bbce70d1703a3a91f33585c89b26bcfb23922f5f8e4691a1289ccb74f4f46c"
+    },
+    "builder": {
+      "bytes": 20135,
+      "hash_mode": "normalized_text_sha256",
+      "path": "32_build_v5_deployment.py",
+      "role": "V5 builder source",
+      "sha256": "0d5f05e45c98e21e4d9f83ffae3639bcc6443074d50343f9d03ccf86dd9938a5"
+    },
+    "calibrator": {
+      "bytes": 6002,
+      "hash_mode": "normalized_text_sha256",
+      "path": "30_calibrate_v5.py",
+      "role": "normal calibrator",
+      "sha256": "1f752946845d8dd2e45fd7d271e35795efd7b24d6db1922ce078d5d2173b4116"
+    },
+    "configuration": {
+      "bytes": 3790,
+      "hash_mode": "normalized_text_sha256",
+      "path": "config.py",
+      "role": "project configuration",
+      "sha256": "d93204902304b1a96e3c544774e8efd681a1d3372ba48bdf0b92adf8d95398fa"
+    },
+    "features": {
+      "bytes": 3388,
+      "hash_mode": "normalized_text_sha256",
+      "path": "v3_features.py",
+      "role": "causal feature transform",
+      "sha256": "288a9eb8c7936ae1b770a715cec8573f7474f7887daf7c353994f50d2b4b938c"
+    },
+    "generator": {
+      "bytes": 4251,
+      "hash_mode": "normalized_text_sha256",
+      "path": "28_generate_v5_selection.py",
+      "role": "V5 selection generator",
+      "sha256": "f5018590c0ab2e84bbb17313a22730259e9aa75bac07d8de05f64a1fab82e2ba"
+    },
+    "hashing": {
+      "bytes": 483,
+      "hash_mode": "normalized_text_sha256",
+      "path": "v4_hashing.py",
+      "role": "cross-platform hashing",
+      "sha256": "1c8d7002a5b797d1e27fa6f24336e1defcff556e8c0136e1f9cc5cef9c264365"
+    },
+    "locked_evaluator": {
+      "bytes": 15028,
+      "hash_mode": "normalized_text_sha256",
+      "path": "31_evaluate_v5_locked_holdout.py",
+      "role": "one-time locked evaluator",
+      "sha256": "e2740e3ee5174e047adb4417de9280d119076f9d542e16646507878d724af6b1"
+    },
+    "model": {
+      "bytes": 21335,
+      "hash_mode": "normalized_text_sha256",
+      "path": "models.py",
+      "role": "model source",
+      "sha256": "8d8d47fa71712a4ca64a9a9dc4891a6e387ca2841bf197544648f41ebd2e8fe7"
+    },
+    "runtime": {
+      "bytes": 11707,
+      "hash_mode": "normalized_text_sha256",
+      "path": "v5_edge_runtime.py",
+      "role": "V5 runtime source",
+      "sha256": "5736122d6efc4a11334997e0525bb66a230b0d3c8167044acecb087ec068dbdc"
+    },
+    "runtime_tests": {
+      "bytes": 5442,
+      "hash_mode": "normalized_text_sha256",
+      "path": "tests/test_v5_runtime.py",
+      "role": "V5 runtime tests",
+      "sha256": "23c4c00e0cd87644194d7fb30fc2395b299c3857fd3c5dfca5412f1cfc1ec8f5"
+    },
+    "scoring": {
+      "bytes": 13852,
+      "hash_mode": "normalized_text_sha256",
+      "path": "v5_experiment.py",
+      "role": "V5 score source",
+      "sha256": "063ee877c446dd5ac4f49b0a3808bbaf2cc05c1dffbf63f1963cb1750b88eb95"
+    },
+    "trainer": {
+      "bytes": 13271,
+      "hash_mode": "normalized_text_sha256",
+      "path": "29_train_select_v5.py",
+      "role": "V5 trainer",
+      "sha256": "42ffd2a0d0d4b9240b6dda45a1723fecbf5524ccacb49b4da47f916efa8448ce"
+    }
+  },
+  "status": "paper_edge_runtime_prototype_not_production_release",
+  "timing_contract": {
+    "interval_margin_seconds": 0.05099499999999964,
+    "maximum_interval_seconds": 1.0997949999999996,
+    "minimum_interval_seconds": 0.9431450000000001,
+    "mode": "fixed_cadence_fail_closed",
+    "nominal_interval_seconds": 1.0198999999999927,
+    "sensor_timeout_seconds": 3.059699999999978,
+    "strictly_increasing": true,
+    "subsecond_claim": "not supported; source cadence is about 1 Hz",
+    "timestamp_required": true,
+    "training_interval_p05_seconds": 0.9941399999999998,
+    "training_interval_p95_seconds": 1.0488
+  }
+}
