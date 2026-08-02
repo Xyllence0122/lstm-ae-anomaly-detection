@@ -1,46 +1,53 @@
 {
   "artifacts": {
     "build_environment": {
-      "bytes": 757,
+      "bytes": 728,
+      "hash_mode": "normalized_text_sha256",
       "path": "outputs/v4/deployment_environment_v4.json",
       "role": "exact successful build environment",
-      "sha256": "81fbe53f1114f2be235357168ba0a9e5469000b8bb2f5d847c9f478f4f9ed224"
+      "sha256": "ed20e4effdaeb017a97b37f60bd37e1c333e4008a2cddbb480cbbc39c6b7b958"
     },
     "locked_final_report": {
-      "bytes": 5947,
+      "bytes": 5777,
+      "hash_mode": "normalized_text_sha256",
       "path": "outputs/v3/final_holdout_v3_2.json",
       "role": "V3.2 locked holdout report",
-      "sha256": "33bfe9c85b0f57c44c924ae464915e2aa3832af1ae98d8aadd19e4095fbd34ab"
+      "sha256": "5f74313dd3af41209f4e6fe96b7d56663a32eeb7d5c7256c8d927becbcddcf2f"
     },
     "normal_calibration": {
-      "bytes": 1202,
+      "bytes": 1172,
+      "hash_mode": "normalized_text_sha256",
       "path": "outputs/v3/deployment_calibration_v3_2.json",
       "role": "V3.2 normal-only calibration",
-      "sha256": "a602f9c210a798640e20d6e3cc8502b64c9b91ebad497ab05cffdacfaeefb56c"
+      "sha256": "69567f32087739a1ebf9f89e4cfdde633e6368db2cc6e5a1a2001f74f572627b"
     },
     "runtime_parity": {
-      "bytes": 8337,
+      "bytes": 8038,
+      "hash_mode": "normalized_text_sha256",
       "path": "outputs/v4/runtime_parity_v4.json",
       "role": "offline versus streaming parity",
-      "sha256": "095ee6699e7b0af709393f21c290d37092bea05b0f0e9131d6a01f847f47c7bf"
+      "sha256": "d3d3df3c3011b3e647302b0ac2fa42adc73a8baee4cf39c0af1bd407654b2664"
     },
     "source_checkpoint": {
       "bytes": 229001,
+      "hash_mode": "sha256",
       "path": "outputs/v3/sliding_window_lstm_ae_v3_2.pt",
       "role": "locked V3.2 PyTorch checkpoint",
       "sha256": "e3ab0ba9954114bf4b8db5842838be88160ef7b65a308c4c8ffe6c0603a56b5d"
     },
     "source_statistics": {
-      "bytes": 37981,
+      "bytes": 36311,
+      "hash_mode": "normalized_text_sha256",
       "path": "outputs/v3/sensor_stats_v3_2.json",
       "role": "V3.2 source statistics",
-      "sha256": "79118aea76f3d3bf8eb41c2b5d62e20ff56ab5adc073e00cc419dbbfb77b2aa6"
+      "sha256": "5e9b3aa0cbec720abb4871c771b11584066fb1fab235767ed92e63557bf2f76b"
     },
     "torchscript_model": {
       "bytes": 235643,
+      "hash_mode": "sha256",
       "path": "outputs/v4/sliding_window_lstm_ae_v4.ts",
       "role": "V4 CPU streaming inference model",
-      "sha256": "220e5bc78d748de36920a0bbabbc654db40e8b5c8c8c5d5fb676fc5b88f1865a"
+      "sha256": "6e3264ae25076ec8a7fbaadeee168782751050cd2397659b91515df4ed0d7179"
     }
   },
   "build": {
@@ -50,7 +57,7 @@
       "--force"
     ],
     "git": {
-      "commit": "597e679abe4bd8053c592cd2f0803bbd0be1ba70",
+      "commit": "a914f5e51869bb9804e2f951cdc17765584a1297",
       "status_porcelain": []
     },
     "numpy": "2.5.1",
@@ -249,11 +256,11 @@
       "sha256": "f9ef8feab4dee45cef5c0507bba2005785ab17481b707fdaf0b52aa5000a53dd"
     },
     "builder": {
-      "bytes": 21938,
+      "bytes": 22698,
       "hash_mode": "normalized_text_sha256",
       "path": "26_build_v4_deployment.py",
       "role": "deployment builder source",
-      "sha256": "670172bed555bc50d7cfcf2c5f1c0432e7f6922ef2ecf93c9a33882dd100d083"
+      "sha256": "1ed3c00734bded0c2c8dab0e4cff98b45f5778602bd19eb293a29b91da3b9449"
     },
     "configuration": {
       "bytes": 3790,
@@ -305,18 +312,25 @@
       "sha256": "b0fc694677228330955f054fc3564f6bfa18536d203dbcb6d7488b2db16c8bca"
     },
     "runtime": {
-      "bytes": 30659,
+      "bytes": 31810,
       "hash_mode": "normalized_text_sha256",
       "path": "v4_edge_runtime.py",
       "role": "runtime source",
-      "sha256": "95abd0b5eb7a920e15a17e04a5b94a86eb45978d0d02114e8a68cde1c75ebf81"
+      "sha256": "e1bbce70d1703a3a91f33585c89b26bcfb23922f5f8e4691a1289ccb74f4f46c"
     },
     "runtime_tests": {
-      "bytes": 16192,
+      "bytes": 18726,
       "hash_mode": "normalized_text_sha256",
       "path": "tests/test_v4_runtime.py",
       "role": "V4 runtime tests",
-      "sha256": "e8ca8b79870a9dba2cd1481f16cb451a587cada6879a045350b56b53c57d4baf"
+      "sha256": "3a8199f309d6547fa9a19980576e197e154c86485fb31e75e8b72ffb27169e93"
+    },
+    "v4_hashing": {
+      "bytes": 483,
+      "hash_mode": "normalized_text_sha256",
+      "path": "v4_hashing.py",
+      "role": "V4 cross-platform artifact hash source",
+      "sha256": "1c8d7002a5b797d1e27fa6f24336e1defcff556e8c0136e1f9cc5cef9c264365"
     }
   },
   "status": "paper_edge_runtime_prototype_not_production_release",

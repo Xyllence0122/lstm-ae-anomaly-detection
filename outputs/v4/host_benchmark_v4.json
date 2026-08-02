@@ -1,56 +1,56 @@
 {
   "environment": {
-    "numpy": "2.2.3",
-    "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
-    "torch": "2.12.1+cpu",
+    "numpy": "2.5.1",
+    "python": "3.12.13 (main, Mar  3 2026, 15:01:35) [MSC v.1944 64 bit (AMD64)]",
+    "torch": "2.13.0+cpu",
     "torch_threads": 1
   },
   "hardware": {
     "is_raspberry_pi_5": false,
     "machine": "AMD64",
-    "model": "Windows-10-10.0.26200-SP0",
-    "platform": "Windows-10-10.0.26200-SP0",
+    "model": "Windows-11-10.0.26200-SP0",
+    "platform": "Windows-11-10.0.26200-SP0",
     "processor": "AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD"
   },
   "interpretation": "Only a report with hardware.is_raspberry_pi_5=true may be cited as Raspberry Pi 5 performance. This replay excludes equipment protocol I/O and external alarm delivery latency.",
   "latency": {
     "all_updates": {
       "count": 10292,
-      "maximum_ms": 189.138,
-      "mean_ms": 1.1228920034978624,
-      "p50_ms": 0.9565,
-      "p95_ms": 2.583735,
-      "p99_ms": 3.3916040000000005
+      "maximum_ms": 41.0147,
+      "mean_ms": 0.6541481344733774,
+      "p50_ms": 0.4442,
+      "p95_ms": 1.1502699999999992,
+      "p99_ms": 1.548958000000001
     },
     "raw_samples": {
       "all_update_count": 10292,
       "format": "NumPy NPZ with all_update_ms and inference_update_ms",
       "inference_update_count": 9592,
       "path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v4\\host_benchmark_v4_latencies.npz",
-      "sha256": "358735eebce75c3379b1aac77ab1e468f8cbad13e18170bd1f729333967b422c"
+      "sha256": "143e51cc62ac07b047f03f37855530a31bdcce296dde92b524dc5b6661192691"
     },
     "updates_with_model_inference": {
       "count": 9592,
-      "maximum_ms": 189.138,
-      "mean_ms": 1.2019660341951626,
-      "p50_ms": 1.0287,
-      "p95_ms": 2.6261449999999997,
-      "p99_ms": 3.428903000000001
+      "maximum_ms": 41.0147,
+      "mean_ms": 0.7000664616346957,
+      "p50_ms": 0.4588,
+      "p95_ms": 1.1603899999999998,
+      "p99_ms": 1.562554
     }
   },
   "protocol": {
-    "model_load_seconds": 0.07458640006370842,
+    "model_load_seconds": 0.018289999978151172,
     "nominal_interval_seconds": 1.0198999999999927,
     "sample_count": 10292,
     "seed": 496001,
     "synthetic_normal_sequences": 100,
-    "throughput_samples_per_second": 884.3885629010609,
-    "wall_seconds": 11.637418700032867
+    "throughput_samples_per_second": 1514.983885414245,
+    "wall_seconds": 6.793471599987242
   },
   "provenance": {
     "benchmark_code_sha256": "d86d19a43d9b90594a3145df6c78640f94045e6784da0c1fb4c5c239976e8f1c",
     "manifest_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v4\\deployment_manifest_v4.json",
-    "manifest_sha256": "922886d89a823ddb6d9fd4fcfe49accb86db28f94aba7a66c237be5b19cd23b0",
+    "manifest_sha256": "04af6092175adb6d4c47951720f265e150e75d345d1d90e2e5d574e00e8eb9ab",
     "model_version": "v4-runtime-v3.2-weights",
     "statistics_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\sensor_stats_v3_2.json",
     "statistics_sha256": "79118aea76f3d3bf8eb41c2b5d62e20ff56ab5adc073e00cc419dbbfb77b2aa6"
@@ -59,15 +59,15 @@
     "cpu_temperature_end_celsius": null,
     "cpu_temperature_start_celsius": null,
     "os_peak_scope": "operating-system process high-water mark since process start; checkpoint maximum is separately reported",
-    "os_process_peak_rss_bytes": 240214016,
+    "os_process_peak_rss_bytes": 231030784,
     "power_note": "requires an external meter or supported Pi sensor",
     "power_watts": null,
-    "rss_after_data_generation_bytes": 224628736,
-    "rss_after_model_load_bytes": 228900864,
-    "rss_after_replay_bytes": 238841856,
-    "rss_model_load_increment_bytes": 4272128,
-    "rss_observed_max_at_checkpoints_bytes": 240168960,
-    "rss_process_start_bytes": 223838208
+    "rss_after_data_generation_bytes": 220340224,
+    "rss_after_model_load_bytes": 223158272,
+    "rss_after_replay_bytes": 231030784,
+    "rss_model_load_increment_bytes": 2818048,
+    "rss_observed_max_at_checkpoints_bytes": 231030784,
+    "rss_process_start_bytes": 219512832
   },
   "runtime_observations": {
     "alarm_sample_count_on_synthetic_normal": 0,
