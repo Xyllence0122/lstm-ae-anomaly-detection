@@ -432,6 +432,12 @@ def main():
             "base_runtime": source_record(
                 PROJECT_DIR / "v4_edge_runtime.py", "shared safety runtime"),
             "builder": source_record(Path(__file__), "V5 builder source"),
+            "benchmark": source_record(
+                PROJECT_DIR / "27_benchmark_v4_runtime.py",
+                "shared host/Pi benchmark core"),
+            "benchmark_wrapper": source_record(
+                PROJECT_DIR / "33_benchmark_v5_runtime.py",
+                "V5 benchmark entry point"),
             "runtime_tests": source_record(
                 PROJECT_DIR / "tests" / "test_v5_runtime.py",
                 "V5 runtime tests"),
