@@ -30,6 +30,11 @@ V5 TorchScript已通過40條序列、8,944個profile scores的離線/串流parit
 告警decision mismatch為0。V4的Pi 5結果不能直接當成V5結果；V5仍需在
 實體Pi 5重新執行`33_benchmark_v5_runtime.py`。
 
+V5 MQTT端對端實驗使用`34_run_v5_mqtt_edge.py`在Pi執行推論，並由
+`35_run_v5_mqtt_sensor.py`從PC送出合成sensor及收集decision/alarm round trip。
+安裝`requirements-mqtt.txt`後，依`V5_MQTT端對端測試.md`先做同機smoke test，
+再做PC到Pi的LAN正式測試。此實驗只驗證傳輸與runtime，不是新的模型holdout。
+
 ## V4 即時邊緣原型
 
 V4 將鎖定的 V3.2 多尺度 Sliding-Window LSTM-AE 搬到逐筆推論
