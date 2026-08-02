@@ -1,0 +1,32 @@
+name: OpenCodeReview
+on:
+pull_request:
+types:
+- opened
+- synchronize
+- reopened
+permissions:
+contents: read
+pull-requests: write
+concurrency:
+group: ocr-review-${{ github.event.pull_request.number }}
+cancel-in-progress: true
+jobs:
+review:
+runs-on: ubuntu-latest
+steps:
+- name: Checkout repository
+uses: actions/checkout@v4
+with:
+fetch-depth: 0
+- name: Run OpenCodeReview
+uses: alibaba/open-code-review@main
+with:
+llm_url: ${{ secrets.OCR_LLM_URL }}
+
+llm_auth_token: ${{ secrets.OCR_LLM_AUTH_TOKEN }}
+llm_model: ${{ secrets.OCR_LLM_MODEL }}
+llm_use_anthropic: ${{ secrets.OCR_LLM_USE_ANTHROPIC }}
+language: 中文
+sticky_summary: 'true'
+incremental: 'true'
