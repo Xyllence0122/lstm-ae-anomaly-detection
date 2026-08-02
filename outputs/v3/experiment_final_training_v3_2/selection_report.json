@@ -1,0 +1,702 @@
+{
+  "protocol": {
+    "selection_data_only": true,
+    "target_validation_fpr": 0.005,
+    "window_training": true,
+    "dynamic_reconstruction_loss_weight": 0.5,
+    "selection_objective": "macro anomaly recall, then minimum type recall, under the normal-only validation FPR operating point",
+    "holdout_access": "none"
+  },
+  "feature_spec": {
+    "version": 1,
+    "raw_sensor_names": [
+      "Cl2 Flow",
+      "He Press",
+      "Pressure",
+      "Vat Valve"
+    ],
+    "feature_names": [
+      "Cl2 Flow",
+      "He Press",
+      "Pressure",
+      "Vat Valve",
+      "delta::Cl2 Flow",
+      "delta::He Press",
+      "delta::Pressure",
+      "delta::Vat Valve",
+      "elapsed_phase"
+    ],
+    "expected_cycle_samples": 103.0,
+    "feature_mean": [
+      753.2308921515456,
+      100.62531959401875,
+      1204.3171631672735,
+      49.83035368404742,
+      0.004609901603780894,
+      0.0069051677384365075,
+      -0.648567637715968,
+      0.016154024947702798,
+      0.5025311192137406
+    ],
+    "feature_std": [
+      0.7573009239799001,
+      0.8030600978609934,
+      26.859762887910275,
+      0.8645777175551732,
+      1.041247624286753,
+      1.09014047644379,
+      12.538013071934483,
+      0.5164739326841352,
+      0.2944206110734744
+    ],
+    "score_feature_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "causality": "features at t use raw values through t, x[t]-x[t-1], and elapsed sample count since reset; actual cycle length is unused",
+    "timing_contract": "no timestamp, delta-t, or resampling is used; delta features are per-sample differences and elapsed_phase is sample progress"
+  },
+  "resolved_run": {
+    "command_argv": [
+      "C:\\Max\\Paper\\AIoT\\lstm-ae\\.venv\\Scripts\\python.exe",
+      "C:\\Max\\Paper\\AIoT\\lstm-ae\\14_train_v3_window_lstm_ae.py",
+      "--seeds",
+      "34001,34002,34003",
+      "--epochs",
+      "40",
+      "--batch-size",
+      "128",
+      "--samples-per-size",
+      "4",
+      "--dynamic-weight",
+      "0.5",
+      "--experiment",
+      "final_training_v3_2",
+      "--data-path",
+      "outputs\\v3\\selection_data_v3_2.npz"
+    ],
+    "command_line_windows": "C:\\Max\\Paper\\AIoT\\lstm-ae\\.venv\\Scripts\\python.exe C:\\Max\\Paper\\AIoT\\lstm-ae\\14_train_v3_window_lstm_ae.py --seeds 34001,34002,34003 --epochs 40 --batch-size 128 --samples-per-size 4 --dynamic-weight 0.5 --experiment final_training_v3_2 --data-path outputs\\v3\\selection_data_v3_2.npz",
+    "arguments": {
+      "seeds": [
+        34001,
+        34002,
+        34003
+      ],
+      "epochs": 40,
+      "batch_size": 128,
+      "samples_per_size": 4,
+      "dynamic_weight": 0.5,
+      "experiment": "final_training_v3_2",
+      "publish": false,
+      "data_path": "outputs\\v3\\selection_data_v3_2.npz"
+    },
+    "fixed_config": {
+      "window_sizes": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "persistence_options": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "score_modes": [
+        "mean",
+        "max",
+        "delta_mean",
+        "delta_max"
+      ],
+      "target_validation_fpr": 0.005,
+      "hidden_size": 64,
+      "latent_size": 16,
+      "optimizer": "Adam",
+      "learning_rate": 0.001,
+      "validation_window_sequence_count": 500,
+      "validation_windows_per_size": 2,
+      "validation_window_seed": 35001
+    },
+    "selection_data_path": "outputs\\v3\\selection_data_v3_2.npz",
+    "selection_data_sha256": "7b0f325d54e8957ba0f95a07d4d05d26d95bcfb05fdadfcee07a313cb4ae2a37",
+    "torch_version": "2.13.0+cpu",
+    "device": "cpu"
+  },
+  "seeds": [
+    {
+      "seed": 34001,
+      "selection": {
+        "epoch": 20,
+        "window_size": 8,
+        "score_mode": "mean",
+        "persistence_required": 1,
+        "persistence_span": 1,
+        "threshold": 8.372431360065365,
+        "validation_precision": 0.9845916795069337,
+        "validation_recall": 0.71,
+        "validation_f1": 0.8250484183344093,
+        "validation_fpr": 0.005,
+        "validation_macro_recall": 0.71,
+        "validation_min_type_recall": 0.57,
+        "validation_per_type_recall": {
+          "A: dynamic slew excursion": 0.6166666666666667,
+          "B: oscillation": 0.9433333333333334,
+          "C: drift": 0.57
+        },
+        "validation_pre_onset_rate": 0.0077777777777777776
+      },
+      "final_train_loss": 1.4894293219812456,
+      "final_validation_loss": 1.4899710714817047,
+      "requested_epochs": 40,
+      "completed_epochs": 40,
+      "checkpoint_epochs": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "diagnostics": {
+        "best_by_window": {
+          "8": {
+            "epoch": 20,
+            "window_size": 8,
+            "score_mode": "mean",
+            "persistence_required": 1,
+            "persistence_span": 1,
+            "threshold": 8.372431360065365,
+            "validation_precision": 0.9845916795069337,
+            "validation_recall": 0.71,
+            "validation_f1": 0.8250484183344093,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.71,
+            "validation_min_type_recall": 0.57,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.6166666666666667,
+              "B: oscillation": 0.9433333333333334,
+              "C: drift": 0.57
+            },
+            "validation_pre_onset_rate": 0.0077777777777777776
+          },
+          "16": {
+            "epoch": 20,
+            "window_size": 16,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 4.909491508054759,
+            "validation_precision": 0.984251968503937,
+            "validation_recall": 0.6944444444444444,
+            "validation_f1": 0.8143322475570033,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6944444444444445,
+            "validation_min_type_recall": 0.49,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.49,
+              "B: oscillation": 0.9766666666666667,
+              "C: drift": 0.6166666666666667
+            },
+            "validation_pre_onset_rate": 0.0044444444444444444
+          },
+          "32": {
+            "epoch": 20,
+            "window_size": 32,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 3.2024460890453814,
+            "validation_precision": 0.9840510366826156,
+            "validation_recall": 0.6855555555555556,
+            "validation_f1": 0.808120497707924,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6855555555555556,
+            "validation_min_type_recall": 0.42,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.42,
+              "B: oscillation": 0.9533333333333334,
+              "C: drift": 0.6833333333333333
+            },
+            "validation_pre_onset_rate": 0.0011111111111111111
+          },
+          "64": {
+            "epoch": 30,
+            "window_size": 64,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 2.4136669803175907,
+            "validation_precision": 0.9831081081081081,
+            "validation_recall": 0.6466666666666666,
+            "validation_f1": 0.7801608579088471,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6466666666666666,
+            "validation_min_type_recall": 0.24,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.24,
+              "B: oscillation": 0.88,
+              "C: drift": 0.82
+            },
+            "validation_pre_onset_rate": 0.0
+          }
+        },
+        "best_by_anomaly_type": {
+          "A: dynamic slew excursion": {
+            "epoch": 40,
+            "window_size": 64,
+            "score_mode": "max",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 4.400929034397067,
+            "validation_precision": 0.978021978021978,
+            "validation_recall": 0.49444444444444446,
+            "validation_f1": 0.6568265682656826,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.49444444444444446,
+            "validation_min_type_recall": 0.11,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.7833333333333333,
+              "B: oscillation": 0.59,
+              "C: drift": 0.11
+            },
+            "validation_pre_onset_rate": 0.0
+          },
+          "B: oscillation": {
+            "epoch": 20,
+            "window_size": 16,
+            "score_mode": "mean",
+            "persistence_required": 3,
+            "persistence_span": 5,
+            "threshold": 4.635968241123914,
+            "validation_precision": 0.9823321554770318,
+            "validation_recall": 0.6177777777777778,
+            "validation_f1": 0.7585266030013642,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6177777777777778,
+            "validation_min_type_recall": 0.24666666666666667,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.24666666666666667,
+              "B: oscillation": 0.98,
+              "C: drift": 0.6266666666666667
+            },
+            "validation_pre_onset_rate": 0.0033333333333333335
+          },
+          "C: drift": {
+            "epoch": 20,
+            "window_size": 64,
+            "score_mode": "mean",
+            "persistence_required": 3,
+            "persistence_span": 5,
+            "threshold": 2.399314777636948,
+            "validation_precision": 0.9824253075571178,
+            "validation_recall": 0.6211111111111111,
+            "validation_f1": 0.7610619469026548,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6211111111111111,
+            "validation_min_type_recall": 0.13,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.13,
+              "B: oscillation": 0.8866666666666667,
+              "C: drift": 0.8466666666666667
+            },
+            "validation_pre_onset_rate": 0.0
+          }
+        }
+      }
+    },
+    {
+      "seed": 34002,
+      "selection": {
+        "epoch": 30,
+        "window_size": 32,
+        "score_mode": "mean",
+        "persistence_required": 2,
+        "persistence_span": 3,
+        "threshold": 3.1300149477005585,
+        "validation_precision": 0.9839486356340289,
+        "validation_recall": 0.6811111111111111,
+        "validation_f1": 0.8049901510177282,
+        "validation_fpr": 0.005,
+        "validation_macro_recall": 0.681111111111111,
+        "validation_min_type_recall": 0.3933333333333333,
+        "validation_per_type_recall": {
+          "A: dynamic slew excursion": 0.3933333333333333,
+          "B: oscillation": 0.95,
+          "C: drift": 0.7
+        },
+        "validation_pre_onset_rate": 0.0
+      },
+      "final_train_loss": 1.504274288492818,
+      "final_validation_loss": 1.509208768606186,
+      "requested_epochs": 40,
+      "completed_epochs": 40,
+      "checkpoint_epochs": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "diagnostics": {
+        "best_by_window": {
+          "8": {
+            "epoch": 10,
+            "window_size": 8,
+            "score_mode": "mean",
+            "persistence_required": 1,
+            "persistence_span": 1,
+            "threshold": 9.411905910120062,
+            "validation_precision": 0.9838969404186796,
+            "validation_recall": 0.6788888888888889,
+            "validation_f1": 0.8034188034188035,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6788888888888889,
+            "validation_min_type_recall": 0.49333333333333335,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.49333333333333335,
+              "B: oscillation": 0.8566666666666667,
+              "C: drift": 0.6866666666666666
+            },
+            "validation_pre_onset_rate": 0.008888888888888889
+          },
+          "16": {
+            "epoch": 10,
+            "window_size": 16,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 5.572894718228348,
+            "validation_precision": 0.9838969404186796,
+            "validation_recall": 0.6788888888888889,
+            "validation_f1": 0.8034188034188035,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6788888888888889,
+            "validation_min_type_recall": 0.4,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.4,
+              "B: oscillation": 0.9233333333333333,
+              "C: drift": 0.7133333333333334
+            },
+            "validation_pre_onset_rate": 0.008888888888888889
+          },
+          "32": {
+            "epoch": 30,
+            "window_size": 32,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 3.1300149477005585,
+            "validation_precision": 0.9839486356340289,
+            "validation_recall": 0.6811111111111111,
+            "validation_f1": 0.8049901510177282,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.681111111111111,
+            "validation_min_type_recall": 0.3933333333333333,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.3933333333333333,
+              "B: oscillation": 0.95,
+              "C: drift": 0.7
+            },
+            "validation_pre_onset_rate": 0.0
+          },
+          "64": {
+            "epoch": 40,
+            "window_size": 64,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 2.408455387188783,
+            "validation_precision": 0.9829931972789115,
+            "validation_recall": 0.6422222222222222,
+            "validation_f1": 0.7768817204301075,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6422222222222222,
+            "validation_min_type_recall": 0.23666666666666666,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.23666666666666666,
+              "B: oscillation": 0.89,
+              "C: drift": 0.8
+            },
+            "validation_pre_onset_rate": 0.0
+          }
+        },
+        "best_by_anomaly_type": {
+          "A: dynamic slew excursion": {
+            "epoch": 40,
+            "window_size": 64,
+            "score_mode": "max",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 4.656271216434571,
+            "validation_precision": 0.9789915966386554,
+            "validation_recall": 0.5177777777777778,
+            "validation_f1": 0.6773255813953488,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.5177777777777778,
+            "validation_min_type_recall": 0.16666666666666666,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.81,
+              "B: oscillation": 0.5766666666666667,
+              "C: drift": 0.16666666666666666
+            },
+            "validation_pre_onset_rate": 0.0
+          },
+          "B: oscillation": {
+            "epoch": 30,
+            "window_size": 32,
+            "score_mode": "mean",
+            "persistence_required": 3,
+            "persistence_span": 5,
+            "threshold": 3.024699785942219,
+            "validation_precision": 0.9824253075571178,
+            "validation_recall": 0.6211111111111111,
+            "validation_f1": 0.7610619469026548,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6211111111111112,
+            "validation_min_type_recall": 0.21666666666666667,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.21666666666666667,
+              "B: oscillation": 0.9633333333333334,
+              "C: drift": 0.6833333333333333
+            },
+            "validation_pre_onset_rate": 0.0
+          },
+          "C: drift": {
+            "epoch": 20,
+            "window_size": 64,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 2.6514172891967323,
+            "validation_precision": 0.9817184643510055,
+            "validation_recall": 0.5966666666666667,
+            "validation_f1": 0.7422252937111264,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.5966666666666667,
+            "validation_min_type_recall": 0.14333333333333334,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.14333333333333334,
+              "B: oscillation": 0.8066666666666666,
+              "C: drift": 0.84
+            },
+            "validation_pre_onset_rate": 0.0
+          }
+        }
+      }
+    },
+    {
+      "seed": 34003,
+      "selection": {
+        "epoch": 10,
+        "window_size": 8,
+        "score_mode": "mean",
+        "persistence_required": 2,
+        "persistence_span": 3,
+        "threshold": 8.420386486823709,
+        "validation_precision": 0.9847094801223242,
+        "validation_recall": 0.7155555555555555,
+        "validation_f1": 0.8288288288288288,
+        "validation_fpr": 0.005,
+        "validation_macro_recall": 0.7155555555555555,
+        "validation_min_type_recall": 0.5533333333333333,
+        "validation_per_type_recall": {
+          "A: dynamic slew excursion": 0.5533333333333333,
+          "B: oscillation": 0.8966666666666666,
+          "C: drift": 0.6966666666666667
+        },
+        "validation_pre_onset_rate": 0.01
+      },
+      "final_train_loss": 1.4968459971489445,
+      "final_validation_loss": 1.5094942450523376,
+      "requested_epochs": 40,
+      "completed_epochs": 40,
+      "checkpoint_epochs": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "diagnostics": {
+        "best_by_window": {
+          "8": {
+            "epoch": 10,
+            "window_size": 8,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 8.420386486823709,
+            "validation_precision": 0.9847094801223242,
+            "validation_recall": 0.7155555555555555,
+            "validation_f1": 0.8288288288288288,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.7155555555555555,
+            "validation_min_type_recall": 0.5533333333333333,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.5533333333333333,
+              "B: oscillation": 0.8966666666666666,
+              "C: drift": 0.6966666666666667
+            },
+            "validation_pre_onset_rate": 0.01
+          },
+          "16": {
+            "epoch": 20,
+            "window_size": 16,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 5.1618754020315105,
+            "validation_precision": 0.9840510366826156,
+            "validation_recall": 0.6855555555555556,
+            "validation_f1": 0.808120497707924,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6855555555555556,
+            "validation_min_type_recall": 0.44666666666666666,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.44666666666666666,
+              "B: oscillation": 0.96,
+              "C: drift": 0.65
+            },
+            "validation_pre_onset_rate": 0.0044444444444444444
+          },
+          "32": {
+            "epoch": 20,
+            "window_size": 32,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 3.247761401841753,
+            "validation_precision": 0.9843014128728415,
+            "validation_recall": 0.6966666666666667,
+            "validation_f1": 0.8158750813272609,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6966666666666667,
+            "validation_min_type_recall": 0.4033333333333333,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.4033333333333333,
+              "B: oscillation": 0.9466666666666667,
+              "C: drift": 0.74
+            },
+            "validation_pre_onset_rate": 0.0011111111111111111
+          },
+          "64": {
+            "epoch": 30,
+            "window_size": 64,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 2.4794725551519194,
+            "validation_precision": 0.9828767123287672,
+            "validation_recall": 0.6377777777777778,
+            "validation_f1": 0.7735849056603774,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6377777777777777,
+            "validation_min_type_recall": 0.20333333333333334,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.20333333333333334,
+              "B: oscillation": 0.86,
+              "C: drift": 0.85
+            },
+            "validation_pre_onset_rate": 0.0
+          }
+        },
+        "best_by_anomaly_type": {
+          "A: dynamic slew excursion": {
+            "epoch": 30,
+            "window_size": 64,
+            "score_mode": "max",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 5.170263183906033,
+            "validation_precision": 0.9761904761904762,
+            "validation_recall": 0.45555555555555555,
+            "validation_f1": 0.6212121212121212,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.45555555555555555,
+            "validation_min_type_recall": 0.11666666666666667,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.7833333333333333,
+              "B: oscillation": 0.4666666666666667,
+              "C: drift": 0.11666666666666667
+            },
+            "validation_pre_onset_rate": 0.0
+          },
+          "B: oscillation": {
+            "epoch": 20,
+            "window_size": 16,
+            "score_mode": "mean",
+            "persistence_required": 3,
+            "persistence_span": 5,
+            "threshold": 4.794566640099057,
+            "validation_precision": 0.9824561403508771,
+            "validation_recall": 0.6222222222222222,
+            "validation_f1": 0.7619047619047619,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6222222222222222,
+            "validation_min_type_recall": 0.23333333333333334,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.23333333333333334,
+              "B: oscillation": 0.9766666666666667,
+              "C: drift": 0.6566666666666666
+            },
+            "validation_pre_onset_rate": 0.0033333333333333335
+          },
+          "C: drift": {
+            "epoch": 20,
+            "window_size": 64,
+            "score_mode": "mean",
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "threshold": 2.533545184326879,
+            "validation_precision": 0.9825783972125436,
+            "validation_recall": 0.6266666666666667,
+            "validation_f1": 0.7652645861601085,
+            "validation_fpr": 0.005,
+            "validation_macro_recall": 0.6266666666666666,
+            "validation_min_type_recall": 0.17666666666666667,
+            "validation_per_type_recall": {
+              "A: dynamic slew excursion": 0.17666666666666667,
+              "B: oscillation": 0.84,
+              "C: drift": 0.8633333333333333
+            },
+            "validation_pre_onset_rate": 0.0
+          }
+        }
+      }
+    }
+  ],
+  "release_seed": 34003,
+  "release_selection": {
+    "epoch": 10,
+    "window_size": 8,
+    "score_mode": "mean",
+    "persistence_required": 2,
+    "persistence_span": 3,
+    "threshold": 8.420386486823709,
+    "validation_precision": 0.9847094801223242,
+    "validation_recall": 0.7155555555555555,
+    "validation_f1": 0.8288288288288288,
+    "validation_fpr": 0.005,
+    "validation_macro_recall": 0.7155555555555555,
+    "validation_min_type_recall": 0.5533333333333333,
+    "validation_per_type_recall": {
+      "A: dynamic slew excursion": 0.5533333333333333,
+      "B: oscillation": 0.8966666666666666,
+      "C: drift": 0.6966666666666667
+    },
+    "validation_pre_onset_rate": 0.01
+  },
+  "candidate_sha256": "3ce562b1361512503f570d4e7c78b5192f546725febf8e9cdd6ad68d0dc40dc4",
+  "elapsed_seconds": 723.8712389469147
+}

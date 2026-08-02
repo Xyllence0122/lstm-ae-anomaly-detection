@@ -1,0 +1,29 @@
+{
+  "builder_additional_dependencies": [
+    "scipy",
+    "scikit-learn"
+  ],
+  "interpretation": "This records the exact successful build environment; Pi wheels may differ and must be recorded in the Pi benchmark report.",
+  "packages": {
+    "matplotlib": "3.11.0",
+    "numpy": "2.5.1",
+    "pandas": "3.0.3",
+    "scikit-learn": "1.9.0",
+    "scipy": "1.18.0",
+    "torch": "2.13.0"
+  },
+  "platform": {
+    "machine": "AMD64",
+    "release": "11",
+    "system": "Windows"
+  },
+  "python": {
+    "executable_name": "python.exe",
+    "implementation": "CPython",
+    "version": "3.12.13 (main, Mar  3 2026, 15:01:35) [MSC v.1944 64 bit (AMD64)]"
+  },
+  "runtime_minimum_direct_dependencies": [
+    "numpy",
+    "torch"
+  ]
+}

@@ -1,125 +1,175 @@
 {
   "per_seed": [
     {
-      "precision": 0.9746192893401016,
-      "recall": 0.64,
-      "f1": 0.772635814889336,
-      "fpr": 0.025,
+      "precision": 0.9644670050761421,
+      "recall": 0.6333333333333333,
+      "f1": 0.7645875251509054,
+      "fpr": 0.035,
       "per_type_recall": {
-        "A: 升溫過快": 0.66,
-        "B: 過程震盪": 0.64,
-        "C: 緩慢漂移": 0.62
+        "A: 暫態到位過快": 0.61,
+        "B: 過程震盪": 0.66,
+        "C: 緩慢漂移": 0.63
       },
-      "threshold": 1.739024295628295,
+      "threshold": 1.7297881700165005,
       "seed": 42,
       "best_epoch": 140,
       "window": 9,
       "use_calib": true,
       "thr_rule": "p99",
-      "val_f1": 0.7385892116182573
+      "val_f1": 0.743801652892562,
+      "run_signature": "04ef2b177e50972cbfc875a071de28c4f3b4171dceb516906d3f82644827ca17",
+      "signature_payload": {
+        "pipeline_version": 3,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "seed": 42,
+        "epochs": 400,
+        "checkpoint_every": 20,
+        "hidden_size": 64,
+        "latent_size": 16
+      }
     },
     {
-      "precision": 0.975609756097561,
-      "recall": 0.6666666666666666,
-      "f1": 0.7920792079207921,
-      "fpr": 0.025,
+      "precision": 0.9858490566037735,
+      "recall": 0.6966666666666667,
+      "f1": 0.81640625,
+      "fpr": 0.015,
       "per_type_recall": {
-        "A: 升溫過快": 0.71,
+        "A: 暫態到位過快": 0.71,
         "B: 過程震盪": 0.66,
-        "C: 緩慢漂移": 0.63
+        "C: 緩慢漂移": 0.72
       },
-      "threshold": 1.7560748542106868,
+      "threshold": 1.772204338402371,
       "seed": 43,
-      "best_epoch": 100,
-      "window": 9,
-      "use_calib": true,
-      "thr_rule": "p99",
-      "val_f1": 0.7489711934156379
-    },
-    {
-      "precision": 0.9665071770334929,
-      "recall": 0.6733333333333333,
-      "f1": 0.793713163064833,
-      "fpr": 0.035,
-      "per_type_recall": {
-        "A: 升溫過快": 0.64,
-        "B: 過程震盪": 0.65,
-        "C: 緩慢漂移": 0.73
-      },
-      "threshold": 1.770536749856775,
-      "seed": 44,
       "best_epoch": 60,
       "window": 9,
       "use_calib": true,
       "thr_rule": "p99",
-      "val_f1": 0.7540983606557377
+      "val_f1": 0.7741935483870968,
+      "run_signature": "f7edd6b3a01afdd4b657e550f07820ccc1160f7761b2266a276338ad3458d9ab",
+      "signature_payload": {
+        "pipeline_version": 3,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "seed": 43,
+        "epochs": 400,
+        "checkpoint_every": 20,
+        "hidden_size": 64,
+        "latent_size": 16
+      }
     },
     {
-      "precision": 0.9591836734693877,
+      "precision": 0.9791666666666666,
       "recall": 0.6266666666666667,
-      "f1": 0.7580645161290323,
-      "fpr": 0.04,
+      "f1": 0.7642276422764228,
+      "fpr": 0.02,
       "per_type_recall": {
-        "A: 升溫過快": 0.69,
-        "B: 過程震盪": 0.66,
-        "C: 緩慢漂移": 0.53
+        "A: 暫態到位過快": 0.69,
+        "B: 過程震盪": 0.64,
+        "C: 緩慢漂移": 0.55
       },
-      "threshold": 1.7408502798898502,
+      "threshold": 1.775994436084214,
+      "seed": 44,
+      "best_epoch": 140,
+      "window": 9,
+      "use_calib": true,
+      "thr_rule": "p99",
+      "val_f1": 0.7063829787234043,
+      "run_signature": "3d1e5e2974024c96c669e2f10f41747f83d481847fd599ea09bd877ac170f935",
+      "signature_payload": {
+        "pipeline_version": 3,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "seed": 44,
+        "epochs": 400,
+        "checkpoint_every": 20,
+        "hidden_size": 64,
+        "latent_size": 16
+      }
+    },
+    {
+      "precision": 0.9695431472081218,
+      "recall": 0.6366666666666667,
+      "f1": 0.7686116700201208,
+      "fpr": 0.03,
+      "per_type_recall": {
+        "A: 暫態到位過快": 0.71,
+        "B: 過程震盪": 0.66,
+        "C: 緩慢漂移": 0.54
+      },
+      "threshold": 1.7445669506321944,
       "seed": 45,
       "best_epoch": 220,
       "window": 9,
       "use_calib": true,
       "thr_rule": "p99",
-      "val_f1": 0.711864406779661
+      "val_f1": 0.711864406779661,
+      "run_signature": "5e8df8e3f6b082f9e53b6f99191a43ac9d9e9f58bcbae24f81f24442f65beb1d",
+      "signature_payload": {
+        "pipeline_version": 3,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "seed": 45,
+        "epochs": 400,
+        "checkpoint_every": 20,
+        "hidden_size": 64,
+        "latent_size": 16
+      }
     },
     {
-      "precision": 0.9671361502347418,
-      "recall": 0.6866666666666666,
-      "f1": 0.8031189083820662,
-      "fpr": 0.035,
+      "precision": 0.98,
+      "recall": 0.6533333333333333,
+      "f1": 0.784,
+      "fpr": 0.02,
       "per_type_recall": {
-        "A: 升溫過快": 0.69,
-        "B: 過程震盪": 0.69,
-        "C: 緩慢漂移": 0.68
+        "A: 暫態到位過快": 0.61,
+        "B: 過程震盪": 0.61,
+        "C: 緩慢漂移": 0.74
       },
-      "threshold": 1.7130634551759925,
+      "threshold": 1.8031412890682148,
       "seed": 46,
-      "best_epoch": 100,
+      "best_epoch": 60,
       "window": 9,
       "use_calib": true,
       "thr_rule": "p99",
-      "val_f1": 0.7741935483870968
+      "val_f1": 0.7385892116182573,
+      "run_signature": "96e4fc583c223a371919f84154ed1a27148d89b6f6502a051d7d20f9fd9b77a4",
+      "signature_payload": {
+        "pipeline_version": 3,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "seed": 46,
+        "epochs": 400,
+        "checkpoint_every": 20,
+        "hidden_size": 64,
+        "latent_size": 16
+      }
     }
   ],
   "aggregate": {
     "precision": {
-      "mean": 0.968611209235057,
-      "std": 0.006009290572237286
+      "mean": 0.9758051751109409,
+      "std": 0.007714179541141674
     },
     "recall": {
-      "mean": 0.6586666666666666,
-      "std": 0.022070593809662444
+      "mean": 0.6493333333333334,
+      "std": 0.025245461638348638
     },
     "f1": {
-      "mean": 0.7839223220772119,
-      "std": 0.01629058410632038
+      "mean": 0.7795666174894897,
+      "std": 0.01978121151964911
     },
     "fpr": {
-      "mean": 0.032,
-      "std": 0.005999999999999999
+      "mean": 0.024,
+      "std": 0.007348469228349536
     },
-    "A: 升溫過快": {
-      "mean": 0.678,
-      "std": 0.024819347291981684
+    "A: 暫態到位過快": {
+      "mean": 0.6659999999999999,
+      "std": 0.04630334761116089
     },
     "B: 過程震盪": {
-      "mean": 0.66,
-      "std": 0.016733200530681485
+      "mean": 0.646,
+      "std": 0.01959591794226544
     },
     "C: 緩慢漂移": {
-      "mean": 0.638,
-      "std": 0.06675327707311454
+      "mean": 0.6360000000000001,
+      "std": 0.08309031231136393
     }
   },
-  "release_seed": 46
+  "release_seed": 43
 }

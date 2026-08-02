@@ -1,0 +1,80 @@
+{
+  "version": "V3 family erratum 1",
+  "policy": "Original reports remain byte-for-byte immutable. Corrections below supersede only the identified claims or metrics.",
+  "source_sha256": {
+    "v3_initial_holdout": "6d28dd25b2d6d601acfb7ae904bcb724b62fdb6ef05a97b6c41c515d479f75d5",
+    "v3_1_holdout": "ab192a19a74f294aac940c02d5e10de1fe70cad6d98a3e9201f671bdc2e0f098",
+    "real_reuse_report": "d3e77cd8f91ea951aedff2003d97ffef148468d880b247415123826fb5bfcef6",
+    "v3_1_calibration": "ed3519e78d445d7f8562e77a7379f3e6dcc970994a76c2fe86b94cf9926105b4",
+    "v2_real_report": "81cec182aa2e5877e3bde7cd2db0ddf39b9e69f0a34751042562501290e68c43",
+    "v2_statistics": "8c58f319da8593f5350d0c9ac79c0bf40b3f126918d32ed14f8acf3b4f135320"
+  },
+  "corrections": [
+    {
+      "source": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\final_holdout_v3.json",
+      "field": "status",
+      "original": "locked_final_holdout_no_further_tuning",
+      "corrected": "initial locked V3 holdout; its FPR result motivated the separately versioned V3.1 normal-only calibration protocol",
+      "impact": "The report remains a locked evaluation of its frozen V3 artifact, but it is not a no-further-tuning statement for the entire V3 family."
+    },
+    {
+      "sources": [
+        "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\final_holdout_v3.json",
+        "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\final_holdout_v3_1.json"
+      ],
+      "field": "metrics.detected_before_injection_end_rate",
+      "action": "withdraw",
+      "reason": "Type A end_index used transition+0.08 although the phase-warp intervention remained nonzero much later. The original 99% values have no valid injection-support interpretation.",
+      "replacement_definition": "V3.2 computes onset/end from exact indices where the pre-quantization intervention changes the generated normal baseline by more than 1e-12.",
+      "other_metrics_changed": false
+    },
+    {
+      "source": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\final_holdout_v3_1.json",
+      "field": "protocol.threshold_source",
+      "original": "frozen selection-normal profile; no holdout recalibration",
+      "corrected": {
+        "type": "post_selection_normal_only_calibration",
+        "normal_count": 10000,
+        "seed": 296001,
+        "target_fpr": 0.001,
+        "threshold": 1.1160483959991028,
+        "calibration_report_sha256": "ed3519e78d445d7f8562e77a7379f3e6dcc970994a76c2fe86b94cf9926105b4",
+        "calibration_code_sha256": "6556c352e8ca2ddec058a685351efdf2a82f99d770421502447fb403d80cf47c"
+      },
+      "model_or_threshold_changed": false
+    },
+    {
+      "source": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\external_real_data_v3_1.json",
+      "fields": [
+        "status",
+        "interpretation",
+        "limitations"
+      ],
+      "action": "replace external/untouched wording",
+      "corrected": "The 43 normal and 20 faulty wafers were excluded from V3 weights and threshold fitting, but the identical split and wafers had already been evaluated in V2. Treat this as a historical reuse audit, not unseen independent validation.",
+      "evidence": {
+        "v2_v3_split_indices_equal": true,
+        "v2_real_report": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\real_validation.json"
+      }
+    },
+    {
+      "scope": "V3 feature terminology",
+      "action": "replace rate/time wording",
+      "corrected": "Features are x[t]-x[t-1] per-sample differences and sample-index progress. No timestamp, delta-t, or fixed-cadence resampling is implemented."
+    },
+    {
+      "source": "outputs/v3/experiment_final_training/selection_report.json",
+      "action": "provenance limitation",
+      "corrected": "The historical report does not independently preserve the 40-epoch CLI, batch size, or samples-per-size. V3.2 must store resolved argv/config and completed epochs per seed."
+    },
+    {
+      "scope": "edge deployment",
+      "corrected": "V3/V3.1 have no TorchScript export, streaming runtime, or Raspberry Pi 5 benchmark and are not edge-deployment ready."
+    }
+  ],
+  "provenance": {
+    "generator_code_sha256": "dce20631d843b2f08c92466a6d69c4a54813860bd1e3c4154bc329a6f82a0c46",
+    "git_commit": "491ce9160e9c15382c5147e7f1d5b0983dd4dae2",
+    "git_status_porcelain": ""
+  }
+}

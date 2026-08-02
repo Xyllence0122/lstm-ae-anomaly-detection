@@ -1,0 +1,72 @@
+{
+  "protocol": {
+    "selection_data_only": true,
+    "holdout_access": "none",
+    "target_total_validation_fpr": 0.005,
+    "profile_search": "top validation profile per anomaly type, followed by joint normal-only calibration of the maximum normalized score"
+  },
+  "source_checkpoint": "outputs\\v3\\experiment_final_training\\candidate.pt",
+  "source_checkpoint_sha256": "8dfddd75ce086b07715c9feb87c37bca13f33fd4c58fa7b10f80a6570ae3b6f9",
+  "profiles": [
+    {
+      "window_size": 64,
+      "score_mode": "max",
+      "persistence_required": 1,
+      "persistence_span": 1,
+      "base_scale": 6.4717019005279415,
+      "validation_fpr": 0.005,
+      "validation_macro_recall": 0.31555555555555553,
+      "validation_per_type_recall": {
+        "A: dynamic slew excursion": 0.7,
+        "B: oscillation": 0.21,
+        "C: drift": 0.03666666666666667
+      }
+    },
+    {
+      "window_size": 32,
+      "score_mode": "mean",
+      "persistence_required": 3,
+      "persistence_span": 5,
+      "base_scale": 3.410019593646267,
+      "validation_fpr": 0.005,
+      "validation_macro_recall": 0.6233333333333333,
+      "validation_per_type_recall": {
+        "A: dynamic slew excursion": 0.17,
+        "B: oscillation": 0.9033333333333333,
+        "C: drift": 0.7966666666666666
+      }
+    },
+    {
+      "window_size": 64,
+      "score_mode": "mean",
+      "persistence_required": 3,
+      "persistence_span": 5,
+      "base_scale": 2.5743858133716753,
+      "validation_fpr": 0.005,
+      "validation_macro_recall": 0.5733333333333334,
+      "validation_per_type_recall": {
+        "A: dynamic slew excursion": 0.08,
+        "B: oscillation": 0.8066666666666666,
+        "C: drift": 0.8333333333333334
+      }
+    }
+  ],
+  "ensemble_threshold": 1.0648467255465852,
+  "validation_metrics": {
+    "precision": 0.9863574351978172,
+    "recall": 0.8033333333333333,
+    "f1": 0.8854868340477648,
+    "fpr": 0.005,
+    "auc": 0.9654805555555557,
+    "macro_recall": 0.8033333333333333,
+    "minimum_type_recall": 0.6666666666666666,
+    "per_type_recall": {
+      "A: dynamic slew excursion": 0.6666666666666666,
+      "B: oscillation": 0.8933333333333333,
+      "C: drift": 0.85
+    },
+    "projected_precision_at_1pct_prevalence": 0.6187419768934531,
+    "projected_precision_at_0_1pct_prevalence": 0.1385455590686979
+  },
+  "candidate_sha256": "dcb6f59fc511b89b4aff79c3265c58e437faf7911d184d327485c19cf51b61cc"
+}

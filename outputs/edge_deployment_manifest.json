@@ -1,0 +1,235 @@
+{
+  "manifest_version": 1,
+  "manifest_id": "sha256:c8a05f020d87c6353c019556241aa7c01fa843b4af2d412e2d78a47af6602ee4",
+  "payload": {
+    "default_profile": "final_calibration_fpr_1pct",
+    "model_contract": {
+      "model_id": "sliding_window_lstm_ae",
+      "sensor_names": [
+        "Cl2 Flow",
+        "He Press",
+        "Pressure",
+        "Vat Valve"
+      ],
+      "schema_hash": "5a1858053991e3e391601b7442be4ef51accd1842c8eb7285e3c0966c733c0eb",
+      "input_contract": "ordered named mapping or explicit columns header",
+      "checkpoint_configuration": {
+        "seed": 44,
+        "hidden_size": 64,
+        "latent_size": 16,
+        "window_size": 32,
+        "score_mode": "mean",
+        "persistence_required": 3,
+        "persistence_span": 5,
+        "validation_target_fpr": 0.01,
+        "threshold": 2.079145039482915
+      }
+    },
+    "profiles": {
+      "validation_operating_point": {
+        "model_id": "sliding_window_lstm_ae",
+        "checkpoint_artifact": "sliding_checkpoint",
+        "model_artifact": "sliding_torchscript",
+        "schema_hash": "5a1858053991e3e391601b7442be4ef51accd1842c8eb7285e3c0966c733c0eb",
+        "threshold": 2.079145039482915,
+        "target_fpr": 0.01,
+        "calibration_data": "Step 3/V2 validation operating point",
+        "test_labels_used_for_threshold": false,
+        "selection_note": "Labeled synthetic validation anomalies were used for model and score-configuration selection; the numeric threshold was computed from validation normals only.",
+        "profile_hash": "sha256:8302c5fdb3bab9421f03c4079bdad05d5c35dad6ed3240aa5d28a9ca0779c581"
+      },
+      "final_calibration_fpr_1pct": {
+        "model_id": "sliding_window_lstm_ae",
+        "checkpoint_artifact": "sliding_checkpoint",
+        "model_artifact": "sliding_torchscript",
+        "schema_hash": "5a1858053991e3e391601b7442be4ef51accd1842c8eb7285e3c0966c733c0eb",
+        "threshold": 2.2915715737547067,
+        "target_fpr": 0.01,
+        "calibration_data": "final synthetic normal calibration cohort",
+        "calibration_normal_count": 5000,
+        "calibration_seed": 193001,
+        "test_labels_used_for_threshold": false,
+        "profile_hash": "sha256:7a1adc6672374888652ff2668faa28959f592a94026f4f95c7c0dc9d3a1ff0ec"
+      },
+      "final_calibration_fpr_0_5pct": {
+        "model_id": "sliding_window_lstm_ae",
+        "checkpoint_artifact": "sliding_checkpoint",
+        "model_artifact": "sliding_torchscript",
+        "schema_hash": "5a1858053991e3e391601b7442be4ef51accd1842c8eb7285e3c0966c733c0eb",
+        "threshold": 2.446301998730784,
+        "target_fpr": 0.005,
+        "calibration_data": "final synthetic normal calibration cohort",
+        "calibration_normal_count": 5000,
+        "calibration_seed": 193001,
+        "test_labels_used_for_threshold": false,
+        "profile_hash": "sha256:0e27ed0cc293c8f0599efc1220554d9128597b100855ae855aea72635412d64a"
+      },
+      "final_calibration_fpr_0_1pct": {
+        "model_id": "sliding_window_lstm_ae",
+        "checkpoint_artifact": "sliding_checkpoint",
+        "model_artifact": "sliding_torchscript",
+        "schema_hash": "5a1858053991e3e391601b7442be4ef51accd1842c8eb7285e3c0966c733c0eb",
+        "threshold": 2.7322752216943855,
+        "target_fpr": 0.001,
+        "calibration_data": "final synthetic normal calibration cohort",
+        "calibration_normal_count": 5000,
+        "calibration_seed": 193001,
+        "test_labels_used_for_threshold": false,
+        "profile_hash": "sha256:0bf560b86285b88ed7f8ae4810ada009da122410d7b0ae6533c32cdddd3b5249"
+      }
+    },
+    "artifacts": {
+      "sliding_checkpoint": {
+        "path": "outputs/sliding_window_lstm_ae.pt",
+        "sha256": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd"
+      },
+      "sliding_torchscript": {
+        "path": "outputs/sliding_window_lstm_ae.ts",
+        "sha256": "6450d7e40a01b23c8498167f05610a373f7af7afd01565c763099757d051143e"
+      },
+      "forecaster_checkpoint": {
+        "path": "outputs/streaming_lstm_forecaster.pt",
+        "sha256": "1e580fe05aa9a346bcec7ef034acb11fc0b89155b06caa76b64d5cc37762ef22"
+      },
+      "forecaster_torchscript": {
+        "path": "outputs/streaming_lstm_step.ts",
+        "sha256": "7c4ad2377cc0bd7a4128f5fd792f109b79b26749fd9cfe603d553a3ae9570228"
+      }
+    },
+    "reports": [
+      {
+        "path": "outputs/final_holdout_evaluation.json",
+        "json_pointer": "/results",
+        "sha256": "2821cd80b3ed5a23f12fb02abb311612fc9c89de8c2071212ecdcca0bbda934c"
+      },
+      {
+        "path": "outputs/prevalence_evaluation.json",
+        "json_pointer": "/online_results",
+        "sha256": "7a049b37f4b9baf3277a9c914b8416677b7fdafce09f4904d49fa8bd09d1baf7"
+      },
+      {
+        "path": "outputs/sliding_window_metrics.json",
+        "json_pointer": "/release",
+        "sha256": "cc3d026a7998b350f141d609a28c1561f4f54ef2fa40959bd0b5c1410797fad4"
+      },
+      {
+        "path": "outputs/sliding_window_metrics.json",
+        "json_pointer": "/artifact_parity",
+        "sha256": "16b91204da96f498288b0c8508f813a30b747286fcb0b4ab4d58abd3e0cd19f3"
+      },
+      {
+        "path": "outputs/real_validation.json",
+        "json_pointer": "/sliding_window_lstm_ae",
+        "sha256": "784e90bb82e43027bea20890efb7993033195a95e5f7f21af2d7b901644640f5"
+      }
+    ],
+    "provenance": {
+      "evaluation_source_commit": "389a3ce8e9fed49ce1fde668303ef1da378df766",
+      "git_blobs": [
+        {
+          "path": "02_generate_synthetic.py",
+          "sha256": "205d54938b9df512106705cf73dbafa1d906b8870320655670bc56315bb79e25"
+        },
+        {
+          "path": "07_streaming_early_warning.py",
+          "sha256": "c4cf0597ee30d86e91689e6f19ba0e2e2853b11e7107f0554f419b96c9d0360d"
+        },
+        {
+          "path": "08_train_sliding_window_lstm_ae.py",
+          "sha256": "7a019479f868b4bf4fcbfcc910d1ed53dbc7fb34b5254340262f33e359769a21"
+        },
+        {
+          "path": "09_compare_online_models.py",
+          "sha256": "9e4caedb73dc3f682e2033634ab3a2fae64322394db94930b90bb3751edeeaba"
+        },
+        {
+          "path": "10_evaluate_locked_holdout.py",
+          "sha256": "da5015805e47772f239d283423e8b3f04e99ca231b5b7758c7c5c0754707a6b1"
+        },
+        {
+          "path": "config.py",
+          "sha256": "d93204902304b1a96e3c544774e8efd681a1d3372ba48bdf0b92adf8d95398fa"
+        },
+        {
+          "path": "edge_runtime.py",
+          "sha256": "918d5c5c5ab1630bd2154f208102b3a752dc888826c2135351557346ce2664ad"
+        },
+        {
+          "path": "edge_window_runtime.py",
+          "sha256": "59c556c89ae5310895e1bb6b988bd75e63171c752ba105bd66e83aeca25fa889"
+        },
+        {
+          "path": "models.py",
+          "sha256": "a6b59aa43f46859b03dc60e83fcf2b537e97cb53374000d22869edc1ba8aec13"
+        },
+        {
+          "path": "online_evaluation.py",
+          "sha256": "be2f8d9574386a84a505ca206ce4a6920d6a2cb9495f3b7d43b440bf5bf71cfb"
+        },
+        {
+          "path": "outputs/sensor_stats.json",
+          "sha256": "27abce696c8fd997c570640ff403791c0be6bbfcf7f2ef0a4fbac9fa8112d69d"
+        },
+        {
+          "path": "requirements.txt",
+          "sha256": "b0fc694677228330955f054fc3564f6bfa18536d203dbcb6d7488b2db16c8bca"
+        }
+      ],
+      "deployment_runtime_files": [
+        {
+          "path": "deployment_manifest.py",
+          "hash_mode": "normalized_lf_text_sha256",
+          "sha256": "12d22ce4be8fb9a155ead93980bad657f3bc85935b73a1859519b379273cfaa9"
+        },
+        {
+          "path": "edge_window_runtime.py",
+          "hash_mode": "normalized_lf_text_sha256",
+          "sha256": "86ce6693461f65f3bfba09e8e5a5ab873c3dfc78bd46c96a49234346e09c6323"
+        }
+      ],
+      "environment": {
+        "python": "3.12.13",
+        "distributions": {
+          "matplotlib": "3.11.0",
+          "numpy": "2.5.1",
+          "scikit-learn": "1.9.0",
+          "scipy": "1.18.0",
+          "torch": "2.13.0"
+        }
+      },
+      "final_holdout_protocol": {
+        "status": "final holdout; not used for model selection",
+        "calibration_normal_count": 5000,
+        "holdout_normal_count": 10000,
+        "holdout_per_anomaly_type": 1000,
+        "random_seeds": {
+          "calibration": 193001,
+          "normal_holdout": 194001,
+          "anomaly_holdout": 195001
+        },
+        "artifact_sha256": {
+          "sliding_window_lstm_ae.pt": "1f6f76943b342aabca7babf8f4f90ac44e52ffc83caf43e73aac2ab5b0f23dfd",
+          "streaming_lstm_forecaster.pt": "1e580fe05aa9a346bcec7ef034acb11fc0b89155b06caa76b64d5cc37762ef22"
+        },
+        "warning": "Changing model settings after reading this report invalidates its final-holdout status."
+      },
+      "development_protocol": {
+        "calibration_normal_count": 5000,
+        "independent_test_normal_count": 10000,
+        "fixed_anomaly_test_count": 300,
+        "target_fprs": [
+          0.01,
+          0.005,
+          0.001
+        ],
+        "prevalence_scenarios": [
+          0.05,
+          0.01,
+          0.001
+        ],
+        "threshold_data": "independent synthetic normal calibration cohort",
+        "test_data": "independent synthetic normals plus the fixed A/B/C test anomalies; anomalies are intentionally retained for stable recall"
+      }
+    }
+  }
+}

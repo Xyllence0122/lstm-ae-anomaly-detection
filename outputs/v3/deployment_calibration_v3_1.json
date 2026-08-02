@@ -1,0 +1,27 @@
+{
+  "status": "normal_only_threshold_recalibration",
+  "model_weights_changed": false,
+  "profiles_changed": false,
+  "anomaly_labels_accessed": false,
+  "normal_count": 10000,
+  "seed": 296001,
+  "target_fpr": 0.001,
+  "allowed_false_positives": 10,
+  "observed_false_positives": 10,
+  "observed_fpr": 0.001,
+  "old_threshold": 1.0455643552008689,
+  "new_threshold": 1.1160483959991028,
+  "source_artifact_sha256": "34bbd3ab1ac797ecd2311ef10267e58b991798bfb85602155ac653f2da57e502",
+  "statistics_sha256": "79ba1e51556f6fd1755f645cc92535a35d52984a733cd24a282f22dc16df43e8",
+  "calibrated_artifact_sha256": "5225deea1e1af34fc5fcab987af03d0aefaebae0c42433b71be4868dac6468b2",
+  "code_sha256": "6556c352e8ca2ddec058a685351efdf2a82f99d770421502447fb403d80cf47c",
+  "git_commit": "0634e4f1a16227c8812a78ae1110d54dd2009d3a",
+  "git_status_before_outputs": "?? outputs/v3/sliding_window_lstm_ae_v3_1.pt",
+  "environment": {
+    "python": "3.12.13",
+    "torch": "2.13.0+cpu",
+    "numpy": "2.5.1",
+    "device": "cpu"
+  },
+  "reason": "The initial 2,000-normal selection cohort produced only two allowed tail events and did not generalize to the first locked holdout. V3.1 uses 10,000 new normal-only events and requires a new artifact, new holdout seeds, and a new report."
+}

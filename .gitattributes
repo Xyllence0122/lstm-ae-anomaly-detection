@@ -1,0 +1,3 @@
+# Preserve the immutable V2 manifest bytes that its raw SHA-256 sidecar binds.
+outputs/edge_deployment_manifest.json -text
+outputs/edge_deployment_manifest.sha256 -text

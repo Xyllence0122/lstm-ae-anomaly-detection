@@ -1,0 +1,352 @@
+{
+  "artifacts": {
+    "build_environment": {
+      "bytes": 728,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v4/deployment_environment_v4.json",
+      "role": "exact successful build environment",
+      "sha256": "ed20e4effdaeb017a97b37f60bd37e1c333e4008a2cddbb480cbbc39c6b7b958"
+    },
+    "locked_final_report": {
+      "bytes": 5777,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v3/final_holdout_v3_2.json",
+      "role": "V3.2 locked holdout report",
+      "sha256": "5f74313dd3af41209f4e6fe96b7d56663a32eeb7d5c7256c8d927becbcddcf2f"
+    },
+    "normal_calibration": {
+      "bytes": 1172,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v3/deployment_calibration_v3_2.json",
+      "role": "V3.2 normal-only calibration",
+      "sha256": "69567f32087739a1ebf9f89e4cfdde633e6368db2cc6e5a1a2001f74f572627b"
+    },
+    "runtime_parity": {
+      "bytes": 8038,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v4/runtime_parity_v4.json",
+      "role": "offline versus streaming parity",
+      "sha256": "d3d3df3c3011b3e647302b0ac2fa42adc73a8baee4cf39c0af1bd407654b2664"
+    },
+    "source_checkpoint": {
+      "bytes": 229001,
+      "hash_mode": "sha256",
+      "path": "outputs/v3/sliding_window_lstm_ae_v3_2.pt",
+      "role": "locked V3.2 PyTorch checkpoint",
+      "sha256": "e3ab0ba9954114bf4b8db5842838be88160ef7b65a308c4c8ffe6c0603a56b5d"
+    },
+    "source_statistics": {
+      "bytes": 36311,
+      "hash_mode": "normalized_text_sha256",
+      "path": "outputs/v3/sensor_stats_v3_2.json",
+      "role": "V3.2 source statistics",
+      "sha256": "5e9b3aa0cbec720abb4871c771b11584066fb1fab235767ed92e63557bf2f76b"
+    },
+    "torchscript_model": {
+      "bytes": 235643,
+      "hash_mode": "sha256",
+      "path": "outputs/v4/sliding_window_lstm_ae_v4.ts",
+      "role": "V4 CPU streaming inference model",
+      "sha256": "6e3264ae25076ec8a7fbaadeee168782751050cd2397659b91515df4ed0d7179"
+    }
+  },
+  "build": {
+    "command_argv": [
+      "C:\\Max\\Paper\\AIoT\\lstm-ae\\.venv\\Scripts\\python.exe",
+      "26_build_v4_deployment.py",
+      "--force"
+    ],
+    "git": {
+      "commit": "878a4070994ce98c3d000e82c7e1854f4f383573",
+      "status_porcelain": []
+    },
+    "numpy": "2.5.1",
+    "python": "3.12.13 (main, Mar  3 2026, 15:01:35) [MSC v.1944 64 bit (AMD64)]",
+    "torch": "2.13.0+cpu"
+  },
+  "event_contract": {
+    "default_post_alarm_samples": 16,
+    "default_pre_alarm_samples": 64,
+    "required_context": [
+      "wafer_id",
+      "recipe_id",
+      "equipment_id",
+      "stream_instance_id"
+    ],
+    "saved_provenance": [
+      "model version",
+      "model hash",
+      "manifest hash",
+      "sensor schema hash",
+      "threshold",
+      "profile evidence"
+    ],
+    "storage_format": "append-only JSON Lines"
+  },
+  "limitations": [
+    "V4 reuses V3.2 weights and does not improve locked recall.",
+    "The approximately 1 Hz source data cannot validate subsecond faults.",
+    "Raspberry Pi 5 latency, temperature, power, and long-duration stability require measurement on the physical device.",
+    "The historical 43 normal and 20 faulty wafers are not an independent unseen external validation set.",
+    "The runtime accepts CSV replay; a production equipment protocol adapter remains site-specific.",
+    "Runtime parity uses selection data and shared mathematical components; it validates implementation consistency, not model accuracy or independent external validity."
+  ],
+  "lineage": {
+    "holdout_reuse_for_tuning": false,
+    "source_final_report_status": "v3_2_locked_holdout_after_metadata_correction_and_normal_calibration",
+    "threshold": "locked V3.2 normal-only calibration, unchanged",
+    "weights": "locked V3.2 weights, unchanged"
+  },
+  "manifest_version": 4,
+  "model_contract": {
+    "alarm_comparison": "strict score > threshold",
+    "architecture": "Sliding-Window LSTM Autoencoder",
+    "ensemble_rule": "maximum available normalized persistent profile score",
+    "ensemble_threshold": 1.1795640023513194,
+    "feature_spec": {
+      "causality": "features at t use raw values through t, x[t]-x[t-1], and elapsed sample count since reset; actual cycle length is unused",
+      "expected_cycle_samples": 103.0,
+      "feature_mean": [
+        753.2308921515456,
+        100.62531959401875,
+        1204.3171631672735,
+        49.83035368404742,
+        0.004609901603780894,
+        0.0069051677384365075,
+        -0.648567637715968,
+        0.016154024947702798,
+        0.5025311192137406
+      ],
+      "feature_names": [
+        "Cl2 Flow",
+        "He Press",
+        "Pressure",
+        "Vat Valve",
+        "delta::Cl2 Flow",
+        "delta::He Press",
+        "delta::Pressure",
+        "delta::Vat Valve",
+        "elapsed_phase"
+      ],
+      "feature_std": [
+        0.7573009239799001,
+        0.8030600978609934,
+        26.859762887910275,
+        0.8645777175551732,
+        1.041247624286753,
+        1.09014047644379,
+        12.538013071934483,
+        0.5164739326841352,
+        0.2944206110734744
+      ],
+      "raw_schema_hash": "5a1858053991e3e391601b7442be4ef51accd1842c8eb7285e3c0966c733c0eb",
+      "raw_sensor_names": [
+        "Cl2 Flow",
+        "He Press",
+        "Pressure",
+        "Vat Valve"
+      ],
+      "score_feature_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "timing_contract": "no timestamp, delta-t, or resampling is used; delta features are per-sample differences and elapsed_phase is sample progress",
+      "version": 1
+    },
+    "profiles": [
+      {
+        "base_scale": 15.662364970613032,
+        "calibration": [
+          3.062478839518013,
+          2.882083774166907,
+          0.5405364243602082,
+          0.8019066181076094,
+          3.2422319439106024,
+          3.121322087081079,
+          3.240035003587351,
+          3.3380070560226733
+        ],
+        "persistence_required": 1,
+        "persistence_span": 1,
+        "profile_id": "p1_w8_max_1of1",
+        "score_mode": "max",
+        "validation_fpr": 0.001,
+        "validation_macro_recall": 0.2811111111111111,
+        "validation_per_type_recall": {
+          "A: per-sample difference excursion": 0.58,
+          "B: oscillation": 0.25333333333333335,
+          "C: drift": 0.01
+        },
+        "window_size": 8
+      },
+      {
+        "base_scale": 9.909443296675217,
+        "calibration": [
+          0.8909216110597921,
+          0.8593944859935227,
+          0.15662761131056896,
+          0.23546223805785424,
+          1.0048616768302017,
+          1.0094143323692368,
+          0.9297558028355255,
+          1.0077602588052603
+        ],
+        "persistence_required": 1,
+        "persistence_span": 1,
+        "profile_id": "p2_w8_mean_1of1",
+        "score_mode": "mean",
+        "validation_fpr": 0.001,
+        "validation_macro_recall": 0.6466666666666666,
+        "validation_per_type_recall": {
+          "A: per-sample difference excursion": 0.44,
+          "B: oscillation": 0.8466666666666667,
+          "C: drift": 0.6533333333333333
+        },
+        "window_size": 8
+      },
+      {
+        "base_scale": 2.775505103317731,
+        "calibration": [
+          0.9685187911486683,
+          0.960511597126134,
+          0.19385774297521763,
+          0.3332588946609572,
+          1.0072133514691668,
+          1.0085684006599263,
+          0.9175970770514195,
+          1.0115185204580648
+        ],
+        "persistence_required": 3,
+        "persistence_span": 5,
+        "profile_id": "p3_w64_mean_3of5",
+        "score_mode": "mean",
+        "validation_fpr": 0.001,
+        "validation_macro_recall": 0.5377777777777778,
+        "validation_per_type_recall": {
+          "A: per-sample difference excursion": 0.04666666666666667,
+          "B: oscillation": 0.7466666666666667,
+          "C: drift": 0.82
+        },
+        "window_size": 64
+      }
+    ],
+    "raw_sensor_schema_hash": "5a1858053991e3e391601b7442be4ef51accd1842c8eb7285e3c0966c733c0eb",
+    "stream_boundary": "start_stream/reset required for every wafer, recipe, or monitored process segment"
+  },
+  "model_version": "v4-runtime-v3.2-weights",
+  "source_provenance": {
+    "benchmark": {
+      "bytes": 13960,
+      "hash_mode": "normalized_text_sha256",
+      "path": "27_benchmark_v4_runtime.py",
+      "role": "benchmark source",
+      "sha256": "8ea7c24123e4136d417c8c9b236124aeca4c0cfb0ce371f226720e6d5250695c"
+    },
+    "benchmark_generator": {
+      "bytes": 19952,
+      "hash_mode": "normalized_text_sha256",
+      "path": "v3_data.py",
+      "role": "synthetic benchmark workload generator",
+      "sha256": "f9ef8feab4dee45cef5c0507bba2005785ab17481b707fdaf0b52aa5000a53dd"
+    },
+    "builder": {
+      "bytes": 22698,
+      "hash_mode": "normalized_text_sha256",
+      "path": "26_build_v4_deployment.py",
+      "role": "deployment builder source",
+      "sha256": "1ed3c00734bded0c2c8dab0e4cff98b45f5778602bd19eb293a29b91da3b9449"
+    },
+    "configuration": {
+      "bytes": 3790,
+      "hash_mode": "normalized_text_sha256",
+      "path": "config.py",
+      "role": "project path and sensor config",
+      "sha256": "d93204902304b1a96e3c544774e8efd681a1d3372ba48bdf0b92adf8d95398fa"
+    },
+    "feature_transform": {
+      "bytes": 3388,
+      "hash_mode": "normalized_text_sha256",
+      "path": "v3_features.py",
+      "role": "feature source",
+      "sha256": "288a9eb8c7936ae1b770a715cec8573f7474f7887daf7c353994f50d2b4b938c"
+    },
+    "hash_verifier": {
+      "bytes": 10300,
+      "hash_mode": "normalized_text_sha256",
+      "path": "deployment_manifest.py",
+      "role": "hash and schema verifier source",
+      "sha256": "12d22ce4be8fb9a155ead93980bad657f3bc85935b73a1859519b379273cfaa9"
+    },
+    "locked_evaluator": {
+      "bytes": 1938,
+      "hash_mode": "normalized_text_sha256",
+      "path": "24_evaluate_v3_2_locked_holdout.py",
+      "role": "locked evaluator entry point",
+      "sha256": "9f137e9fadc95e9f33ec9c42590f16f8867736977ab291becabc5e9ec389b375"
+    },
+    "model": {
+      "bytes": 21335,
+      "hash_mode": "normalized_text_sha256",
+      "path": "models.py",
+      "role": "model source",
+      "sha256": "8d8d47fa71712a4ca64a9a9dc4891a6e387ca2841bf197544648f41ebd2e8fe7"
+    },
+    "online_scoring": {
+      "bytes": 7370,
+      "hash_mode": "normalized_text_sha256",
+      "path": "online_evaluation.py",
+      "role": "score source",
+      "sha256": "be2f8d9574386a84a505ca206ce4a6920d6a2cb9495f3b7d43b440bf5bf71cfb"
+    },
+    "requirements": {
+      "bytes": 81,
+      "hash_mode": "normalized_text_sha256",
+      "path": "requirements.txt",
+      "role": "project minimum dependency declarations",
+      "sha256": "b0fc694677228330955f054fc3564f6bfa18536d203dbcb6d7488b2db16c8bca"
+    },
+    "runtime": {
+      "bytes": 31810,
+      "hash_mode": "normalized_text_sha256",
+      "path": "v4_edge_runtime.py",
+      "role": "runtime source",
+      "sha256": "e1bbce70d1703a3a91f33585c89b26bcfb23922f5f8e4691a1289ccb74f4f46c"
+    },
+    "runtime_tests": {
+      "bytes": 18726,
+      "hash_mode": "normalized_text_sha256",
+      "path": "tests/test_v4_runtime.py",
+      "role": "V4 runtime tests",
+      "sha256": "3a8199f309d6547fa9a19980576e197e154c86485fb31e75e8b72ffb27169e93"
+    },
+    "v4_hashing": {
+      "bytes": 483,
+      "hash_mode": "normalized_text_sha256",
+      "path": "v4_hashing.py",
+      "role": "V4 cross-platform artifact hash source",
+      "sha256": "1c8d7002a5b797d1e27fa6f24336e1defcff556e8c0136e1f9cc5cef9c264365"
+    }
+  },
+  "status": "paper_edge_runtime_prototype_not_production_release",
+  "timing_contract": {
+    "interpretation": "per-sample differences are valid only inside this enforced cadence band; samples outside the band are rejected and must not be silently scored",
+    "interval_margin_seconds": 0.05099499999999964,
+    "interval_rule": "training p05/p95 extended by 5% of median",
+    "maximum_interval_seconds": 1.0997949999999996,
+    "minimum_interval_seconds": 0.9431450000000001,
+    "mode": "fixed_cadence_fail_closed",
+    "nominal_interval_seconds": 1.0198999999999927,
+    "sensor_timeout_seconds": 3.059699999999978,
+    "strictly_increasing": true,
+    "subsecond_claim": "not supported; the source data cadence is approximately 1 Hz",
+    "timestamp_required": true,
+    "training_interval_p05_seconds": 0.9941399999999998,
+    "training_interval_p95_seconds": 1.0488
+  }
+}

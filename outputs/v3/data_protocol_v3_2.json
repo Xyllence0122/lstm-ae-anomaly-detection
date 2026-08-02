@@ -1,0 +1,29 @@
+{
+  "version": "3.2",
+  "selection_data_only": true,
+  "lineage": {
+    "source_data_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\selection_data_v3.npz",
+    "source_data_sha256": "cdc4f48aa972325e46e0f14f547b1d29b5064a5ca08d7462a34714df92a64198",
+    "sequence_values_equal_to_v3": {
+      "train": true,
+      "validation_normal": true,
+      "validation_anomaly": true,
+      "labels": true
+    },
+    "changed_type_a_end_metadata_count": 300
+  },
+  "counts": {
+    "train_normal": 1000,
+    "validation_normal": 2000,
+    "validation_per_anomaly": 300
+  },
+  "seeds": {
+    "train_normal": 31001,
+    "validation_normal": 32001,
+    "validation_anomaly": 33001
+  },
+  "timing_feature_contract": "no timestamp, delta-t, or fixed-cadence resampling; x[t]-x[t-1] and sample-index progress only",
+  "data_sha256": "7b0f325d54e8957ba0f95a07d4d05d26d95bcfb05fdadfcee07a313cb4ae2a37",
+  "statistics_sha256": "79118aea76f3d3bf8eb41c2b5d62e20ff56ab5adc073e00cc419dbbfb77b2aa6",
+  "holdout_policy": "No V3.2 holdout data are generated here."
+}

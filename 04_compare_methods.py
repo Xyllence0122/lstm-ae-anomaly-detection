@@ -18,18 +18,23 @@ import json
 import numpy as np
 import pandas as pd
 import torch
-import matplotlib.pyplot as plt
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import precision_recall_fscore_support, f1_score
 
 from config import (OUTPUT_DIR, FIGURE_DIR, RANDOM_SEED, SENSOR_NAMES,
                     COLORS, set_plot_style)
+import matplotlib.pyplot as plt
 from models import (DEVICE, LSTMAutoEncoder, DenseAutoEncoder,
                     train_collect_checkpoints, grid_select,
                     pointwise_errors, sensor_peak_scores, combine_peaks,
                     make_threshold)
 
-ANOMALY_LABELS = {0: "Normal", 1: "A: 升溫過快", 2: "B: 過程震盪", 3: "C: 緩慢漂移"}
+ANOMALY_LABELS = {
+    0: "Normal",
+    1: "A: 暫態到位過快",
+    2: "B: 過程震盪",
+    3: "C: 緩慢漂移",
+}
 
 
 def evaluate(name, y_test, y_pred):
@@ -41,7 +46,7 @@ def evaluate(name, y_test, y_pred):
     row = {"method": name, "precision": float(prec), "recall": float(rec),
            "f1": float(f1), "fpr": fpr, **per_type}
     print(f"{name:18s} P={prec:.3f} R={rec:.3f} F1={f1:.3f} FPR={fpr:.3f} "
-          f"| A={per_type['A: 升溫過快']:.2f} B={per_type['B: 過程震盪']:.2f} "
+          f"| A={per_type['A: 暫態到位過快']:.2f} B={per_type['B: 過程震盪']:.2f} "
           f"C={per_type['C: 緩慢漂移']:.2f}")
     return row
 
@@ -103,6 +108,7 @@ def main():
     rows.append(evaluate("SPC X-bar", y_test, spc_pred))
 
     # 2. Dense AE（相同選擇協議，固定長度輸入）
+    torch.manual_seed(RANDOM_SEED)
     dense = DenseAutoEncoder(Xtr_f.shape[1], n_feat)
     _, d_ckpts = train_collect_checkpoints(dense, list(Xtr_f), list(Xva_f),
                                            epochs=400, seed=RANDOM_SEED,
