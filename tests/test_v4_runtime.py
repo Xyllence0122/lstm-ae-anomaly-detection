@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,7 +8,10 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from deployment_manifest import sensor_schema_hash
+from deployment_manifest import (
+    normalized_text_sha256,
+    sensor_schema_hash,
+)
 from v3_features import transform_sequence
 from v4_edge_runtime import (
     DEFAULT_MANIFEST,
@@ -87,6 +91,18 @@ def detector(threshold=0.5):
 
 
 class V4RuntimeTests(unittest.TestCase):
+    def test_normalized_text_hash_is_line_ending_independent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            paths = [root / name for name in ("lf.txt", "crlf.txt", "cr.txt")]
+            paths[0].write_bytes(b"alpha\nbeta\n")
+            paths[1].write_bytes(b"alpha\r\nbeta\r\n")
+            paths[2].write_bytes(b"alpha\rbeta\r")
+            self.assertEqual(
+                len({normalized_text_sha256(path) for path in paths}),
+                1,
+            )
+
     def test_runtime_feature_rows_match_offline_transform(self):
         model = detector(threshold=100.0)
         model.start_stream("W1", "R1", "EQ1", "stream-1")
@@ -406,6 +422,47 @@ class V4RuntimeTests(unittest.TestCase):
             model.schema_hash,
             document["model_contract"]["raw_sensor_schema_hash"],
         )
+
+    @unittest.skipUnless(
+        DEFAULT_MANIFEST.is_file(),
+        "V4 deployment package has not been built")
+    def test_built_manifest_accepts_crlf_text_artifact_checkout(self):
+        document = json.loads(DEFAULT_MANIFEST.read_text(encoding="utf-8"))
+        source_root = DEFAULT_MANIFEST.parents[2]
+        with tempfile.TemporaryDirectory() as directory:
+            target_root = Path(directory) / "project"
+            target_manifest = (
+                target_root / "outputs" / "v4" /
+                DEFAULT_MANIFEST.name
+            )
+            records = [
+                *document["artifacts"].values(),
+                *document["source_provenance"].values(),
+            ]
+            for record in records:
+                source = source_root / record["path"]
+                target = target_root / record["path"]
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+                if record["hash_mode"] == "normalized_text_sha256":
+                    normalized = source.read_bytes().replace(
+                        b"\r\n", b"\n").replace(b"\r", b"\n")
+                    target.write_bytes(normalized.replace(b"\n", b"\r\n"))
+            target_manifest.parent.mkdir(parents=True, exist_ok=True)
+            manifest_lf = DEFAULT_MANIFEST.read_bytes().replace(
+                b"\r\n", b"\n").replace(b"\r", b"\n")
+            target_manifest.write_bytes(
+                manifest_lf.replace(b"\n", b"\r\n"))
+            shutil.copy2(
+                DEFAULT_MANIFEST.with_suffix(".sha256"),
+                target_manifest.with_suffix(".sha256"),
+            )
+            loaded, _, manifest_hash = load_v4_manifest(target_manifest)
+            self.assertEqual(loaded["model_version"], document["model_version"])
+            self.assertEqual(
+                manifest_hash,
+                normalized_text_sha256(DEFAULT_MANIFEST),
+            )
 
     @unittest.skipUnless(
         DEFAULT_MANIFEST.is_file(),

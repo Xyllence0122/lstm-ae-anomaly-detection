@@ -20,6 +20,8 @@ V4 新增：
   storage error解除前拒絕後續sample。
 - `26_build_v4_deployment.py`：輸出具 SHA-256 驗證的 TorchScript、
   deployment manifest及離線/即時 parity report。
+- 文字artifact採LF-normalized SHA-256，確保Windows與Pi Linux checkout
+  驗證一致；模型與其他二進位artifact仍採raw SHA-256。
 - `27_benchmark_v4_runtime.py`：同一工具可在開發機或 Raspberry Pi 5
   量測 p50/p95/p99、throughput、RSS及可取得的CPU溫度。
 

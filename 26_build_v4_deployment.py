@@ -16,6 +16,7 @@ import torch
 from config import OUTPUT_DIR, PROJECT_DIR
 from deployment_manifest import (
     file_sha256,
+    normalized_text_bytes,
     normalized_text_sha256,
     sensor_schema_hash,
 )
@@ -67,12 +68,10 @@ def json_ready(value):
 
 
 def write_json(path, value):
-    Path(path).write_text(
-        json.dumps(
-            json_ready(value), ensure_ascii=False, indent=2,
-            sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    content = json.dumps(
+        json_ready(value), ensure_ascii=False, indent=2,
+        sort_keys=True) + "\n"
+    Path(path).write_bytes(content.encode("utf-8"))
 
 
 def git_record():
@@ -329,11 +328,27 @@ def runtime_parity(model, scripted, artifact, profiles, timing):
     }
 
 
-def artifact_record(path, role):
+def artifact_record(path, role, hash_mode=None):
+    path = Path(path)
+    if hash_mode is None:
+        hash_mode = (
+            "normalized_text_sha256"
+            if path.suffix.lower() == ".json"
+            else "sha256"
+        )
+    if hash_mode == "normalized_text_sha256":
+        digest = normalized_text_sha256(path)
+        size = len(normalized_text_bytes(path))
+    elif hash_mode == "sha256":
+        digest = file_sha256(path)
+        size = path.stat().st_size
+    else:
+        raise ValueError(f"unsupported artifact hash mode: {hash_mode}")
     return {
         "path": relative(path),
-        "sha256": file_sha256(path),
-        "bytes": Path(path).stat().st_size,
+        "sha256": digest,
+        "hash_mode": hash_mode,
+        "bytes": size,
         "role": role,
     }
 
@@ -343,7 +358,7 @@ def source_record(path, role):
         "path": relative(path),
         "sha256": normalized_text_sha256(path),
         "hash_mode": "normalized_text_sha256",
-        "bytes": Path(path).stat().st_size,
+        "bytes": len(normalized_text_bytes(path)),
         "role": role,
     }
 
@@ -529,9 +544,10 @@ def main():
         ],
     }
     write_json(MANIFEST_PATH, manifest)
-    manifest_hash = file_sha256(MANIFEST_PATH)
-    MANIFEST_SIDECAR.write_text(
-        f"{manifest_hash}  {MANIFEST_PATH.name}\n", encoding="ascii")
+    manifest_hash = normalized_text_sha256(MANIFEST_PATH)
+    MANIFEST_SIDECAR.write_bytes(
+        f"{manifest_hash}  {MANIFEST_PATH.name}  "
+        "normalized_text_sha256\n".encode("ascii"))
 
     verified, _, verified_hash = load_v4_manifest(MANIFEST_PATH)
     detector = V4MultiscaleDetector.from_manifest(MANIFEST_PATH)

@@ -29,10 +29,15 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
-def normalized_text_sha256(path):
-    """Hash source text consistently across LF and CRLF Git checkouts."""
+def normalized_text_bytes(path):
+    """Return text bytes with platform line endings normalized to LF."""
     value = Path(path).read_bytes().replace(b"\r\n", b"\n")
-    return sha256_bytes(value)
+    return value.replace(b"\r", b"\n")
+
+
+def normalized_text_sha256(path):
+    """Hash text consistently across LF, CRLF, and CR Git checkouts."""
+    return sha256_bytes(normalized_text_bytes(path))
 
 
 def sensor_schema_payload(sensor_names):

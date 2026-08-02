@@ -18,6 +18,7 @@ import torch
 from config import PROJECT_DIR
 from deployment_manifest import (
     file_sha256,
+    normalized_text_bytes,
     normalized_text_sha256,
     sensor_schema_hash,
 )
@@ -32,6 +33,22 @@ def _sidecar_path(manifest_path):
     return Path(manifest_path).with_suffix(".sha256")
 
 
+def _path_digest(path, hash_mode):
+    if hash_mode == "normalized_text_sha256":
+        return normalized_text_sha256(path)
+    if hash_mode == "sha256":
+        return file_sha256(path)
+    raise ValueError(f"unsupported artifact hash mode: {hash_mode}")
+
+
+def _path_size(path, hash_mode):
+    if hash_mode == "normalized_text_sha256":
+        return len(normalized_text_bytes(path))
+    if hash_mode == "sha256":
+        return Path(path).stat().st_size
+    raise ValueError(f"unsupported artifact hash mode: {hash_mode}")
+
+
 def load_v4_manifest(path=DEFAULT_MANIFEST, verify_provenance=True):
     """Load a V4 deployment manifest and verify all bound artifacts."""
     path = Path(path).resolve()
@@ -39,9 +56,20 @@ def load_v4_manifest(path=DEFAULT_MANIFEST, verify_provenance=True):
     if not path.is_file() or not sidecar.is_file():
         raise FileNotFoundError(
             f"deployment manifest and sidecar are required: {path}, {sidecar}")
-    expected_manifest_hash = sidecar.read_text(
-        encoding="ascii").strip().split()[0]
-    actual_manifest_hash = file_sha256(path)
+    sidecar_fields = sidecar.read_text(encoding="ascii").strip().split()
+    if len(sidecar_fields) != 3:
+        raise ValueError(
+            "V4 manifest sidecar must contain hash, filename, and hash mode")
+    expected_manifest_hash, expected_name, manifest_hash_mode = (
+        sidecar_fields)
+    if expected_name != path.name:
+        raise ValueError(
+            f"manifest sidecar filename mismatch: expected {path.name}, "
+            f"got {expected_name}")
+    if manifest_hash_mode != "normalized_text_sha256":
+        raise ValueError(
+            "V4 manifest must use normalized_text_sha256")
+    actual_manifest_hash = _path_digest(path, manifest_hash_mode)
     if actual_manifest_hash != expected_manifest_hash:
         raise ValueError(
             "deployment manifest hash mismatch: "
@@ -56,25 +84,25 @@ def load_v4_manifest(path=DEFAULT_MANIFEST, verify_provenance=True):
         if not artifact_path.is_file():
             raise FileNotFoundError(
                 f"missing deployment artifact {artifact_id}: {artifact_path}")
-        actual = file_sha256(artifact_path)
+        hash_mode = artifact.get("hash_mode")
+        actual = _path_digest(artifact_path, hash_mode)
         if actual != artifact["sha256"]:
             raise ValueError(
                 f"artifact hash mismatch for {artifact_id}: "
                 f"expected {artifact['sha256']}, got {actual}")
+        actual_size = _path_size(artifact_path, hash_mode)
+        if actual_size != artifact["bytes"]:
+            raise ValueError(
+                f"artifact size mismatch for {artifact_id}: "
+                f"expected {artifact['bytes']}, got {actual_size}")
     if verify_provenance:
         for source_id, source in document["source_provenance"].items():
             source_path = project_root / source["path"]
             if not source_path.is_file():
                 raise FileNotFoundError(
                     f"missing provenance source {source_id}: {source_path}")
-            hash_mode = source.get("hash_mode", "sha256")
-            if hash_mode == "normalized_text_sha256":
-                actual = normalized_text_sha256(source_path)
-            elif hash_mode == "sha256":
-                actual = file_sha256(source_path)
-            else:
-                raise ValueError(
-                    f"unsupported provenance hash mode: {hash_mode}")
+            hash_mode = source.get("hash_mode")
+            actual = _path_digest(source_path, hash_mode)
             if actual != source["sha256"]:
                 raise ValueError(
                     f"provenance hash mismatch for {source_id}: "
