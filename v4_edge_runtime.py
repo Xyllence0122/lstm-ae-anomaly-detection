@@ -18,10 +18,9 @@ import torch
 from config import PROJECT_DIR
 from deployment_manifest import (
     file_sha256,
-    normalized_text_bytes,
-    normalized_text_sha256,
     sensor_schema_hash,
 )
+from v4_hashing import normalized_text_bytes, normalized_text_sha256
 
 
 DEFAULT_MANIFEST = (

@@ -16,8 +16,6 @@ import torch
 from config import OUTPUT_DIR, PROJECT_DIR
 from deployment_manifest import (
     file_sha256,
-    normalized_text_bytes,
-    normalized_text_sha256,
     sensor_schema_hash,
 )
 from models import (
@@ -27,6 +25,7 @@ from models import (
 from online_evaluation import apply_persistence, sensor_error_score_curves
 from v3_features import transform_sequence
 from v4_edge_runtime import V4MultiscaleDetector, load_v4_manifest
+from v4_hashing import normalized_text_bytes, normalized_text_sha256
 
 
 V3_DIR = OUTPUT_DIR / "v3"
@@ -515,6 +514,9 @@ def main():
             "hash_verifier": source_record(
                 PROJECT_DIR / "deployment_manifest.py",
                 "hash and schema verifier source"),
+            "v4_hashing": source_record(
+                PROJECT_DIR / "v4_hashing.py",
+                "V4 cross-platform artifact hash source"),
             "requirements": source_record(
                 PROJECT_DIR / "requirements.txt",
                 "project minimum dependency declarations"),

@@ -8,10 +8,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from deployment_manifest import (
-    normalized_text_sha256,
-    sensor_schema_hash,
-)
+from deployment_manifest import sensor_schema_hash
 from v3_features import transform_sequence
 from v4_edge_runtime import (
     DEFAULT_MANIFEST,
@@ -19,6 +16,7 @@ from v4_edge_runtime import (
     V4MultiscaleDetector,
     load_v4_manifest,
 )
+from v4_hashing import normalized_text_sha256
 
 
 class ZeroAutoEncoder(torch.nn.Module):
