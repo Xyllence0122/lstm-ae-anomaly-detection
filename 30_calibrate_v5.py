@@ -80,6 +80,11 @@ def verify_inputs():
 
 def main():
     input_hashes = verify_inputs()
+    git_status_before_outputs = git_value("status", "--porcelain")
+    if git_status_before_outputs:
+        raise RuntimeError(
+            "V5 calibration requires a clean preregistered worktree: "
+            f"{git_status_before_outputs}")
     artifact = torch.load(
         SOURCE_PATH, map_location="cpu", weights_only=False)
     statistics = load_statistics(STATS_PATH)
@@ -131,7 +136,7 @@ def main():
                 PROJECT_DIR / "v5_experiment.py"),
         },
         "git_commit": git_value("rev-parse", "HEAD"),
-        "git_status_before_outputs": git_value("status", "--porcelain"),
+        "git_status_before_outputs": git_status_before_outputs,
         "environment": {
             "python": platform.python_version(),
             "torch": torch.__version__,
