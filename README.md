@@ -33,6 +33,10 @@ V4 新增：
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
+Pi OS的Python版本若不同於歷史V2封存環境，V2 exact-runtime parity會明確
+標記為`skipped`；Pi部署驗收以`python -m unittest tests.test_v4_runtime -v`
+全部通過及`27_benchmark_v4_runtime.py`報告為準。
+
 CSV replay 必須有完全符合 manifest 順序的4個sensor欄位，以及每列都有的
 timestamp欄位：
 

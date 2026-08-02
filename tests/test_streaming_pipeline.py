@@ -1,4 +1,7 @@
+import importlib.metadata
 import importlib.util
+import json
+import platform
 import unittest
 from pathlib import Path
 
@@ -207,6 +210,29 @@ class StreamingModelTests(unittest.TestCase):
         np.testing.assert_allclose(actual, expected, atol=1e-7)
 
     def test_final_profile_reproduces_offline_torchscript_decisions(self):
+        manifest = json.loads((
+            PROJECT_DIR / "outputs" / "edge_deployment_manifest.json"
+        ).read_text(encoding="utf-8"))
+        environment = manifest["payload"]["provenance"]["environment"]
+        mismatches = []
+        actual_python = platform.python_version()
+        if actual_python != environment["python"]:
+            mismatches.append(
+                f"python expected {environment['python']}, got "
+                f"{actual_python}")
+        for distribution, expected in environment["distributions"].items():
+            try:
+                actual = importlib.metadata.version(distribution)
+            except importlib.metadata.PackageNotFoundError:
+                actual = "missing"
+            if actual != expected:
+                mismatches.append(
+                    f"{distribution} expected {expected}, got {actual}")
+        if mismatches:
+            self.skipTest(
+                "historical V2 parity requires its exact frozen runtime: "
+                + "; ".join(mismatches))
+
         checkpoint = torch.load(
             PROJECT_DIR / "outputs" / "sliding_window_lstm_ae.pt",
             map_location="cpu", weights_only=False)
