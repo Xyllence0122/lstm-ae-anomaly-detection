@@ -153,8 +153,9 @@ def main():
     offline_replay_seconds = time.perf_counter() - offline_started
 
     lock = threading.Lock()
-    connected = threading.Event()
+    connection_finished = threading.Event()
     subscribed = threading.Event()
+    connection_errors = []
     sent = {}
     results = {}
     result_rtt_ms = {}
@@ -173,16 +174,31 @@ def main():
     configure_security(client, args)
 
     def on_connect(_client, _userdata, _flags, reason_code, _properties):
+        nonlocal connection_errors
         if reason_code.is_failure:
+            connection_errors.append(
+                f"broker rejected MQTT connection: {reason_code}")
+            connection_finished.set()
             return
-        connected.set()
         result, _mid = _client.subscribe([
             (topics["result"], 1), (topics["alarm"], 1)])
         if result != mqtt.MQTT_ERR_SUCCESS:
-            raise RuntimeError(f"MQTT subscribe failed with rc={result}")
+            connection_errors.append(
+                f"MQTT subscribe request failed with rc={result}")
+        connection_finished.set()
 
-    def on_subscribe(_client, _userdata, _mid, _reason_codes, _properties):
+    def on_subscribe(_client, _userdata, _mid, reason_codes, _properties):
+        nonlocal connection_errors
+        failures = [str(code) for code in reason_codes if code.is_failure]
+        if failures:
+            connection_errors.append(
+                f"broker rejected MQTT subscriptions: {failures}")
         subscribed.set()
+
+    def on_connect_fail(_client, _userdata):
+        connection_errors.append(
+            "TCP connection to the MQTT broker failed")
+        connection_finished.set()
 
     def on_message(_client, _userdata, message):
         nonlocal duplicate_results, duplicate_alarms, malformed_responses
@@ -220,14 +236,29 @@ def main():
                 malformed_responses += 1
 
     client.on_connect = on_connect
+    client.on_connect_fail = on_connect_fail
     client.on_subscribe = on_subscribe
     client.on_message = on_message
     client.connect(args.broker, args.port, keepalive=30)
     client.loop_start()
-    if not connected.wait(15) or not subscribed.wait(15):
-        client.loop_stop()
+    if not connection_finished.wait(15):
         client.disconnect()
-        raise RuntimeError("MQTT connection/subscription timed out")
+        client.loop_stop()
+        raise RuntimeError(
+            "MQTT handshake timed out; verify the Pi IP, listener, firewall, "
+            "and LAN client isolation")
+    if connection_errors:
+        client.disconnect()
+        client.loop_stop()
+        raise RuntimeError(connection_errors[0])
+    if not subscribed.wait(15):
+        client.disconnect()
+        client.loop_stop()
+        raise RuntimeError("MQTT subscription acknowledgement timed out")
+    if connection_errors:
+        client.disconnect()
+        client.loop_stop()
+        raise RuntimeError(connection_errors[0])
 
     stream_truth = {}
     expected_by_stream = {}
@@ -275,8 +306,8 @@ def main():
             time.sleep(0.05)
         time.sleep(min(1.0, args.response_timeout_seconds))
     finally:
-        client.loop_stop()
         client.disconnect()
+        client.loop_stop()
 
     with lock:
         sent_ids = set(sent)
