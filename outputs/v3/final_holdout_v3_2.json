@@ -1,0 +1,170 @@
+{
+  "status": "v3_2_locked_holdout_after_metadata_correction_and_normal_calibration",
+  "lineage": {
+    "predecessors": [
+      "outputs/v3/final_holdout_v3.json",
+      "outputs/v3/final_holdout_v3_1.json"
+    ],
+    "erratum": "outputs/v3/report_errata_v3_family.json",
+    "changes": [
+      "correct Type A intervention-support metadata",
+      "record complete training argv/config and completed epochs",
+      "correct per-sample feature terminology and pre-onset diagnostic",
+      "calibrate threshold with new 10,000-normal cohort seed 396001"
+    ]
+  },
+  "protocol": {
+    "normal_count": 10000,
+    "anomaly_count_per_type": 1000,
+    "seeds": {
+      "normal": 494001,
+      "anomaly": 495001
+    },
+    "threshold_source": {
+      "type": "post_selection_normal_only_calibration",
+      "normal_count": 10000,
+      "seed": 396001,
+      "target_fpr": 0.001,
+      "observed_fpr": 0.001,
+      "source_artifact_sha256": "93c229250ec980f461c409ee962b24badc899ea4a303a25d712614f8b0b891bc",
+      "calibration_report": {
+        "path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v3\\deployment_calibration_v3_2.json",
+        "sha256": "a602f9c210a798640e20d6e3cc8502b64c9b91ebad497ab05cffdacfaeefb56c"
+      },
+      "calibration_code": {
+        "path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\23_calibrate_v3_2.py",
+        "sha256": "da068fd091cf23434e6f5458cbe5a8e39e900016a77e37bd5c29e6f706779d1a"
+      }
+    },
+    "same_family_synthetic_holdout": true
+  },
+  "operating_point": {
+    "ensemble_threshold": 1.1795640023513194,
+    "selection_target_fpr": 0.001,
+    "profiles": [
+      {
+        "window_size": 8,
+        "score_mode": "max",
+        "persistence_required": 1,
+        "persistence_span": 1,
+        "base_scale": 15.662364970613032
+      },
+      {
+        "window_size": 8,
+        "score_mode": "mean",
+        "persistence_required": 1,
+        "persistence_span": 1,
+        "base_scale": 9.909443296675217
+      },
+      {
+        "window_size": 64,
+        "score_mode": "mean",
+        "persistence_required": 3,
+        "persistence_span": 5,
+        "base_scale": 2.775505103317731
+      }
+    ]
+  },
+  "confusion_counts": {
+    "true_positive": 2047,
+    "false_negative": 953,
+    "false_positive": 6,
+    "true_negative": 9994
+  },
+  "metrics": {
+    "precision": 0.9970774476376035,
+    "recall": 0.6823333333333333,
+    "f1": 0.810211755392836,
+    "fpr": 0.0006,
+    "auc": 0.9646956666666667,
+    "accuracy": 0.9262307692307692,
+    "fpr_interval": {
+      "successes": 6,
+      "total": 10000,
+      "rate": 0.0006,
+      "wilson_95pct": [
+        0.0002750134763309977,
+        0.001308524096300786
+      ]
+    },
+    "recall_interval": {
+      "successes": 2047,
+      "total": 3000,
+      "rate": 0.6823333333333333,
+      "wilson_95pct": [
+        0.6654493110039477,
+        0.6987510021608836
+      ]
+    },
+    "per_type_recall": {
+      "A: per-sample difference excursion": {
+        "successes": 481,
+        "total": 1000,
+        "rate": 0.481,
+        "wilson_95pct": [
+          0.4501645630755934,
+          0.5119808537468576
+        ]
+      },
+      "B: oscillation": {
+        "successes": 742,
+        "total": 1000,
+        "rate": 0.742,
+        "wilson_95pct": [
+          0.7139918832868724,
+          0.768155965606119
+        ]
+      },
+      "C: drift": {
+        "successes": 824,
+        "total": 1000,
+        "rate": 0.824,
+        "wilson_95pct": [
+          0.7991696851594058,
+          0.8463505753419543
+        ]
+      }
+    },
+    "projected_precision": {
+      "at_1pct_anomaly_prevalence": 0.9199173108035233,
+      "at_0_1pct_anomaly_prevalence": 0.5323520233017789
+    },
+    "pre_onset_crossing_rate": 0.0006666666666666666,
+    "detected_latency_samples": {
+      "median": 19.0,
+      "p95": 70.0
+    },
+    "detected_before_injection_end_rate": 0.9975574010747436,
+    "injection_end_definition": "last sample where the pre-quantization intervention changes the generated normal baseline by more than 1e-12"
+  },
+  "provenance": {
+    "artifact_sha256": "e3ab0ba9954114bf4b8db5842838be88160ef7b65a308c4c8ffe6c0603a56b5d",
+    "statistics_sha256": "79118aea76f3d3bf8eb41c2b5d62e20ff56ab5adc073e00cc419dbbfb77b2aa6",
+    "data_protocol_sha256": "1911743a99043c018e4793143b3749d09fb8c3a7d1178020c24ca9eeadc90f67",
+    "code_sha256": {
+      "C:\\Max\\Paper\\AIoT\\lstm-ae\\16_evaluate_v3_locked_holdout.py": "7dc7e87a301ed3f8a845537356fc79c363fa2b722f54bbd66107e8e7568aeb86",
+      "v3_data.py": "f9ef8feab4dee45cef5c0507bba2005785ab17481b707fdaf0b52aa5000a53dd",
+      "v3_features.py": "288a9eb8c7936ae1b770a715cec8573f7474f7887daf7c353994f50d2b4b938c",
+      "models.py": "8d8d47fa71712a4ca64a9a9dc4891a6e387ca2841bf197544648f41ebd2e8fe7",
+      "online_evaluation.py": "be2f8d9574386a84a505ca206ce4a6920d6a2cb9495f3b7d43b440bf5bf71cfb",
+      "14_train_v3_window_lstm_ae.py": "d03bfa858d50c12f6d2bb042cbc7c0b41f6bb28e54f0f1b6dd20744011ee2154",
+      "15_select_v3_multiscale.py": "15fa1ec90610f296532d1d60088e9aed43f2c8cb93c5b8b61f141e98033ba055",
+      "C:\\Max\\Paper\\AIoT\\lstm-ae\\24_evaluate_v3_2_locked_holdout.py": "9f137e9fadc95e9f33ec9c42590f16f8867736977ab291becabc5e9ec389b375"
+    },
+    "git_commit": "14087b524da0d3c948eb8fa6f01903c2810e49f6",
+    "git_status_porcelain": "",
+    "environment": {
+      "python": "3.12.13",
+      "torch": "2.13.0+cpu",
+      "numpy": "2.5.1",
+      "scipy": "1.18.0",
+      "device": "cpu"
+    }
+  },
+  "limitations": [
+    "The locked holdout is generated by the same V3 generator family.",
+    "The LAM data cadence is about 1 Hz; sub-second faults are not observable.",
+    "Real faulty wafers were not used to tune weights or thresholds.",
+    "Raspberry Pi 5 latency and long-duration false-alert rate are not measured yet."
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "audit_scope": "V2 data and model failure analysis performed before V3 design",
+  "data_contract": {
+    "train_normal": 500,
+    "validation_normal": 200,
+    "validation_anomaly": 150,
+    "sensor_names": [
+      "Cl2 Flow",
+      "He Press",
+      "Pressure",
+      "Vat Valve"
+    ],
+    "length_range": [
+      95,
+      112
+    ]
+  },
+  "first_difference_oracle": {
+    "purpose": "Observability check only; this is not a selected V3 model.",
+    "target_validation_fpr": 0.01,
+    "observed_validation_fpr": 0.01,
+    "threshold": 7.545454545454546,
+    "per_type_recall": {
+      "A: fast transient": 0.06,
+      "B: oscillation": 0.02,
+      "C: drift": 0.0
+    },
+    "sensor_difference_center": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sensor_difference_scale_q75": [
+      1.0,
+      1.0,
+      11.0,
+      1.0
+    ]
+  },
+  "type_a_timing": {
+    "count": 50,
+    "median_anomaly_span_samples": 22.0,
+    "median_oracle_peak_sample": 96.5,
+    "fraction_ended_before_v2_window_ready": 1.0,
+    "v2_window_ready_sample": 31
+  },
+  "v2_development_false_positives": {
+    "threshold": 2.2915715737547067,
+    "normal_count": 200,
+    "false_positive_count": 4,
+    "false_positive_indices": [
+      12,
+      22,
+      120,
+      152
+    ],
+    "first_alert_progress": [
+      1.0,
+      0.99,
+      1.0,
+      0.8272727272727273
+    ],
+    "peak_score_progress": [
+      1.0,
+      1.0,
+      1.0,
+      0.8727272727272727
+    ],
+    "median_first_alert_progress": 0.995,
+    "median_peak_score_progress": 1.0
+  },
+  "known_generator_limitations": [
+    "Normal wafers share one mean profile per sensor.",
+    "Residual noise is generated independently per sensor; real cross-sensor covariance is not modeled.",
+    "Normal timing variation and recipe/step context are not modeled.",
+    "Type A starts at sample zero, so no pre-anomaly context exists.",
+    "The same generator family is used across development and holdout cohorts."
+  ]
+}

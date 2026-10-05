@@ -115,6 +115,17 @@
   "len_min": 95,
   "len_max": 112,
   "profile_grid": 101,
+  "sampling": {
+    "time_column": "Time",
+    "time_unit_assumption": "seconds",
+    "n_positive_intervals": 6320,
+    "median_interval": 1.019999999999996,
+    "p05_interval": 0.9960999999999984,
+    "p95_interval": 1.0488,
+    "min_interval": 0.8564000000000007,
+    "max_interval": 2.3496000000000095,
+    "median_rate_hz_if_seconds": 0.9803921568627489
+  },
   "sensors": {
     "Cl2 Flow": {
       "index": 3,

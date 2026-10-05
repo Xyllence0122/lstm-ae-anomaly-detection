@@ -1,0 +1,414 @@
+{
+  "protocol": {
+    "model_training": "normal synthetic sequences only",
+    "model_selection": "labeled synthetic anomaly validation set",
+    "test_access": "once per seed after model selection",
+    "alarm_score": "causal trailing mean of one-step squared error",
+    "true_positive_rule": "first threshold crossing at or after synthetic injection onset",
+    "early_warning_definition": "first threshold crossing before sequence end; synthetic injection onset is available only for generated data"
+  },
+  "per_seed": [
+    {
+      "precision": 0.970873786407767,
+      "recall": 0.6666666666666666,
+      "f1": 0.7905138339920948,
+      "fpr": 0.03,
+      "per_type_recall": {
+        "A: 暫態到位過快": 0.75,
+        "B: 過程震盪": 0.56,
+        "C: 緩慢漂移": 0.69
+      },
+      "alert_timing": {
+        "A: 暫態到位過快": {
+          "detected": 75,
+          "total": 100,
+          "median_alert_progress": 0.08653846153846154,
+          "median_remaining_fraction": 0.9134615384615384,
+          "median_detection_delay_samples": 9.0,
+          "pre_onset_alarm_rate": 0.0
+        },
+        "B: 過程震盪": {
+          "detected": 56,
+          "total": 100,
+          "median_alert_progress": 0.5505050505050505,
+          "median_remaining_fraction": 0.4494949494949495,
+          "median_detection_delay_samples": 18.5,
+          "pre_onset_alarm_rate": 0.0
+        },
+        "C: 緩慢漂移": {
+          "detected": 69,
+          "total": 100,
+          "median_alert_progress": 0.8297872340425532,
+          "median_remaining_fraction": 0.17021276595744683,
+          "median_detection_delay_samples": 59.0,
+          "pre_onset_alarm_rate": 0.0
+        }
+      },
+      "pre_onset_alarm_rate": 0.0,
+      "threshold": 1.8138664096413757,
+      "seed": 42,
+      "best_epoch": 120,
+      "window": 9,
+      "use_calib": true,
+      "thr_rule": "p99",
+      "val_f1": 0.7385892116182573,
+      "run_signature": "2df81e72cb4612c030fae88e124a4a49fbe24625630450a1150a18e4fc21d9bb",
+      "signature_payload": {
+        "pipeline_version": 2,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "epochs": 200,
+        "checkpoint_every": 20,
+        "hidden_size": 64,
+        "num_layers": 1,
+        "seed": 42
+      }
+    },
+    {
+      "precision": 0.9840425531914894,
+      "recall": 0.6166666666666667,
+      "f1": 0.7581967213114754,
+      "fpr": 0.015,
+      "per_type_recall": {
+        "A: 暫態到位過快": 0.62,
+        "B: 過程震盪": 0.55,
+        "C: 緩慢漂移": 0.68
+      },
+      "alert_timing": {
+        "A: 暫態到位過快": {
+          "detected": 62,
+          "total": 100,
+          "median_alert_progress": 0.08737864077669903,
+          "median_remaining_fraction": 0.912621359223301,
+          "median_detection_delay_samples": 9.0,
+          "pre_onset_alarm_rate": 0.0
+        },
+        "B: 過程震盪": {
+          "detected": 55,
+          "total": 100,
+          "median_alert_progress": 0.5648148148148148,
+          "median_remaining_fraction": 0.43518518518518523,
+          "median_detection_delay_samples": 19.0,
+          "pre_onset_alarm_rate": 0.0
+        },
+        "C: 緩慢漂移": {
+          "detected": 68,
+          "total": 100,
+          "median_alert_progress": 0.8571428571428571,
+          "median_remaining_fraction": 0.1428571428571429,
+          "median_detection_delay_samples": 60.0,
+          "pre_onset_alarm_rate": 0.0
+        }
+      },
+      "pre_onset_alarm_rate": 0.0,
+      "threshold": 1.8733286809895602,
+      "seed": 43,
+      "best_epoch": 120,
+      "window": 9,
+      "use_calib": true,
+      "thr_rule": "mean3sigma",
+      "val_f1": 0.6753246753246753,
+      "run_signature": "b835d48bff68d4a58ca0a783c9fe8d8e3e5423c4912e69b3fd349798d9999964",
+      "signature_payload": {
+        "pipeline_version": 2,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "epochs": 200,
+        "checkpoint_every": 20,
+        "hidden_size": 64,
+        "num_layers": 1,
+        "seed": 43
+      }
+    },
+    {
+      "precision": 0.9634703196347032,
+      "recall": 0.7033333333333334,
+      "f1": 0.8131021194605009,
+      "fpr": 0.04,
+      "per_type_recall": {
+        "A: 暫態到位過快": 0.8,
+        "B: 過程震盪": 0.62,
+        "C: 緩慢漂移": 0.69
+      },
+      "alert_timing": {
+        "A: 暫態到位過快": {
+          "detected": 80,
+          "total": 100,
+          "median_alert_progress": 0.08695855115758028,
+          "median_remaining_fraction": 0.9130414488424197,
+          "median_detection_delay_samples": 9.0,
+          "pre_onset_alarm_rate": 0.0
+        },
+        "B: 過程震盪": {
+          "detected": 62,
+          "total": 100,
+          "median_alert_progress": 0.5642361111111112,
+          "median_remaining_fraction": 0.4357638888888889,
+          "median_detection_delay_samples": 19.0,
+          "pre_onset_alarm_rate": 0.0
+        },
+        "C: 緩慢漂移": {
+          "detected": 69,
+          "total": 100,
+          "median_alert_progress": 0.8514851485148515,
+          "median_remaining_fraction": 0.14851485148514854,
+          "median_detection_delay_samples": 59.0,
+          "pre_onset_alarm_rate": 0.0
+        }
+      },
+      "pre_onset_alarm_rate": 0.0,
+      "threshold": 1.8709675110767479,
+      "seed": 44,
+      "best_epoch": 160,
+      "window": 9,
+      "use_calib": true,
+      "thr_rule": "p99",
+      "val_f1": 0.7385892116182573,
+      "run_signature": "2b5420d72d0b43be7602ce0087fb4867389bf7e904df59db651eff98d19123cf",
+      "signature_payload": {
+        "pipeline_version": 2,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "epochs": 200,
+        "checkpoint_every": 20,
+        "hidden_size": 64,
+        "num_layers": 1,
+        "seed": 44
+      }
+    },
+    {
+      "precision": 0.9693877551020408,
+      "recall": 0.6333333333333333,
+      "f1": 0.7661290322580645,
+      "fpr": 0.03,
+      "per_type_recall": {
+        "A: 暫態到位過快": 0.62,
+        "B: 過程震盪": 0.58,
+        "C: 緩慢漂移": 0.7
+      },
+      "alert_timing": {
+        "A: 暫態到位過快": {
+          "detected": 62,
+          "total": 100,
+          "median_alert_progress": 0.08737864077669903,
+          "median_remaining_fraction": 0.912621359223301,
+          "median_detection_delay_samples": 9.0,
+          "pre_onset_alarm_rate": 0.0
+        },
+        "B: 過程震盪": {
+          "detected": 58,
+          "total": 100,
+          "median_alert_progress": 0.5505050505050505,
+          "median_remaining_fraction": 0.4494949494949495,
+          "median_detection_delay_samples": 19.0,
+          "pre_onset_alarm_rate": 0.0
+        },
+        "C: 緩慢漂移": {
+          "detected": 70,
+          "total": 100,
+          "median_alert_progress": 0.8160377358490567,
+          "median_remaining_fraction": 0.18396226415094336,
+          "median_detection_delay_samples": 58.0,
+          "pre_onset_alarm_rate": 0.0
+        }
+      },
+      "pre_onset_alarm_rate": 0.0,
+      "threshold": 1.7683025906394938,
+      "seed": 45,
+      "best_epoch": 80,
+      "window": 9,
+      "use_calib": true,
+      "thr_rule": "p99",
+      "val_f1": 0.7063829787234043,
+      "run_signature": "126b5993f22536614a8d36eae7667f1c00ea3ee9292f601dc614016fadf276f5",
+      "signature_payload": {
+        "pipeline_version": 2,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "epochs": 200,
+        "checkpoint_every": 20,
+        "hidden_size": 64,
+        "num_layers": 1,
+        "seed": 45
+      }
+    },
+    {
+      "precision": 0.9674418604651163,
+      "recall": 0.6933333333333334,
+      "f1": 0.8077669902912621,
+      "fpr": 0.035,
+      "per_type_recall": {
+        "A: 暫態到位過快": 0.81,
+        "B: 過程震盪": 0.57,
+        "C: 緩慢漂移": 0.7
+      },
+      "alert_timing": {
+        "A: 暫態到位過快": {
+          "detected": 81,
+          "total": 100,
+          "median_alert_progress": 0.08737864077669903,
+          "median_remaining_fraction": 0.912621359223301,
+          "median_detection_delay_samples": 9.0,
+          "pre_onset_alarm_rate": 0.0
+        },
+        "B: 過程震盪": {
+          "detected": 57,
+          "total": 100,
+          "median_alert_progress": 0.5531914893617021,
+          "median_remaining_fraction": 0.44680851063829785,
+          "median_detection_delay_samples": 19.0,
+          "pre_onset_alarm_rate": 0.0
+        },
+        "C: 緩慢漂移": {
+          "detected": 70,
+          "total": 100,
+          "median_alert_progress": 0.8324193902171528,
+          "median_remaining_fraction": 0.1675806097828471,
+          "median_detection_delay_samples": 58.5,
+          "pre_onset_alarm_rate": 0.0
+        }
+      },
+      "pre_onset_alarm_rate": 0.0,
+      "threshold": 1.77152558871628,
+      "seed": 46,
+      "best_epoch": 140,
+      "window": 9,
+      "use_calib": true,
+      "thr_rule": "p99",
+      "val_f1": 0.7591836734693878,
+      "run_signature": "744aa71d6ab7d7060e0bcb9850f6649dff95e7bfdaf576da0a9a0e27fd136227",
+      "signature_payload": {
+        "pipeline_version": 2,
+        "data_sha256": "df8025524c97feb4c0062441c0943e42936d70e476d364f124dcd2b0a78279ee",
+        "epochs": 200,
+        "checkpoint_every": 20,
+        "hidden_size": 64,
+        "num_layers": 1,
+        "seed": 46
+      }
+    }
+  ],
+  "aggregate": {
+    "precision": {
+      "mean": 0.9710432549602233,
+      "std": 0.006958024800617034
+    },
+    "recall": {
+      "mean": 0.6626666666666667,
+      "std": 0.03342653636459114
+    },
+    "f1": {
+      "mean": 0.7871417394626796,
+      "std": 0.021863491316479897
+    },
+    "fpr": {
+      "mean": 0.03,
+      "std": 0.008366600265340756
+    },
+    "pre_onset_alarm_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "per_type": {
+      "A: 暫態到位過快": {
+        "recall_mean": 0.72,
+        "recall_std": 0.08414273587185055,
+        "median_alert_progress_mean": 0.08712658700522778,
+        "median_alert_progress_std": 0.00033607169529499895,
+        "median_remaining_fraction_mean": 0.9128734129947722,
+        "median_remaining_fraction_std": 0.00033607169529496496,
+        "median_detection_delay_samples_mean": 9.0,
+        "median_detection_delay_samples_std": 0.0,
+        "pre_onset_alarm_rate_mean": 0.0,
+        "pre_onset_alarm_rate_std": 0.0
+      },
+      "B: 過程震盪": {
+        "recall_mean": 0.576,
+        "recall_std": 0.024166091947189126,
+        "median_alert_progress_mean": 0.5566505032595458,
+        "median_alert_progress_std": 0.006506848483101044,
+        "median_remaining_fraction_mean": 0.4433494967404542,
+        "median_remaining_fraction_std": 0.0065068484831010305,
+        "median_detection_delay_samples_mean": 18.9,
+        "median_detection_delay_samples_std": 0.2,
+        "pre_onset_alarm_rate_mean": 0.0,
+        "pre_onset_alarm_rate_std": 0.0
+      },
+      "C: 緩慢漂移": {
+        "recall_mean": 0.692,
+        "recall_std": 0.007483314773547854,
+        "median_alert_progress_mean": 0.8373744731532942,
+        "median_alert_progress_std": 0.015015162787900129,
+        "median_remaining_fraction_mean": 0.16262552684670575,
+        "median_remaining_fraction_std": 0.01501516278790014,
+        "median_detection_delay_samples_mean": 58.9,
+        "median_detection_delay_samples_std": 0.6633249580710799,
+        "pre_onset_alarm_rate_mean": 0.0,
+        "pre_onset_alarm_rate_std": 0.0
+      }
+    }
+  },
+  "release_seed": 46,
+  "release": {
+    "precision": 0.9674418604651163,
+    "recall": 0.6933333333333334,
+    "f1": 0.8077669902912621,
+    "fpr": 0.035,
+    "per_type_recall": {
+      "A: 暫態到位過快": 0.81,
+      "B: 過程震盪": 0.57,
+      "C: 緩慢漂移": 0.7
+    },
+    "alert_timing": {
+      "A: 暫態到位過快": {
+        "detected": 81,
+        "total": 100,
+        "median_alert_progress": 0.08737864077669903,
+        "median_remaining_fraction": 0.912621359223301,
+        "median_detection_delay_samples": 9.0,
+        "pre_onset_alarm_rate": 0.0
+      },
+      "B: 過程震盪": {
+        "detected": 57,
+        "total": 100,
+        "median_alert_progress": 0.5531914893617021,
+        "median_remaining_fraction": 0.44680851063829785,
+        "median_detection_delay_samples": 19.0,
+        "pre_onset_alarm_rate": 0.0
+      },
+      "C: 緩慢漂移": {
+        "detected": 70,
+        "total": 100,
+        "median_alert_progress": 0.8324193902171528,
+        "median_remaining_fraction": 0.1675806097828471,
+        "median_detection_delay_samples": 58.5,
+        "pre_onset_alarm_rate": 0.0
+      }
+    },
+    "pre_onset_alarm_rate": 0.0,
+    "threshold": 1.77152558871628,
+    "seed": 46,
+    "window": 9,
+    "thr_rule": "p99",
+    "use_calib": true,
+    "best_epoch": 140,
+    "val_f1": 0.7591836734693878
+  },
+  "edge_benchmark": {
+    "device_scope": "host_cpu_not_raspberry_pi",
+    "includes": "one recurrent inference step only",
+    "excludes": "sensor I/O, preprocessing, score smoothing, and alert transport",
+    "runs": 2000,
+    "mean_us": 158.05885,
+    "p50_us": 138.35000000000002,
+    "p95_us": 237.41,
+    "torchscript_size_kib": 78.3876953125,
+    "parameter_count": 18180,
+    "torch_version": "2.13.0+cpu",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD",
+    "threads_during_benchmark": 1
+  },
+  "limitations": [
+    "Synthetic anomaly timing is not a measured physical failure onset.",
+    "LAM 9600 sampling does not validate millisecond thermal behavior.",
+    "Host CPU latency is not Raspberry Pi latency.",
+    "Sensor I/O and alert transport are excluded from the microbenchmark."
+  ]
+}

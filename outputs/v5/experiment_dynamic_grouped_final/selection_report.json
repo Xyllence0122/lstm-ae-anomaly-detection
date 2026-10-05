@@ -1,0 +1,1814 @@
+{
+  "status": "v5_selection_complete_locked_holdout_unopened",
+  "protocol": {
+    "selection_only": true,
+    "target_fpr": 0.001,
+    "acceptance_targets": {
+      "maximum_fpr": 0.001,
+      "minimum_recall": 0.75,
+      "minimum_f1": 0.85,
+      "minimum_type_a_recall": 0.6,
+      "minimum_type_b_recall": 0.7,
+      "minimum_type_c_recall": 0.8
+    },
+    "reserved_seeds": {
+      "normal_only_calibration": 720101,
+      "locked_holdout_normal": 730101,
+      "locked_holdout_anomaly": 730102
+    },
+    "locked_holdout_access": "none"
+  },
+  "resolved_arguments": {
+    "seeds": [
+      710201,
+      710202,
+      710203
+    ],
+    "epochs": 30,
+    "batch_size": 128,
+    "samples_per_size": 4,
+    "delta_feature_weight": 2.0,
+    "phase_feature_weight": 0.25,
+    "temporal_difference_weight": 0.5,
+    "experiment": "dynamic_grouped_final",
+    "data_path": "C:\\Max\\Paper\\AIoT\\lstm-ae\\outputs\\v5\\selection_data_v5.npz"
+  },
+  "fixed_configuration": {
+    "window_sizes": [
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "feature_groups": [
+      "raw",
+      "delta",
+      "raw_delta"
+    ],
+    "hidden_size": 64,
+    "latent_size": 16,
+    "validation_window_seed": 710110,
+    "optimizer": "Adam",
+    "learning_rate": 0.001
+  },
+  "feature_spec": {
+    "version": 1,
+    "raw_sensor_names": [
+      "Cl2 Flow",
+      "He Press",
+      "Pressure",
+      "Vat Valve"
+    ],
+    "feature_names": [
+      "Cl2 Flow",
+      "He Press",
+      "Pressure",
+      "Vat Valve",
+      "delta::Cl2 Flow",
+      "delta::He Press",
+      "delta::Pressure",
+      "delta::Vat Valve",
+      "elapsed_phase"
+    ],
+    "expected_cycle_samples": 104.0,
+    "feature_mean": [
+      753.2332348473145,
+      100.63440444925074,
+      1204.0256546423607,
+      49.834652917246,
+      0.004624980689015912,
+      0.00645630568000412,
+      -0.6444686904577991,
+      0.01591225088830527,
+      0.4991785641210979
+    ],
+    "feature_std": [
+      0.7559087802716359,
+      0.802964997905795,
+      26.746546600556886,
+      0.8611645705751932,
+      1.0348413353587758,
+      1.092220606880369,
+      12.523949292426144,
+      0.5204051507298572,
+      0.29245090784692035
+    ],
+    "score_feature_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "causality": "features at t use raw values through t, x[t]-x[t-1], and elapsed sample count since reset; actual cycle length is unused",
+    "timing_contract": "no timestamp, delta-t, or resampling is used; delta features are per-sample differences and elapsed_phase is sample progress"
+  },
+  "seed_results": [
+    {
+      "seed": 710201,
+      "completed_epochs": 30,
+      "final_train_loss": 1.2993603420690594,
+      "final_validation_loss": 1.2768737971782684,
+      "selected": {
+        "epoch": 10,
+        "metrics": {
+          "precision": 0.9971264367816092,
+          "recall": 0.8675,
+          "f1": 0.9278074866310161,
+          "fpr": 0.001,
+          "auc": 0.9794663888888889
+        },
+        "per_type": {
+          "A: per-sample difference excursion": 0.7925,
+          "B: oscillation": 0.93,
+          "C: drift": 0.88
+        },
+        "macro_recall": 0.8675,
+        "min_type_recall": 0.7925,
+        "projected_precision": {
+          "at_1pct_prevalence": 0.8975685463010864,
+          "at_0_1pct_prevalence": 0.4647736405036164
+        },
+        "threshold": 1.0230547835735644,
+        "gate": {
+          "passed": true,
+          "checks": {
+            "fpr": true,
+            "recall": true,
+            "f1": true,
+            "type_a_recall": true,
+            "type_b_recall": true,
+            "type_c_recall": true
+          },
+          "targets": {
+            "maximum_fpr": 0.001,
+            "minimum_recall": 0.75,
+            "minimum_f1": 0.85,
+            "minimum_type_a_recall": 0.6,
+            "minimum_type_b_recall": 0.7,
+            "minimum_type_c_recall": 0.8
+          }
+        },
+        "profiles": [
+          {
+            "window_size": 4,
+            "score_mode": "max",
+            "feature_group": "raw",
+            "feature_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "persistence_required": 1,
+            "persistence_span": 1,
+            "base_scale": 16.54791218302937,
+            "validation_fpr": 0.001,
+            "validation_macro_recall": 0.5233333333333333,
+            "validation_per_type_recall": {
+              "A: per-sample difference excursion": 0.8,
+              "B: oscillation": 0.4575,
+              "C: drift": 0.3125
+            },
+            "calibration": [
+              1.6809673877781721,
+              1.7013826874078095,
+              0.28494023060194446,
+              0.39461489701357094
+            ]
+          },
+          {
+            "window_size": 16,
+            "score_mode": "mean",
+            "feature_group": "raw",
+            "feature_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "persistence_required": 3,
+            "persistence_span": 5,
+            "base_scale": 5.429500133231205,
+            "validation_fpr": 0.001,
+            "validation_macro_recall": 0.585,
+            "validation_per_type_recall": {
+              "A: per-sample difference excursion": 0.105,
+              "B: oscillation": 0.9375,
+              "C: drift": 0.7125
+            },
+            "calibration": [
+              0.9107634704891028,
+              0.9128981743408935,
+              0.1563425677372599,
+              0.27677668590606874
+            ]
+          },
+          {
+            "window_size": 64,
+            "score_mode": "mean",
+            "feature_group": "raw",
+            "feature_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "persistence_required": 3,
+            "persistence_span": 5,
+            "base_scale": 2.4142527568947068,
+            "validation_fpr": 0.001,
+            "validation_macro_recall": 0.6033333333333334,
+            "validation_per_type_recall": {
+              "A: per-sample difference excursion": 0.07,
+              "B: oscillation": 0.86,
+              "C: drift": 0.88
+            },
+            "calibration": [
+              0.9737877832369858,
+              0.9671167209142987,
+              0.2006777318999063,
+              0.384659978197492
+            ]
+          }
+        ]
+      },
+      "checkpoint_diagnostics": [
+        {
+          "epoch": 10,
+          "metrics": {
+            "precision": 0.9971264367816092,
+            "recall": 0.8675,
+            "f1": 0.9278074866310161,
+            "fpr": 0.001,
+            "auc": 0.9794663888888889
+          },
+          "per_type": {
+            "A: per-sample difference excursion": 0.7925,
+            "B: oscillation": 0.93,
+            "C: drift": 0.88
+          },
+          "macro_recall": 0.8675,
+          "min_type_recall": 0.7925,
+          "projected_precision": {
+            "at_1pct_prevalence": 0.8975685463010864,
+            "at_0_1pct_prevalence": 0.4647736405036164
+          },
+          "threshold": 1.0230547835735644,
+          "gate": {
+            "passed": true,
+            "checks": {
+              "fpr": true,
+              "recall": true,
+              "f1": true,
+              "type_a_recall": true,
+              "type_b_recall": true,
+              "type_c_recall": true
+            },
+            "targets": {
+              "maximum_fpr": 0.001,
+              "minimum_recall": 0.75,
+              "minimum_f1": 0.85,
+              "minimum_type_a_recall": 0.6,
+              "minimum_type_b_recall": 0.7,
+              "minimum_type_c_recall": 0.8
+            }
+          },
+          "profiles": [
+            {
+              "window_size": 4,
+              "score_mode": "max",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 1,
+              "persistence_span": 1,
+              "base_scale": 16.54791218302937,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.5233333333333333,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.8,
+                "B: oscillation": 0.4575,
+                "C: drift": 0.3125
+              },
+              "calibration": [
+                1.6809673877781721,
+                1.7013826874078095,
+                0.28494023060194446,
+                0.39461489701357094
+              ]
+            },
+            {
+              "window_size": 16,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 5.429500133231205,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.585,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.105,
+                "B: oscillation": 0.9375,
+                "C: drift": 0.7125
+              },
+              "calibration": [
+                0.9107634704891028,
+                0.9128981743408935,
+                0.1563425677372599,
+                0.27677668590606874
+              ]
+            },
+            {
+              "window_size": 64,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 2.4142527568947068,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.6033333333333334,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.07,
+                "B: oscillation": 0.86,
+                "C: drift": 0.88
+              },
+              "calibration": [
+                0.9737877832369858,
+                0.9671167209142987,
+                0.2006777318999063,
+                0.384659978197492
+              ]
+            }
+          ]
+        },
+        {
+          "epoch": 20,
+          "metrics": {
+            "precision": 0.9970845481049563,
+            "recall": 0.855,
+            "f1": 0.9205921938088829,
+            "fpr": 0.001,
+            "auc": 0.9791077777777778
+          },
+          "per_type": {
+            "A: per-sample difference excursion": 0.7525,
+            "B: oscillation": 0.8975,
+            "C: drift": 0.915
+          },
+          "macro_recall": 0.855,
+          "min_type_recall": 0.7525,
+          "projected_precision": {
+            "at_1pct_prevalence": 0.8962264150943396,
+            "at_0_1pct_prevalence": 0.4611650485436893
+          },
+          "threshold": 1.053188139671434,
+          "gate": {
+            "passed": true,
+            "checks": {
+              "fpr": true,
+              "recall": true,
+              "f1": true,
+              "type_a_recall": true,
+              "type_b_recall": true,
+              "type_c_recall": true
+            },
+            "targets": {
+              "maximum_fpr": 0.001,
+              "minimum_recall": 0.75,
+              "minimum_f1": 0.85,
+              "minimum_type_a_recall": 0.6,
+              "minimum_type_b_recall": 0.7,
+              "minimum_type_c_recall": 0.8
+            }
+          },
+          "profiles": [
+            {
+              "window_size": 4,
+              "score_mode": "delta_max",
+              "feature_group": "raw_delta",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ],
+              "persistence_required": 1,
+              "persistence_span": 1,
+              "base_scale": 37.80907197913517,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.2775,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.755,
+                "B: oscillation": 0.0775,
+                "C: drift": 0.0
+              },
+              "calibration": [
+                0.5282014545531024,
+                0.4869544762866077,
+                0.18454144306391512,
+                0.21915860810673352,
+                1.0513455830589225,
+                0.8839676982263807,
+                1.8756510737433554,
+                1.6904158025194267
+              ]
+            },
+            {
+              "window_size": 64,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 2.2913947545230093,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.6325,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.0875,
+                "B: oscillation": 0.8875,
+                "C: drift": 0.9225
+              },
+              "calibration": [
+                0.9666155061737238,
+                0.9686095890452777,
+                0.18848963762543927,
+                0.34370687004269473
+              ]
+            },
+            {
+              "window_size": 4,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 8.614340683032525,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.6091666666666667,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.3175,
+                "B: oscillation": 0.7625,
+                "C: drift": 0.7475
+              },
+              "calibration": [
+                0.3685632056570582,
+                0.3377644888617602,
+                0.11051296201404184,
+                0.1219378225137792
+              ]
+            }
+          ]
+        },
+        {
+          "epoch": 30,
+          "metrics": {
+            "precision": 0.9970731707317073,
+            "recall": 0.8516666666666667,
+            "f1": 0.9186516853932585,
+            "fpr": 0.001,
+            "auc": 0.9775711111111112
+          },
+          "per_type": {
+            "A: per-sample difference excursion": 0.7775,
+            "B: oscillation": 0.875,
+            "C: drift": 0.9025
+          },
+          "macro_recall": 0.8516666666666666,
+          "min_type_recall": 0.7775,
+          "projected_precision": {
+            "at_1pct_prevalence": 0.8958625525946704,
+            "at_0_1pct_prevalence": 0.4601945244956772
+          },
+          "threshold": 1.0905788850908973,
+          "gate": {
+            "passed": true,
+            "checks": {
+              "fpr": true,
+              "recall": true,
+              "f1": true,
+              "type_a_recall": true,
+              "type_b_recall": true,
+              "type_c_recall": true
+            },
+            "targets": {
+              "maximum_fpr": 0.001,
+              "minimum_recall": 0.75,
+              "minimum_f1": 0.85,
+              "minimum_type_a_recall": 0.6,
+              "minimum_type_b_recall": 0.7,
+              "minimum_type_c_recall": 0.8
+            }
+          },
+          "profiles": [
+            {
+              "window_size": 4,
+              "score_mode": "delta_max",
+              "feature_group": "delta",
+              "feature_indices": [
+                4,
+                5,
+                6,
+                7
+              ],
+              "persistence_required": 1,
+              "persistence_span": 1,
+              "base_scale": 55.514152766876734,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.285,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.79,
+                "B: oscillation": 0.0625,
+                "C: drift": 0.0025
+              },
+              "calibration": [
+                0.2674931528307126,
+                0.2851461248087495,
+                0.7685086213986471,
+                0.7495051432036819
+              ]
+            },
+            {
+              "window_size": 16,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 5.56559220003819,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.5966666666666667,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.1175,
+                "B: oscillation": 0.9075,
+                "C: drift": 0.765
+              },
+              "calibration": [
+                0.8182737903033922,
+                0.8365579277428197,
+                0.16484101214291091,
+                0.31382476395325415
+              ]
+            },
+            {
+              "window_size": 64,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 2.5941324917677955,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.5741666666666667,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.03,
+                "B: oscillation": 0.77,
+                "C: drift": 0.9225
+              },
+              "calibration": [
+                0.9453986712383644,
+                0.9496968548540295,
+                0.19637842777574038,
+                0.4100375204462488
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 710202,
+      "completed_epochs": 30,
+      "final_train_loss": 1.346456486508887,
+      "final_validation_loss": 1.3594324171543122,
+      "selected": {
+        "epoch": 20,
+        "metrics": {
+          "precision": 0.9970760233918129,
+          "recall": 0.8525,
+          "f1": 0.9191374663072777,
+          "fpr": 0.001,
+          "auc": 0.9680055555555556
+        },
+        "per_type": {
+          "A: per-sample difference excursion": 0.71,
+          "B: oscillation": 0.9625,
+          "C: drift": 0.885
+        },
+        "macro_recall": 0.8525,
+        "min_type_recall": 0.71,
+        "projected_precision": {
+          "at_1pct_prevalence": 0.8959537572254336,
+          "at_0_1pct_prevalence": 0.4604374831217931
+        },
+        "threshold": 1.0184140063443392,
+        "gate": {
+          "passed": true,
+          "checks": {
+            "fpr": true,
+            "recall": true,
+            "f1": true,
+            "type_a_recall": true,
+            "type_b_recall": true,
+            "type_c_recall": true
+          },
+          "targets": {
+            "maximum_fpr": 0.001,
+            "minimum_recall": 0.75,
+            "minimum_f1": 0.85,
+            "minimum_type_a_recall": 0.6,
+            "minimum_type_b_recall": 0.7,
+            "minimum_type_c_recall": 0.8
+          }
+        },
+        "profiles": [
+          {
+            "window_size": 4,
+            "score_mode": "max",
+            "feature_group": "raw_delta",
+            "feature_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "base_scale": 18.578176441435392,
+            "validation_fpr": 0.001,
+            "validation_macro_recall": 0.5924999999999999,
+            "validation_per_type_recall": {
+              "A: per-sample difference excursion": 0.7175,
+              "B: oscillation": 0.5125,
+              "C: drift": 0.5475
+            },
+            "calibration": [
+              0.4317862194486997,
+              0.919741546596082,
+              0.23114305748292785,
+              0.4672003420948373,
+              0.4562356322293515,
+              0.9125896493341044,
+              1.1656047093774466,
+              1.3308910792782893
+            ]
+          },
+          {
+            "window_size": 16,
+            "score_mode": "mean",
+            "feature_group": "raw",
+            "feature_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "persistence_required": 3,
+            "persistence_span": 5,
+            "base_scale": 5.0054352402145685,
+            "validation_fpr": 0.001,
+            "validation_macro_recall": 0.5583333333333332,
+            "validation_per_type_recall": {
+              "A: per-sample difference excursion": 0.1075,
+              "B: oscillation": 0.9575,
+              "C: drift": 0.61
+            },
+            "calibration": [
+              0.8244321315682059,
+              0.8897210296632064,
+              0.15149209152456808,
+              0.2670354029299875
+            ]
+          },
+          {
+            "window_size": 64,
+            "score_mode": "mean",
+            "feature_group": "raw",
+            "feature_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "persistence_required": 3,
+            "persistence_span": 5,
+            "base_scale": 2.140988049584561,
+            "validation_fpr": 0.001,
+            "validation_macro_recall": 0.6308333333333334,
+            "validation_per_type_recall": {
+              "A: per-sample difference excursion": 0.095,
+              "B: oscillation": 0.92,
+              "C: drift": 0.8775
+            },
+            "calibration": [
+              0.9504364888905563,
+              0.9546805918143056,
+              0.18915847007248682,
+              0.35337549974800214
+            ]
+          }
+        ]
+      },
+      "checkpoint_diagnostics": [
+        {
+          "epoch": 10,
+          "metrics": {
+            "precision": 0.9970530451866405,
+            "recall": 0.8458333333333333,
+            "f1": 0.915238954012624,
+            "fpr": 0.001,
+            "auc": 0.9736672222222224
+          },
+          "per_type": {
+            "A: per-sample difference excursion": 0.755,
+            "B: oscillation": 0.9125,
+            "C: drift": 0.87
+          },
+          "macro_recall": 0.8458333333333333,
+          "min_type_recall": 0.755,
+          "projected_precision": {
+            "at_1pct_prevalence": 0.8952196154524608,
+            "at_0_1pct_prevalence": 0.4584876682627157
+          },
+          "threshold": 1.0553580297408396,
+          "gate": {
+            "passed": true,
+            "checks": {
+              "fpr": true,
+              "recall": true,
+              "f1": true,
+              "type_a_recall": true,
+              "type_b_recall": true,
+              "type_c_recall": true
+            },
+            "targets": {
+              "maximum_fpr": 0.001,
+              "minimum_recall": 0.75,
+              "minimum_f1": 0.85,
+              "minimum_type_a_recall": 0.6,
+              "minimum_type_b_recall": 0.7,
+              "minimum_type_c_recall": 0.8
+            }
+          },
+          "profiles": [
+            {
+              "window_size": 4,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 1,
+              "persistence_span": 1,
+              "base_scale": 12.00062127467958,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.6916666666666668,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.7725,
+                "B: oscillation": 0.6425,
+                "C: drift": 0.66
+              },
+              "calibration": [
+                0.541257772733969,
+                0.5602627566389841,
+                0.10375678795613251,
+                0.13540105006723088
+              ]
+            },
+            {
+              "window_size": 32,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 3.4041347554366572,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.5733333333333334,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.0775,
+                "B: oscillation": 0.92,
+                "C: drift": 0.7225
+              },
+              "calibration": [
+                0.95184226409034,
+                0.9470656230819117,
+                0.17663683537803015,
+                0.32844728447065613
+              ]
+            },
+            {
+              "window_size": 64,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 2.2552690262266504,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.6216666666666667,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.0925,
+                "B: oscillation": 0.8925,
+                "C: drift": 0.88
+              },
+              "calibration": [
+                0.9691158729535441,
+                0.966792291182557,
+                0.19245532745303154,
+                0.36868763404162375
+              ]
+            }
+          ]
+        },
+        {
+          "epoch": 20,
+          "metrics": {
+            "precision": 0.9970760233918129,
+            "recall": 0.8525,
+            "f1": 0.9191374663072777,
+            "fpr": 0.001,
+            "auc": 0.9680055555555556
+          },
+          "per_type": {
+            "A: per-sample difference excursion": 0.71,
+            "B: oscillation": 0.9625,
+            "C: drift": 0.885
+          },
+          "macro_recall": 0.8525,
+          "min_type_recall": 0.71,
+          "projected_precision": {
+            "at_1pct_prevalence": 0.8959537572254336,
+            "at_0_1pct_prevalence": 0.4604374831217931
+          },
+          "threshold": 1.0184140063443392,
+          "gate": {
+            "passed": true,
+            "checks": {
+              "fpr": true,
+              "recall": true,
+              "f1": true,
+              "type_a_recall": true,
+              "type_b_recall": true,
+              "type_c_recall": true
+            },
+            "targets": {
+              "maximum_fpr": 0.001,
+              "minimum_recall": 0.75,
+              "minimum_f1": 0.85,
+              "minimum_type_a_recall": 0.6,
+              "minimum_type_b_recall": 0.7,
+              "minimum_type_c_recall": 0.8
+            }
+          },
+          "profiles": [
+            {
+              "window_size": 4,
+              "score_mode": "max",
+              "feature_group": "raw_delta",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ],
+              "persistence_required": 2,
+              "persistence_span": 3,
+              "base_scale": 18.578176441435392,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.5924999999999999,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.7175,
+                "B: oscillation": 0.5125,
+                "C: drift": 0.5475
+              },
+              "calibration": [
+                0.4317862194486997,
+                0.919741546596082,
+                0.23114305748292785,
+                0.4672003420948373,
+                0.4562356322293515,
+                0.9125896493341044,
+                1.1656047093774466,
+                1.3308910792782893
+              ]
+            },
+            {
+              "window_size": 16,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 5.0054352402145685,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.5583333333333332,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.1075,
+                "B: oscillation": 0.9575,
+                "C: drift": 0.61
+              },
+              "calibration": [
+                0.8244321315682059,
+                0.8897210296632064,
+                0.15149209152456808,
+                0.2670354029299875
+              ]
+            },
+            {
+              "window_size": 64,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 2.140988049584561,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.6308333333333334,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.095,
+                "B: oscillation": 0.92,
+                "C: drift": 0.8775
+              },
+              "calibration": [
+                0.9504364888905563,
+                0.9546805918143056,
+                0.18915847007248682,
+                0.35337549974800214
+              ]
+            }
+          ]
+        },
+        {
+          "epoch": 30,
+          "metrics": {
+            "precision": 0.9970617042115573,
+            "recall": 0.8483333333333334,
+            "f1": 0.9167041873030166,
+            "fpr": 0.001,
+            "auc": 0.9747911111111112
+          },
+          "per_type": {
+            "A: per-sample difference excursion": 0.775,
+            "B: oscillation": 0.905,
+            "C: drift": 0.865
+          },
+          "macro_recall": 0.8483333333333333,
+          "min_type_recall": 0.775,
+          "projected_precision": {
+            "at_1pct_prevalence": 0.8954961294862773,
+            "at_0_1pct_prevalence": 0.45922049801515696
+          },
+          "threshold": 1.0843449077891707,
+          "gate": {
+            "passed": true,
+            "checks": {
+              "fpr": true,
+              "recall": true,
+              "f1": true,
+              "type_a_recall": true,
+              "type_b_recall": true,
+              "type_c_recall": true
+            },
+            "targets": {
+              "maximum_fpr": 0.001,
+              "minimum_recall": 0.75,
+              "minimum_f1": 0.85,
+              "minimum_type_a_recall": 0.6,
+              "minimum_type_b_recall": 0.7,
+              "minimum_type_c_recall": 0.8
+            }
+          },
+          "profiles": [
+            {
+              "window_size": 4,
+              "score_mode": "delta_max",
+              "feature_group": "raw_delta",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ],
+              "persistence_required": 1,
+              "persistence_span": 1,
+              "base_scale": 38.44664255847226,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.3258333333333333,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.7825,
+                "B: oscillation": 0.1675,
+                "C: drift": 0.0275
+              },
+              "calibration": [
+                0.23713505412393343,
+                0.32890759043606194,
+                0.10522700881258279,
+                0.1753455076751876,
+                0.31613318773572036,
+                0.3522993972516434,
+                1.1681943545277471,
+                0.797290487434031
+              ]
+            },
+            {
+              "window_size": 8,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 2,
+              "persistence_span": 3,
+              "base_scale": 6.577573798594351,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.7125,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.495,
+                "B: oscillation": 0.9125,
+                "C: drift": 0.73
+              },
+              "calibration": [
+                0.5081166117400273,
+                0.6024542458218146,
+                0.130185758441915,
+                0.20944591405831436
+              ]
+            },
+            {
+              "window_size": 64,
+              "score_mode": "last",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 9.485021351527571,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.38916666666666666,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.0,
+                "B: oscillation": 0.3,
+                "C: drift": 0.8675
+              },
+              "calibration": [
+                0.895342623685311,
+                0.9484952465026402,
+                0.16105846403253302,
+                0.3208895198478722
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 710203,
+      "completed_epochs": 30,
+      "final_train_loss": 1.400475810098852,
+      "final_validation_loss": 1.381260511279106,
+      "selected": {
+        "epoch": 30,
+        "metrics": {
+          "precision": 0.9970178926441352,
+          "recall": 0.8358333333333333,
+          "f1": 0.9093381686310064,
+          "fpr": 0.001,
+          "auc": 0.9744586111111111
+        },
+        "per_type": {
+          "A: per-sample difference excursion": 0.7575,
+          "B: oscillation": 0.8725,
+          "C: drift": 0.8775
+        },
+        "macro_recall": 0.8358333333333333,
+        "min_type_recall": 0.7575,
+        "projected_precision": {
+          "at_1pct_prevalence": 0.8940987698341951,
+          "at_0_1pct_prevalence": 0.455536379326006
+        },
+        "threshold": 1.032777824282109,
+        "gate": {
+          "passed": true,
+          "checks": {
+            "fpr": true,
+            "recall": true,
+            "f1": true,
+            "type_a_recall": true,
+            "type_b_recall": true,
+            "type_c_recall": true
+          },
+          "targets": {
+            "maximum_fpr": 0.001,
+            "minimum_recall": 0.75,
+            "minimum_f1": 0.85,
+            "minimum_type_a_recall": 0.6,
+            "minimum_type_b_recall": 0.7,
+            "minimum_type_c_recall": 0.8
+          }
+        },
+        "profiles": [
+          {
+            "window_size": 4,
+            "score_mode": "delta_max",
+            "feature_group": "delta",
+            "feature_indices": [
+              4,
+              5,
+              6,
+              7
+            ],
+            "persistence_required": 1,
+            "persistence_span": 1,
+            "base_scale": 62.96584491638906,
+            "validation_fpr": 0.001,
+            "validation_macro_recall": 0.26416666666666666,
+            "validation_per_type_recall": {
+              "A: per-sample difference excursion": 0.75,
+              "B: oscillation": 0.04,
+              "C: drift": 0.0025
+            },
+            "calibration": [
+              0.22123185297246256,
+              0.24378179088000787,
+              0.7838222559336252,
+              0.46351792094336475
+            ]
+          },
+          {
+            "window_size": 64,
+            "score_mode": "mean",
+            "feature_group": "raw",
+            "feature_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "persistence_required": 3,
+            "persistence_span": 5,
+            "base_scale": 2.3290853012589796,
+            "validation_fpr": 0.001,
+            "validation_macro_recall": 0.6025,
+            "validation_per_type_recall": {
+              "A: per-sample difference excursion": 0.075,
+              "B: oscillation": 0.89,
+              "C: drift": 0.8425
+            },
+            "calibration": [
+              0.9594372174913375,
+              0.9487893170163699,
+              0.1868752401226751,
+              0.34084694802103394
+            ]
+          },
+          {
+            "window_size": 4,
+            "score_mode": "mean",
+            "feature_group": "raw",
+            "feature_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "persistence_required": 2,
+            "persistence_span": 3,
+            "base_scale": 16.806941023609895,
+            "validation_fpr": 0.001,
+            "validation_macro_recall": 0.6791666666666667,
+            "validation_per_type_recall": {
+              "A: per-sample difference excursion": 0.6025,
+              "B: oscillation": 0.7025,
+              "C: drift": 0.7325
+            },
+            "calibration": [
+              0.09871602565402816,
+              0.09481791936652009,
+              0.05651794879700852,
+              0.08165950535616207
+            ]
+          }
+        ]
+      },
+      "checkpoint_diagnostics": [
+        {
+          "epoch": 10,
+          "metrics": {
+            "precision": 0.9969879518072289,
+            "recall": 0.8275,
+            "f1": 0.9043715846994536,
+            "fpr": 0.001,
+            "auc": 0.9622619444444445
+          },
+          "per_type": {
+            "A: per-sample difference excursion": 0.695,
+            "B: oscillation": 0.93,
+            "C: drift": 0.8575
+          },
+          "macro_recall": 0.8275,
+          "min_type_recall": 0.695,
+          "projected_precision": {
+            "at_1pct_prevalence": 0.8931462493254183,
+            "at_0_1pct_prevalence": 0.45305228579249934
+          },
+          "threshold": 1.076317868641193,
+          "gate": {
+            "passed": true,
+            "checks": {
+              "fpr": true,
+              "recall": true,
+              "f1": true,
+              "type_a_recall": true,
+              "type_b_recall": true,
+              "type_c_recall": true
+            },
+            "targets": {
+              "maximum_fpr": 0.001,
+              "minimum_recall": 0.75,
+              "minimum_f1": 0.85,
+              "minimum_type_a_recall": 0.6,
+              "minimum_type_b_recall": 0.7,
+              "minimum_type_c_recall": 0.8
+            }
+          },
+          "profiles": [
+            {
+              "window_size": 4,
+              "score_mode": "max",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 2,
+              "persistence_span": 3,
+              "base_scale": 11.979984259075463,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.5125000000000001,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.7425,
+                "B: oscillation": 0.44,
+                "C: drift": 0.355
+              },
+              "calibration": [
+                1.4581560980399042,
+                1.591566231468489,
+                0.27833634400182367,
+                0.4213369259224435
+              ]
+            },
+            {
+              "window_size": 16,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 4.754081642053799,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.6208333333333335,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.135,
+                "B: oscillation": 0.9425,
+                "C: drift": 0.785
+              },
+              "calibration": [
+                0.9397932715943843,
+                0.93017034428381,
+                0.17899270577727674,
+                0.3205303459887188
+              ]
+            },
+            {
+              "window_size": 64,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 2.308211016980491,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.5841666666666666,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.0575,
+                "B: oscillation": 0.8275,
+                "C: drift": 0.8675
+              },
+              "calibration": [
+                0.9834417416312898,
+                0.9670619455927907,
+                0.21186447553319435,
+                0.453650072110442
+              ]
+            }
+          ]
+        },
+        {
+          "epoch": 20,
+          "metrics": {
+            "precision": 0.9969758064516129,
+            "recall": 0.8241666666666667,
+            "f1": 0.9023722627737226,
+            "fpr": 0.001,
+            "auc": 0.9728222222222221
+          },
+          "per_type": {
+            "A: per-sample difference excursion": 0.735,
+            "B: oscillation": 0.8575,
+            "C: drift": 0.88
+          },
+          "macro_recall": 0.8241666666666667,
+          "min_type_recall": 0.735,
+          "projected_precision": {
+            "at_1pct_prevalence": 0.8927604260696878,
+            "at_0_1pct_prevalence": 0.45205228997166097
+          },
+          "threshold": 1.0362257367919916,
+          "gate": {
+            "passed": true,
+            "checks": {
+              "fpr": true,
+              "recall": true,
+              "f1": true,
+              "type_a_recall": true,
+              "type_b_recall": true,
+              "type_c_recall": true
+            },
+            "targets": {
+              "maximum_fpr": 0.001,
+              "minimum_recall": 0.75,
+              "minimum_f1": 0.85,
+              "minimum_type_a_recall": 0.6,
+              "minimum_type_b_recall": 0.7,
+              "minimum_type_c_recall": 0.8
+            }
+          },
+          "profiles": [
+            {
+              "window_size": 4,
+              "score_mode": "max",
+              "feature_group": "raw_delta",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ],
+              "persistence_required": 2,
+              "persistence_span": 3,
+              "base_scale": 19.489661154632685,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.6241666666666666,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.7275,
+                "B: oscillation": 0.555,
+                "C: drift": 0.59
+              },
+              "calibration": [
+                0.8028856493049271,
+                0.7917304873697739,
+                0.25734755076598925,
+                0.3262943137087489,
+                0.7849793607154841,
+                0.8553691885461301,
+                1.311902482460378,
+                1.3108078435510078
+              ]
+            },
+            {
+              "window_size": 64,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 2.4697274747103926,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.5783333333333333,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.0575,
+                "B: oscillation": 0.8375,
+                "C: drift": 0.84
+              },
+              "calibration": [
+                0.968049957428398,
+                0.958038863391072,
+                0.19196881752824163,
+                0.3547785700945085
+              ]
+            },
+            {
+              "window_size": 4,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 8.941720685502787,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.5958333333333333,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.2875,
+                "B: oscillation": 0.7375,
+                "C: drift": 0.7625
+              },
+              "calibration": [
+                0.35640829660409973,
+                0.3229300008954737,
+                0.10346039078328426,
+                0.1302729582664897
+              ]
+            }
+          ]
+        },
+        {
+          "epoch": 30,
+          "metrics": {
+            "precision": 0.9970178926441352,
+            "recall": 0.8358333333333333,
+            "f1": 0.9093381686310064,
+            "fpr": 0.001,
+            "auc": 0.9744586111111111
+          },
+          "per_type": {
+            "A: per-sample difference excursion": 0.7575,
+            "B: oscillation": 0.8725,
+            "C: drift": 0.8775
+          },
+          "macro_recall": 0.8358333333333333,
+          "min_type_recall": 0.7575,
+          "projected_precision": {
+            "at_1pct_prevalence": 0.8940987698341951,
+            "at_0_1pct_prevalence": 0.455536379326006
+          },
+          "threshold": 1.032777824282109,
+          "gate": {
+            "passed": true,
+            "checks": {
+              "fpr": true,
+              "recall": true,
+              "f1": true,
+              "type_a_recall": true,
+              "type_b_recall": true,
+              "type_c_recall": true
+            },
+            "targets": {
+              "maximum_fpr": 0.001,
+              "minimum_recall": 0.75,
+              "minimum_f1": 0.85,
+              "minimum_type_a_recall": 0.6,
+              "minimum_type_b_recall": 0.7,
+              "minimum_type_c_recall": 0.8
+            }
+          },
+          "profiles": [
+            {
+              "window_size": 4,
+              "score_mode": "delta_max",
+              "feature_group": "delta",
+              "feature_indices": [
+                4,
+                5,
+                6,
+                7
+              ],
+              "persistence_required": 1,
+              "persistence_span": 1,
+              "base_scale": 62.96584491638906,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.26416666666666666,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.75,
+                "B: oscillation": 0.04,
+                "C: drift": 0.0025
+              },
+              "calibration": [
+                0.22123185297246256,
+                0.24378179088000787,
+                0.7838222559336252,
+                0.46351792094336475
+              ]
+            },
+            {
+              "window_size": 64,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 3,
+              "persistence_span": 5,
+              "base_scale": 2.3290853012589796,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.6025,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.075,
+                "B: oscillation": 0.89,
+                "C: drift": 0.8425
+              },
+              "calibration": [
+                0.9594372174913375,
+                0.9487893170163699,
+                0.1868752401226751,
+                0.34084694802103394
+              ]
+            },
+            {
+              "window_size": 4,
+              "score_mode": "mean",
+              "feature_group": "raw",
+              "feature_indices": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "persistence_required": 2,
+              "persistence_span": 3,
+              "base_scale": 16.806941023609895,
+              "validation_fpr": 0.001,
+              "validation_macro_recall": 0.6791666666666667,
+              "validation_per_type_recall": {
+                "A: per-sample difference excursion": 0.6025,
+                "B: oscillation": 0.7025,
+                "C: drift": 0.7325
+              },
+              "calibration": [
+                0.09871602565402816,
+                0.09481791936652009,
+                0.05651794879700852,
+                0.08165950535616207
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "release_seed": 710201,
+  "release": {
+    "epoch": 10,
+    "metrics": {
+      "precision": 0.9971264367816092,
+      "recall": 0.8675,
+      "f1": 0.9278074866310161,
+      "fpr": 0.001,
+      "auc": 0.9794663888888889
+    },
+    "per_type": {
+      "A: per-sample difference excursion": 0.7925,
+      "B: oscillation": 0.93,
+      "C: drift": 0.88
+    },
+    "macro_recall": 0.8675,
+    "min_type_recall": 0.7925,
+    "projected_precision": {
+      "at_1pct_prevalence": 0.8975685463010864,
+      "at_0_1pct_prevalence": 0.4647736405036164
+    },
+    "threshold": 1.0230547835735644,
+    "gate": {
+      "passed": true,
+      "checks": {
+        "fpr": true,
+        "recall": true,
+        "f1": true,
+        "type_a_recall": true,
+        "type_b_recall": true,
+        "type_c_recall": true
+      },
+      "targets": {
+        "maximum_fpr": 0.001,
+        "minimum_recall": 0.75,
+        "minimum_f1": 0.85,
+        "minimum_type_a_recall": 0.6,
+        "minimum_type_b_recall": 0.7,
+        "minimum_type_c_recall": 0.8
+      }
+    },
+    "profiles": [
+      {
+        "window_size": 4,
+        "score_mode": "max",
+        "feature_group": "raw",
+        "feature_indices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "persistence_required": 1,
+        "persistence_span": 1,
+        "base_scale": 16.54791218302937,
+        "validation_fpr": 0.001,
+        "validation_macro_recall": 0.5233333333333333,
+        "validation_per_type_recall": {
+          "A: per-sample difference excursion": 0.8,
+          "B: oscillation": 0.4575,
+          "C: drift": 0.3125
+        },
+        "calibration": [
+          1.6809673877781721,
+          1.7013826874078095,
+          0.28494023060194446,
+          0.39461489701357094
+        ]
+      },
+      {
+        "window_size": 16,
+        "score_mode": "mean",
+        "feature_group": "raw",
+        "feature_indices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "persistence_required": 3,
+        "persistence_span": 5,
+        "base_scale": 5.429500133231205,
+        "validation_fpr": 0.001,
+        "validation_macro_recall": 0.585,
+        "validation_per_type_recall": {
+          "A: per-sample difference excursion": 0.105,
+          "B: oscillation": 0.9375,
+          "C: drift": 0.7125
+        },
+        "calibration": [
+          0.9107634704891028,
+          0.9128981743408935,
+          0.1563425677372599,
+          0.27677668590606874
+        ]
+      },
+      {
+        "window_size": 64,
+        "score_mode": "mean",
+        "feature_group": "raw",
+        "feature_indices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "persistence_required": 3,
+        "persistence_span": 5,
+        "base_scale": 2.4142527568947068,
+        "validation_fpr": 0.001,
+        "validation_macro_recall": 0.6033333333333334,
+        "validation_per_type_recall": {
+          "A: per-sample difference excursion": 0.07,
+          "B: oscillation": 0.86,
+          "C: drift": 0.88
+        },
+        "calibration": [
+          0.9737877832369858,
+          0.9671167209142987,
+          0.2006777318999063,
+          0.384659978197492
+        ]
+      }
+    ]
+  },
+  "candidate_sha256": "5d064e1c0ab94377aa83f353fbee6729fcdc87f8e597c7fc3051b687910c7f5b",
+  "selection_data_sha256": "bd5ca5be9090bbb474b17ca09330734a91a31255fc77e8b64ff09380987d621b",
+  "selection_protocol_sha256": "ff1498a63c9d804ae7cdb4ea8bd10227e393366dd87887bcdf12a33d911bb309",
+  "resolved_command": [
+    "C:\\Max\\Paper\\AIoT\\lstm-ae\\.venv\\Scripts\\python.exe",
+    "C:\\Max\\Paper\\AIoT\\lstm-ae\\29_train_select_v5.py",
+    "--seeds",
+    "710201,710202,710203",
+    "--epochs",
+    "30",
+    "--experiment",
+    "dynamic_grouped_final"
+  ],
+  "command_line_windows": "C:\\Max\\Paper\\AIoT\\lstm-ae\\.venv\\Scripts\\python.exe C:\\Max\\Paper\\AIoT\\lstm-ae\\29_train_select_v5.py --seeds 710201,710202,710203 --epochs 30 --experiment dynamic_grouped_final",
+  "environment": {
+    "python": "3.12.13",
+    "torch": "2.13.0+cpu",
+    "numpy": "2.5.1",
+    "device": "cpu"
+  },
+  "code_sha256": {
+    "trainer": "42ffd2a0d0d4b9240b6dda45a1723fecbf5524ccacb49b4da47f916efa8448ce",
+    "experiment_helpers": "175862860dddbab7618d59622b99be7a1dbec1f0cb9f4f0fbb048465d77f4516"
+  },
+  "elapsed_seconds": 1437.993999004364
+}

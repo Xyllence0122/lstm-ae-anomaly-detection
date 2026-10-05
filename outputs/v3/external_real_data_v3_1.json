@@ -1,0 +1,297 @@
+{
+  "status": "external_real_data_no_tuning",
+  "interpretation": "Binary normal/faulty challenge only; real fault names do not map to the three synthetic anomaly mechanisms.",
+  "data": {
+    "normal_holdout_count": 43,
+    "faulty_count": 20,
+    "normal_split_indices": [
+      26,
+      95,
+      82,
+      85,
+      79,
+      68,
+      30,
+      19,
+      60,
+      80,
+      90,
+      42,
+      24,
+      94,
+      100,
+      103,
+      59,
+      63,
+      29,
+      69,
+      27,
+      61,
+      45,
+      75,
+      62,
+      6,
+      8,
+      33,
+      44,
+      88,
+      12,
+      16,
+      73,
+      76,
+      86,
+      49,
+      5,
+      46,
+      22,
+      91,
+      35,
+      25,
+      77
+    ],
+    "source_mat_sha256": "8d4e40f2c692c0a80a3e307665d31207037f52ed4bba89ecad60d8de86aa24c7",
+    "chronology_repair": "sort monitored step 4/5 samples by Time and average duplicates"
+  },
+  "counts": {
+    "normal_false_positives": 2,
+    "normal_true_negatives": 41,
+    "faulty_detected": 14,
+    "faulty_missed": 6
+  },
+  "metrics": {
+    "precision": 0.875,
+    "recall": 0.7,
+    "f1": 0.7777777777777778,
+    "fpr": 0.046511627906976744,
+    "auc": 0.813953488372093,
+    "normal_fpr_interval": {
+      "successes": 2,
+      "total": 43,
+      "rate": 0.046511627906976744,
+      "wilson_95pct": [
+        0.012849260094380227,
+        0.15455498004063967
+      ]
+    },
+    "faulty_detection_interval": {
+      "successes": 14,
+      "total": 20,
+      "rate": 0.7,
+      "wilson_95pct": [
+        0.4810271816464765,
+        0.8545227551323956
+      ]
+    },
+    "per_fault_name": {
+      "BCl3 +10": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "BCl3 +5": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "BCl3 -5": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Cl2 +5": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Cl2 -10": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Cl2 -5": {
+        "successes": 0,
+        "total": 1,
+        "rate": 0.0,
+        "wilson_95pct": [
+          0.0,
+          0.7934506856227626
+        ]
+      },
+      "He Chuck": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Pr +1": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Pr +2": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Pr +3": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "Pr -2": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "RF +10": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "RF -12": {
+        "successes": 1,
+        "total": 2,
+        "rate": 0.5,
+        "wilson_95pct": [
+          0.09453120573423074,
+          0.9054687942657693
+        ]
+      },
+      "TCP +10": {
+        "successes": 0,
+        "total": 1,
+        "rate": 0.0,
+        "wilson_95pct": [
+          0.0,
+          0.7934506856227626
+        ]
+      },
+      "TCP +20": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "TCP +30": {
+        "successes": 0,
+        "total": 1,
+        "rate": 0.0,
+        "wilson_95pct": [
+          0.0,
+          0.7934506856227626
+        ]
+      },
+      "TCP +50": {
+        "successes": 0,
+        "total": 1,
+        "rate": 0.0,
+        "wilson_95pct": [
+          0.0,
+          0.7934506856227626
+        ]
+      },
+      "TCP -15": {
+        "successes": 1,
+        "total": 1,
+        "rate": 1.0,
+        "wilson_95pct": [
+          0.20654931437723745,
+          1.0
+        ]
+      },
+      "TCP -20": {
+        "successes": 0,
+        "total": 1,
+        "rate": 0.0,
+        "wilson_95pct": [
+          0.0,
+          0.7934506856227626
+        ]
+      }
+    },
+    "alert_sample_indices": [
+      null,
+      null,
+      7,
+      7,
+      null,
+      7,
+      7,
+      null,
+      67,
+      null,
+      9,
+      7,
+      7,
+      null,
+      7,
+      94,
+      7,
+      7,
+      7,
+      9
+    ]
+  },
+  "provenance": {
+    "artifact_sha256": "5225deea1e1af34fc5fcab987af03d0aefaebae0c42433b71be4868dac6468b2",
+    "code_sha256": {
+      "C:\\Max\\Paper\\AIoT\\lstm-ae\\19_evaluate_v3_1_real_external.py": "c0c98b2dc3ba7eb0772f7be6ba87e6599151813bb8eee54790a0f2c47e57afb9",
+      "16_evaluate_v3_locked_holdout.py": "930f6c468a303715fa6e4ef3164ee89b1168523067fcf5d63a41f510561a5a6e",
+      "v3_data.py": "fd238354e2f91ee32bc208f3e78c9725c732e1424fb4363490b2872c79f4f36b",
+      "v3_features.py": "50d805bce955444b492cddb371de22b0e8d2f70842f8041a86d005c9bb884933"
+    },
+    "git_commit": "83dc6f5975fb265a8a5bef01cb7f438e97717c60",
+    "git_status_porcelain": ""
+  },
+  "limitations": [
+    "Only 43 untouched real normal wafers are available, so the FPR confidence interval is wide.",
+    "Only 20 real faulty wafers are available and reliable fault onset labels are absent.",
+    "The real dataset is an external challenge, not a representative prevalence-weighted production trial."
+  ]
+}

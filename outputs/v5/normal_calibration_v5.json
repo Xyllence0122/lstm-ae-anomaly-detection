@@ -1,0 +1,40 @@
+{
+  "status": "v5_normal_only_calibration_locked_profiles_and_weights",
+  "model_weights_changed": false,
+  "profiles_changed": false,
+  "anomaly_labels_accessed": false,
+  "normal_only": true,
+  "normal_count": 10000,
+  "seed": 720101,
+  "target_fpr": 0.001,
+  "allowed_false_positives": 10,
+  "observed_false_positives": 10,
+  "observed_fpr": 0.001,
+  "source_artifact_sha256": "5d064e1c0ab94377aa83f353fbee6729fcdc87f8e597c7fc3051b687910c7f5b",
+  "selection_report_sha256": "f26104072f632fc63458e4223278fd85901627ab088e4e71fc99c0e85187afea",
+  "old_selection_threshold": 1.0230547835735644,
+  "new_calibrated_threshold": 1.1915203284296412,
+  "input_hashes": {
+    "source": "5d064e1c0ab94377aa83f353fbee6729fcdc87f8e597c7fc3051b687910c7f5b",
+    "selection_report": "f26104072f632fc63458e4223278fd85901627ab088e4e71fc99c0e85187afea",
+    "protocol": "ff1498a63c9d804ae7cdb4ea8bd10227e393366dd87887bcdf12a33d911bb309",
+    "statistics": "5e9b3aa0cbec720abb4871c771b11584066fb1fab235767ed92e63557bf2f76b"
+  },
+  "calibrated_artifact_sha256": "a59a6c1ae1e828bce72dbec396806f36344dcaf326e9cc04df0bf560258085f4",
+  "resolved_command": [
+    "C:\\Max\\Paper\\AIoT\\lstm-ae\\.venv\\Scripts\\python.exe",
+    "C:\\Max\\Paper\\AIoT\\lstm-ae\\30_calibrate_v5.py"
+  ],
+  "code_sha256": {
+    "calibrator": "1f752946845d8dd2e45fd7d271e35795efd7b24d6db1922ce078d5d2173b4116",
+    "experiment_helpers": "063ee877c446dd5ac4f49b0a3808bbaf2cc05c1dffbf63f1963cb1750b88eb95"
+  },
+  "git_commit": "bd5752bf7be51733e4a4cd60b39086ea77c9c806",
+  "git_status_before_outputs": "",
+  "environment": {
+    "python": "3.12.13",
+    "torch": "2.13.0+cpu",
+    "numpy": "2.5.1",
+    "device": "cpu"
+  }
+}

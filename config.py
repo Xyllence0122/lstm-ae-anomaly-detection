@@ -3,11 +3,19 @@
 專案共用設定：路徑、sensor 選擇、繪圖樣式
 LSTM-AE 半導體異常偵測（LAM 9600 Metal Etcher）
 """
+import os
 from pathlib import Path
 
 # ---------- 路徑 ----------
 PROJECT_DIR = Path(__file__).parent
-DATA_MAT = Path(r"C:\Max\Paper\AIoT\LAM 9600 Metal Etcher Dataset\MACHINE_Data.mat")
+MPL_CONFIG_DIR = PROJECT_DIR / ".matplotlib"
+MPL_CONFIG_DIR.mkdir(exist_ok=True)
+os.environ.setdefault("MPLCONFIGDIR", str(MPL_CONFIG_DIR))
+os.environ.setdefault("MPLBACKEND", "Agg")
+DEFAULT_DATA_MAT = Path(
+    r"C:\Max\Paper\AIoT\LAM 9600 Metal Etcher Dataset\MACHINE_Data.mat"
+)
+DATA_MAT = Path(os.environ.get("LAM9600_DATA_MAT", DEFAULT_DATA_MAT))
 OUTPUT_DIR = PROJECT_DIR / "outputs"
 FIGURE_DIR = PROJECT_DIR / "figures"
 OUTPUT_DIR.mkdir(exist_ok=True)
